@@ -1,0 +1,160 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h4 class="mb-0">Products</h4>
+
+    <div class="d-flex gap-2">
+        <a href="{{addbundleurl}}" class="btn btn-outline-primary" onclick="if (typeof openBundleDrawer === 'function') { openBundleDrawer(); return false; }">
+            <i class="fa fa-layer-group me-1"></i>
+            Add bundle
+        </a>
+        <a href="{{addnewurl}}" class="btn btn-primary">
+            <i class="fa fa-plus me-1"></i>
+            Add a new product
+        </a>
+    </div>
+
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" action="{{productsurl}}" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label">Search</label>
+                <input type="search" name="search" class="form-control" value="{{searchquery}}" placeholder="Search by product, category, course or status">
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label">Category</label>
+                <select name="categoryid" class="form-select">
+                    {{#categoryfilters}}
+                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/categoryfilters}}
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label">Course</label>
+                <select name="courseid" class="form-select">
+                    {{#coursefilters}}
+                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/coursefilters}}
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label">Type</label>
+                <select name="typefilter" class="form-select">
+                    {{#typefilters}}
+                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/typefilters}}
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label">Status</label>
+                <select name="statusfilter" class="form-select">
+                    {{#statusfilters}}
+                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/statusfilters}}
+                </select>
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Apply filters</button>
+                <a href="{{productsurl}}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{#hasproducts}}
+<div class="card border-0 shadow-sm">
+
+    <div class="table-responsive">
+
+        <table class="table align-middle mb-0">
+
+            <thead class="table-light">
+<tr>
+    <th>Image</th>
+    <th>Product</th>
+    <th>Category</th>
+    <th>Course</th>
+    <th>Type</th>
+    <th>Status</th>
+    <th>Price</th>
+    <th>Original</th>
+    <th>Sale</th>
+    <th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{{#products}}
+<tr>
+<td>
+    {{#image}}
+    <img src="{{image}}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;">
+    {{/image}}
+    {{^image}}
+    <div style="width:50px;height:50px;background:#eee;"></div>
+    {{/image}}
+</td>
+
+<td class="fw-semibold">
+    {{name}}
+    {{#isbundle}}<span class="badge bg-info text-dark ms-2">Bundle</span>{{/isbundle}}
+</td>
+<td>{{categoryname}}</td>
+<td>{{coursename}}</td>
+
+<td>
+<span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">
+{{type}}
+</span>
+</td>
+
+<td>
+<span class="badge {{#isdraft}}bg-secondary{{/isdraft}}{{#ispublished}}bg-success{{/ispublished}}">
+{{status}}
+</span>
+</td>
+
+<td>{{price}}</td>
+
+<td>
+{{#ispaid}}{{originalprice}}{{/ispaid}}
+</td>
+
+<td>
+{{#ispaid}}{{saleprice}}{{/ispaid}}
+</td>
+
+<td>
+<a href="{{editurl}}" class="text-primary me-2">
+<i class="fa {{#isbundle}}fa-layer-group{{/isbundle}}{{^isbundle}}fa-pen{{/isbundle}}"></i>
+</a>
+
+<a href="{{deleteurl}}" class="text-danger"
+onclick="return confirm('Delete this product?')">
+<i class="fa fa-trash"></i>
+</a>
+</td>
+
+</tr>
+{{/products}}
+
+</tbody>
+
+        </table>
+
+    </div>
+
+</div>
+{{/hasproducts}}
+
+{{^hasproducts}}
+<div class="alert alert-info">{{noresultsmessage}}</div>
+{{/hasproducts}}
+

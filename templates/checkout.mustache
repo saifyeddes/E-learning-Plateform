@@ -1,0 +1,195 @@
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h3 class="mb-0">Checkout</h3>
+            <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Back to Cart</a>
+        </div>
+    </div>
+
+    {{#hasproducts}}
+    <div class="card mb-3">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#products}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td>{{qty}}</td>
+                        <td>${{price}}</td>
+                        <td>${{lineprice}}</td>
+                    </tr>
+                    {{/products}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Code de reduction</h5>
+        </div>
+        <div class="card-body">
+            {{#hascouponerror}}
+            <div class="alert alert-danger">{{couponerror}}</div>
+            {{/hascouponerror}}
+
+            {{#hascouponsuccess}}
+            <div class="alert alert-success">{{couponsuccess}}</div>
+            {{/hascouponsuccess}}
+
+            {{#appliedcoupon}}
+            <div class="alert alert-info mb-3">
+                <div><strong>Code:</strong> {{code}}</div>
+                <div><strong>Reduction:</strong> {{discountdisplay}}</div>
+                <div><strong>Nouveau total:</strong> ${{newtotal}}</div>
+            </div>
+            <form method="post" action="{{checkouturl}}" class="d-inline">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <input type="hidden" name="removecoupon" value="1">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Retirer le code</button>
+            </form>
+            {{/appliedcoupon}}
+
+            {{^appliedcoupon}}
+            <form method="post" action="{{checkouturl}}" class="row g-2 align-items-end">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <div class="col-md-8">
+                    <label class="form-label">Entrer votre code promo</label>
+                    <input type="text" name="couponcode" class="form-control" placeholder="Ex: SAVE20" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" name="applycoupon" value="1" class="btn btn-primary w-100">Appliquer</button>
+                </div>
+            </form>
+            {{/appliedcoupon}}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <strong>Total:</strong> ${{total}}
+            </div>
+            <div>
+                {{#isloggedin}}
+                <a href="{{paymenturl}}" class="btn btn-success">Pay Now</a>
+                {{/isloggedin}}
+                {{^isloggedin}}
+                <a href="#authpanel" class="btn btn-primary">Proceed to Payment</a>
+                {{/isloggedin}}
+            </div>
+        </div>
+    </div>
+    {{/hasproducts}}
+</div>
+
+{{^isloggedin}}
+<div id="authpanel" class="container-fluid mt-3">
+    <div class="alert alert-info mb-3" role="alert">
+        Veuillez vous connecter ou vous inscrire pour effectuer votre achat.
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="mb-3">Se connecter</h4>
+                    {{#hasloginerrors}}
+                    <div class="alert alert-danger" role="alert">
+                        {{#loginerrors}}
+                        <div>{{message}}</div>
+                        {{/loginerrors}}
+                    </div>
+                    {{/hasloginerrors}}
+
+                    <form action="{{checkouturl}}" method="post" autocomplete="on">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <input type="hidden" name="loginsubmit" value="1">
+                        <div class="mb-3">
+                            <label for="checkout-username" class="form-label">Identifiant ou e-mail</label>
+                            <input id="checkout-username" class="form-control" type="text" name="login_username" value="{{loginidentifier}}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="checkout-password" class="form-label">Mot de passe</label>
+                            <input id="checkout-password" class="form-control" type="password" name="login_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Se connecter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="mb-3">S’inscrire</h4>
+                    {{#hasregistererrors}}
+                    <div class="alert alert-danger" role="alert">
+                        {{#registererrors}}
+                        <div>{{message}}</div>
+                        {{/registererrors}}
+                    </div>
+                    {{/hasregistererrors}}
+
+                    <form action="{{checkouturl}}" method="post" autocomplete="on">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <input type="hidden" name="registersubmit" value="1">
+
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-firstname" class="form-label">Prénom</label>
+                                <input id="reg-firstname" class="form-control" type="text" name="reg_firstname" value="{{registerfirstname}}" required>
+                            </div>
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-lastname" class="form-label">Nom</label>
+                                <input id="reg-lastname" class="form-control" type="text" name="reg_lastname" value="{{registerlastname}}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-username" class="form-label">Identifiant</label>
+                            <input id="reg-username" class="form-control" type="text" name="reg_username" value="{{registerusername}}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-email" class="form-label">Adresse e-mail</label>
+                            <input id="reg-email" class="form-control" type="email" name="reg_email" value="{{registeremail}}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-password" class="form-label">Mot de passe</label>
+                            <input id="reg-password" class="form-control" type="password" name="reg_password" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-city" class="form-label">Ville</label>
+                                <input id="reg-city" class="form-control" type="text" name="reg_city" value="{{registercity}}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-country" class="form-label">Pays</label>
+                                <select id="reg-country" class="custom-select form-control" name="reg_country">
+                                    <option value="">Choisir...</option>
+                                    {{#countries}}
+                                    <option value="{{code}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                                    {{/countries}}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">S’inscrire</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{/isloggedin}}

@@ -1,0 +1,15 @@
+<div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+    <a href="{{carturl}}" class="btn btn-outline-secondary position-relative" aria-label="Cart">
+        <i class="fa fa-shopping-bag" aria-hidden="true"></i>
+        <span class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle">
+            {{cartcount}}
+        </span>
+    </a>
+
+    {{#isloggedin}}
+    <a href="{{accounturl}}" class="btn btn-secondary rounded-pill px-3">Mon compte</a>
+    {{/isloggedin}}
+    {{^isloggedin}}
+    <a href="{{loginurl}}" class="btn btn-warning rounded-pill px-3">Connexion</a>
+    {{/isloggedin}}
+</div>

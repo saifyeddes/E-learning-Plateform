@@ -1,0 +1,229 @@
+<div id="bundleDrawerInner">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">{{#iseditingbundle}}Edit bundle{{/iseditingbundle}}{{^iseditingbundle}}Add bundle{{/iseditingbundle}}</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeBundleDrawer()">X</button>
+    </div>
+
+    <form method="post" action="{{productsurl}}" enctype="multipart/form-data" id="bundleForm">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <input type="hidden" name="bundleaction" value="{{#iseditingbundle}}updatebundle{{/iseditingbundle}}{{^iseditingbundle}}createbundle{{/iseditingbundle}}">
+        <input type="hidden" name="bundleid" value="{{#editbundle}}{{id}}{{/editbundle}}">
+
+        <div class="mb-2">
+            <label class="form-label">Search product to add</label>
+            <input type="search" id="bundleSearchInput" class="form-control" placeholder="Type product name...">
+        </div>
+
+        <div class="border rounded p-2 mb-3" style="max-height:220px; overflow-y:auto;" id="bundleProductCatalog">
+            {{#bundleavailableproducts}}
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom bundle-product-row" data-name="{{name}}" data-selected="{{#selected}}1{{/selected}}{{^selected}}0{{/selected}}">
+                <span>{{name}}</span>
+                <button type="button" class="btn btn-sm btn-outline-primary add-bundle-item-btn" data-id="{{id}}" data-name="{{name}}" onclick="return localElearningBundleAdd(this);">Add</button>
+            </div>
+            {{/bundleavailableproducts}}
+            {{^bundleavailableproducts}}
+            <div class="text-muted">No products available for bundle.</div>
+            {{/bundleavailableproducts}}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bundle products (added one by one)</label>
+            <div id="selectedBundleItems" class="d-flex flex-wrap gap-2"></div>
+            <div id="selectedBundleInputs"></div>
+            <input type="hidden" id="bundleItemsJoined" name="bundleitemsjoined" value="">
+            <small class="text-muted">Add products one by one using the Add button.</small>
+        </div>
+
+        <div class="mb-3">
+            <input type="text" name="bundletitle" value="{{#editbundle}}{{name}}{{/editbundle}}" class="form-control" placeholder="Bundle title" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload bundle image</label>
+            {{#editbundle}}{{#imageurl}}
+            <div class="mb-2 text-center">
+                <img src="{{imageurl}}" style="max-width:150px; border-radius:8px;">
+            </div>
+            {{/imageurl}}{{/editbundle}}
+            <input type="file" id="bundleImageInput" name="bundleimage" class="d-none" accept="image/*">
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" id="bundleImagePickerBtn" class="btn btn-outline-secondary">File picker</button>
+                <span id="bundleImagePickerLabel" class="text-muted">No file chosen</span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{{bundledescriptioneditor}}}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Product status</label>
+            <select name="bundlestatus" class="form-select">
+                <option value="draft" {{#editbundle}}{{#isstatusdraft}}selected{{/isstatusdraft}}{{/editbundle}}>Draft</option>
+                <option value="publish" {{#editbundle}}{{#isstatuspublished}}selected{{/isstatuspublished}}{{/editbundle}}>Publish</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Bundle type</label>
+            <select name="bundletype" id="bundleTypeSelect" class="form-select">
+                <option value="free" {{#editbundle}}{{#istypefree}}selected{{/istypefree}}{{/editbundle}}>Free</option>
+                <option value="paid" {{#editbundle}}{{#istypepaid}}selected{{/istypepaid}}{{/editbundle}}>Paid</option>
+            </select>
+        </div>
+
+        <div id="bundlePriceSection" class="mb-3" style="display:{{#editbundle}}{{#istypepaid}}block{{/istypepaid}}{{/editbundle}}{{^editbundle}}none{{/editbundle}};">
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="number" name="bundleoriginalprice" value="{{#editbundle}}{{price}}{{/editbundle}}" class="form-control" placeholder="Original price">
+                </div>
+                <div class="col-md-6">
+                    <input type="number" name="bundlesaleprice" value="{{#editbundle}}{{saleprice}}{{/editbundle}}" class="form-control" placeholder="Sale price">
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">{{#iseditingbundle}}Update bundle{{/iseditingbundle}}{{^iseditingbundle}}Create bundle{{/iseditingbundle}}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    const selectedWrap = document.getElementById('selectedBundleItems');
+    const selectedInputs = document.getElementById('selectedBundleInputs');
+    const joinedInput = document.getElementById('bundleItemsJoined');
+
+    function syncJoinedInput() {
+        if (!selectedInputs || !joinedInput) {
+            return;
+        }
+        const ids = Array.from(selectedInputs.querySelectorAll('input[name="bundleitems[]"]')).map(function(input) {
+            return input.value;
+        });
+        joinedInput.value = ids.join(',');
+    }
+
+    function addSelectedItem(id, name, sourceButton) {
+        if (!selectedWrap || !selectedInputs || !id) {
+            return;
+        }
+
+        if (selectedInputs.querySelector('input[name="bundleitems[]"][value="' + id + '"]')) {
+            return;
+        }
+
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-primary d-inline-flex align-items-center gap-2';
+        badge.setAttribute('data-id', id);
+        badge.innerHTML = '<span>' + name + '</span><button type="button" class="btn-close btn-close-white" aria-label="Remove"></button>';
+
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'bundleitems[]';
+        hiddenInput.value = id;
+
+        const removeBtn = badge.querySelector('button');
+        removeBtn.addEventListener('click', function() {
+            badge.remove();
+            hiddenInput.remove();
+            syncJoinedInput();
+            if (sourceButton) {
+                sourceButton.disabled = false;
+            }
+        });
+
+        selectedWrap.appendChild(badge);
+        selectedInputs.appendChild(hiddenInput);
+        syncJoinedInput();
+
+        if (sourceButton) {
+            sourceButton.disabled = true;
+        }
+    }
+
+    window.localElearningBundleAdd = function(button) {
+        if (!button) {
+            return false;
+        }
+        const id = button.getAttribute('data-id');
+        const name = button.getAttribute('data-name');
+        addSelectedItem(id, name, button);
+        return false;
+    };
+
+    const bundleTypeSelect = document.getElementById('bundleTypeSelect');
+    const bundlePriceSection = document.getElementById('bundlePriceSection');
+    if (bundleTypeSelect && bundlePriceSection) {
+        const toggleBundlePrice = function() {
+            bundlePriceSection.style.display = (bundleTypeSelect.value === 'paid') ? 'block' : 'none';
+        };
+        bundleTypeSelect.addEventListener('change', toggleBundlePrice);
+        toggleBundlePrice();
+    }
+
+    const imageInput = document.getElementById('bundleImageInput');
+    const imageBtn = document.getElementById('bundleImagePickerBtn');
+    const imageLabel = document.getElementById('bundleImagePickerLabel');
+    if (imageBtn && imageInput && imageLabel) {
+        imageBtn.addEventListener('click', function() {
+            imageInput.click();
+        });
+        imageInput.addEventListener('change', function() {
+            imageLabel.textContent = (imageInput.files && imageInput.files.length)
+                ? imageInput.files[0].name
+                : 'No file chosen';
+        });
+    }
+
+    const searchInput = document.getElementById('bundleSearchInput');
+    const rows = document.querySelectorAll('.bundle-product-row');
+
+    rows.forEach(function(row) {
+        const addBtn = row.querySelector('.add-bundle-item-btn');
+        if (!addBtn) {
+            return;
+        }
+
+        if (row.getAttribute('data-selected') === '1') {
+            window.localElearningBundleAdd(addBtn);
+        }
+    });
+
+    const catalog = document.getElementById('bundleProductCatalog');
+    if (catalog) {
+        catalog.addEventListener('click', function(e) {
+            const btn = e.target.closest('.add-bundle-item-btn');
+            if (!btn) {
+                return;
+            }
+            e.preventDefault();
+            window.localElearningBundleAdd(btn);
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            rows.forEach(function(row) {
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                row.style.display = (query === '' || name.indexOf(query) !== -1) ? '' : 'none';
+            });
+        });
+    }
+
+    const bundleForm = document.getElementById('bundleForm');
+    if (bundleForm && selectedInputs) {
+        bundleForm.addEventListener('submit', function(e) {
+            syncJoinedInput();
+            if (!selectedInputs.querySelector('input[name="bundleitems[]"]')) {
+                e.preventDefault();
+                alert('Please add at least one product to the bundle.');
+            }
+        });
+    }
+})();
+</script>

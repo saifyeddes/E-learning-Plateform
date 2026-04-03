@@ -1,0 +1,279 @@
+<style>
+.product-drawer {
+    position: fixed;
+    top: 0;
+    right: -750px;
+    width: 750px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    padding: 25px;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 1055;
+}
+
+.product-drawer.open {
+    right: 0;
+}
+
+#drawerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    display: none;
+    z-index: 1050;
+}
+</style>
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="col-md-3 col-lg-2">
+
+            <div class="list-group shadow-sm">
+
+                <a href="{{dashboardurl}}" 
+                   class="list-group-item list-group-item-action {{#isdashboard}}active{{/isdashboard}}">
+                    Dashboard
+                </a>
+
+                <a href="{{productsurl}}" 
+                   class="list-group-item list-group-item-action {{#isproducts}}active{{/isproducts}}">
+                    Products
+                </a>
+
+                <a href="{{ordersurl}}" 
+                   class="list-group-item list-group-item-action {{#isorders}}active{{/isorders}}">
+                    Orders
+                </a>
+
+                <a href="{{couponsurl}}" 
+                   class="list-group-item list-group-item-action {{#iscoupons}}active{{/iscoupons}}">
+                    Coupons
+                </a>
+
+                <a href="{{payementurl}}"
+                   class="list-group-item list-group-item-action {{#ispayement}}active{{/ispayement}}">
+                    Payement
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="col-md-9 col-lg-10">
+
+            {{#isdashboard}}
+                {{> local_elearning_system/dashboard_content }}
+            {{/isdashboard}}
+
+            {{#isproducts}}
+                {{> local_elearning_system/products }}
+            {{/isproducts}}
+
+            {{#isorders}}
+                <h3>Orders</h3>
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <form method="get" action="{{filterurl}}" class="row g-3 align-items-end">
+                            <div class="col-lg-8">
+                                <label class="form-label">Search</label>
+                                <input type="search" name="search" class="form-control" value="{{searchquery}}" placeholder="Search by customer, email, product, amount or order ID">
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="form-label">Product</label>
+                                <select name="productid" class="form-select">
+                                    {{#productfilters}}
+                                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                    {{/productfilters}}
+                                </select>
+                            </div>
+
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Apply filters</button>
+                                <a href="{{ordersurl}}" class="btn btn-outline-secondary">Reset</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {{#hasorders}}
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Product</th>
+                                    <th>Promo</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Facture</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#orders}}
+                                <tr>
+                                    <td>{{id}}</td>
+                                    <td>{{user}}</td>
+                                    <td>{{email}}</td>
+                                    <td>{{product}}</td>
+                                    <td>{{promo}}</td>
+                                    <td>${{amount}}</td>
+                                    <td>{{timecreated}}</td>
+                                    <td>
+                                        <a href="{{invoiceurl}}" class="btn btn-sm btn-outline-primary">Download Facture</a>
+                                    </td>
+                                </tr>
+                                {{/orders}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {{/hasorders}}
+                {{^hasorders}}
+                <div class="alert alert-info">{{noordersmessage}}</div>
+                {{/hasorders}}
+            {{/isorders}}
+
+            {{#iscoupons}}
+                <!-- Coupons content rendered by coupons_layout template -->
+            {{/iscoupons}}
+
+            {{#ispayement}}
+                {{> local_elearning_system/payement_content }}
+            {{/ispayement}}
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Drawer Overlay -->
+<div id="drawerOverlay" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    display: none;
+    z-index: 1050;
+"></div>
+
+<!-- Product Drawer -->
+<div class="product-drawer" id="productDrawer" style="display:none;">
+    <div style="position: relative;">
+    <button onclick="closeDrawer('productDrawer');" 
+                style="position: absolute; top: -10px; right: -10px; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+        
+        {{> local_elearning_system/product_form }}
+    </div>
+</div>
+
+<!-- Bundle Drawer -->
+<div class="product-drawer" id="bundleDrawer" style="display:none;">
+    <div style="position: relative;">
+    <button onclick="closeDrawer('bundleDrawer');" 
+                style="position: absolute; top: -10px; right: -10px; background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+        
+        {{> local_elearning_system/bundle_form }}
+    </div>
+</div>
+
+<script>
+function clearDrawerQueryParams() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('addnew');
+    url.searchParams.delete('edit');
+    url.searchParams.delete('addbundle');
+    url.searchParams.delete('editbundle');
+    window.history.replaceState({}, '', url);
+}
+
+function closeDrawer(drawerId) {
+    const overlay = document.getElementById('drawerOverlay');
+    const productDrawer = document.getElementById('productDrawer');
+    const bundleDrawer = document.getElementById('bundleDrawer');
+
+    if (!drawerId || drawerId === 'productDrawer') {
+        productDrawer?.classList.remove('open');
+        if (productDrawer) {
+            productDrawer.style.display = 'none';
+        }
+    }
+    if (!drawerId || drawerId === 'bundleDrawer') {
+        bundleDrawer?.classList.remove('open');
+        if (bundleDrawer) {
+            bundleDrawer.style.display = 'none';
+        }
+    }
+
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+
+    clearDrawerQueryParams();
+}
+
+window.closeDrawer = closeDrawer;
+window.closeBundleDrawer = function() {
+    closeDrawer('bundleDrawer');
+};
+
+document.getElementById('drawerOverlay')?.addEventListener('click', function() {
+    closeDrawer();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDrawer();
+    }
+});
+
+function openDrawer(drawerId) {
+    const overlay = document.getElementById('drawerOverlay');
+    const drawer = document.getElementById(drawerId);
+    if (overlay) {
+        overlay.style.display = 'block';
+    }
+    if (drawer) {
+        drawer.style.display = 'block';
+        // Force reflow before adding class so transition runs consistently.
+        void drawer.offsetWidth;
+        drawer.classList.add('open');
+    }
+}
+
+// Handle query params for drawer opening
+const params = new URLSearchParams(window.location.search);
+if (params.has('addnew') || params.has('edit')) {
+    openDrawer('productDrawer');
+}
+if (params.has('addbundle') || params.has('editbundle')) {
+    openDrawer('bundleDrawer');
+}
+</script>
+
+<style>
+.container-fluid {
+    padding: 20px;
+}
+
+.list-group-item-action.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+    color: inherit;
+}
+
+.list-group-item-action.active:hover {
+    background-color: #0056b3;
+    color: white;
+}
+</style>

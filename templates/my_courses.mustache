@@ -1,0 +1,81 @@
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h3 class="mb-0">Mes cours et commandes</h3>
+            <div class="d-flex gap-2">
+                <a href="{{homeurl}}" class="btn btn-outline-primary btn-sm">Catalogue</a>
+                <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Panier</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><strong>Cours achetés</strong></div>
+        <div class="card-body">
+            {{#hascourses}}
+            <div class="row g-3">
+                {{#courses}}
+                <div class="col-12 col-lg-6">
+                    <div class="border rounded p-3 h-100">
+                        <h5 class="mb-1">{{coursename}}</h5>
+                        {{#showproductname}}
+                        <div class="text-muted mb-2">Produit: {{productname}}</div>
+                        {{/showproductname}}
+                        <div class="small text-muted mb-3">Acheté le {{purchaseat}}</div>
+                        <a href="{{courseurl}}" class="btn btn-success btn-sm">Démarrer le cours</a>
+                    </div>
+                </div>
+                {{/courses}}
+            </div>
+            {{/hascourses}}
+            {{^hascourses}}
+            <div class="alert alert-info mb-0">Aucun cours acheté pour le moment.</div>
+            {{/hascourses}}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><strong>Commandes passées</strong></div>
+        <div class="table-responsive">
+            {{#hasorders}}
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Produit</th>
+                        <th>Cours</th>
+                        <th>Montant</th>
+                        <th>Date</th>
+                        <th>Facture</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#orders}}
+                    <tr>
+                        <td>#{{id}}</td>
+                        <td>
+                            <div>{{productname}}</div>
+                            {{#hasbundleproducts}}
+                            <div class="small text-muted">Produits: {{bundleproducts}}</div>
+                            {{/hasbundleproducts}}
+                        </td>
+                        <td>
+                            {{#hascourse}}<a href="{{courseurl}}">{{coursename}}</a>{{/hascourse}}
+                            {{^hascourse}}{{coursename}}{{/hascourse}}
+                        </td>
+                        <td>${{amount}}</td>
+                        <td>{{timecreated}}</td>
+                        <td><a href="{{invoiceurl}}" class="btn btn-outline-primary btn-sm">Facture</a></td>
+                    </tr>
+                    {{/orders}}
+                </tbody>
+            </table>
+            {{/hasorders}}
+            {{^hasorders}}
+            <div class="p-3">
+                <div class="alert alert-info mb-0">Aucune commande trouvée.</div>
+            </div>
+            {{/hasorders}}
+        </div>
+    </div>
+</div>

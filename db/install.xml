@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/elearning_system/db" VERSION="2026040202" COMMENT="XMLDB file for elearning system"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+
+    <TABLES>
+
+        <TABLE NAME="elearning_products" COMMENT="Table storing products">
+
+            <FIELDS>
+
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+                <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Product name"/>
+                <FIELD NAME="price" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" COMMENT="Product price"/>
+                <FIELD NAME="saleprice" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" COMMENT="Product sale price"/>
+                <FIELD NAME="description" TYPE="text" NOTNULL="false" COMMENT="Product description"/>
+                <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="draft" COMMENT="Product status (draft/publish)"/>
+                <FIELD NAME="type" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="free" COMMENT="Product type (free/paid/subscription)"/>
+                <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Associated course category ID"/>
+                <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Associated course ID"/>
+                <FIELD NAME="image" TYPE="text" NOTNULL="false" COMMENT="Product image path"/>
+                <FIELD NAME="video" TYPE="text" NOTNULL="false" COMMENT="Product video path"/>
+                <FIELD NAME="showinstructor" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Show instructor details"/>
+                <FIELD NAME="showratings" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Show ratings and reviews"/>
+                <FIELD NAME="showenrolled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Show enrolled learners"/>
+                <FIELD NAME="isbundle" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Whether product is a bundle"/>
+                <FIELD NAME="bundleitems" TYPE="text" NOTNULL="false" COMMENT="Comma-separated bundled product IDs"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Last modification timestamp"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+            </KEYS>
+
+        </TABLE>
+
+        <TABLE NAME="elearning_orders" COMMENT="Table storing orders">
+
+            <FIELDS>
+
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User ID"/>
+                <FIELD NAME="productid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Product ID"/>
+                <FIELD NAME="amount" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" COMMENT="Order amount"/>
+                <FIELD NAME="promocode" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="Applied promo code if any"/>
+                <FIELD NAME="discountamount" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" COMMENT="Discount amount applied to this order item"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Order creation timestamp"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+            </KEYS>
+
+        </TABLE>
+
+        <TABLE NAME="elearning_coupons" COMMENT="Table storing coupon codes">
+
+            <FIELDS>
+
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+                <FIELD NAME="code" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="Coupon code"/>
+                <FIELD NAME="targetproductid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Target product or bundle ID"/>
+                <FIELD NAME="discounttype" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="percentage" COMMENT="Discount type (percentage/fixed)"/>
+                <FIELD NAME="discountvalue" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" COMMENT="Discount percentage or fixed amount"/>
+                <FIELD NAME="minpurchase" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" COMMENT="Minimum purchase amount to apply coupon"/>
+                <FIELD NAME="maxuse" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Maximum number of times coupon can be used (NULL = unlimited)"/>
+                <FIELD NAME="currentuse" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Current number of times coupon has been used"/>
+                <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active" COMMENT="Coupon status (active/inactive)"/>
+                <FIELD NAME="expirydate" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Expiry date timestamp"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+            </KEYS>
+
+            <INDEXES>
+                <INDEX NAME="code_idx" UNIQUE="true" FIELDS="code" COMMENT="Index on coupon code"/>
+            </INDEXES>
+
+        </TABLE>
+
+    </TABLES>
+</XMLDB>

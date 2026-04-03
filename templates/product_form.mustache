@@ -1,0 +1,227 @@
+<div id="productDrawer" class="product-drawer">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        {{#isediting}}
+            <h5 class="mb-0">Edit your product</h5>
+        {{/isediting}}
+        {{^isediting}}
+            <h5 class="mb-0">Add a new product</h5>
+        {{/isediting}}
+
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeDrawer('productDrawer')">✕</button>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="productForm">
+
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <input type="hidden" name="productid" value="{{#editproduct}}{{id}}{{/editproduct}}">
+
+        <!-- HIDDEN VALUES FOR JS -->
+        <input type="hidden" id="selectedCategoryId" value="{{#editproduct}}{{selectedcategoryid}}{{/editproduct}}">
+        <input type="hidden" id="selectedCourseId" value="{{#editproduct}}{{selectedcourseid}}{{/editproduct}}">
+        <input type="hidden" id="statusVal" value="{{#editproduct}}{{status}}{{/editproduct}}">
+        <input type="hidden" id="typeVal" value="{{#editproduct}}{{type}}{{/editproduct}}">
+        <input type="hidden" id="imageUrl" value="{{imageurl}}">
+
+        <!-- TITLE -->
+        <div class="mb-3">
+            <input type="text" name="title"
+                   id="titleInput"
+                   value="{{#editproduct}}{{name}}{{/editproduct}}"
+                   class="form-control"
+                   placeholder="Product title"
+                   required>
+        </div>
+
+        <!-- CATEGORY -->
+        <div class="mb-3">
+            <label class="form-label">Associated course category</label>
+            <select id="categorySelect" name="categoryid" class="form-select" required>
+                <option value="">Select category</option>
+                {{#categories}}
+                    <option value="{{id}}">{{name}}</option>
+                {{/categories}}
+            </select>
+        </div>
+
+        <!-- COURSE -->
+        <div class="mb-3">
+            <label class="form-label">Associated course</label>
+            <select id="courseSelect" name="courseid" class="form-select" required>
+                <option value="">Select course</option>
+                {{#courses}}
+                    <option value="{{id}}" data-category="{{category}}">
+                        {{fullname}}
+                    </option>
+                {{/courses}}
+            </select>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="mb-3">
+            <label class="form-label">Upload image</label>
+
+            {{#imageurl}}
+            <div class="mb-2 text-center">
+                <img src="{{imageurl}}" style="max-width:150px; border-radius:8px;">
+            </div>
+            {{/imageurl}}
+
+            <input type="file" id="productimage" name="productimage" class="d-none" accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.svg,image/*">
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" id="imagePickerBtn" class="btn btn-outline-secondary">File picker</button>
+                <span id="imagePickerLabel" class="text-muted">No file chosen</span>
+            </div>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{{descriptioneditor}}}
+        </div>
+
+        <!-- STATUS -->
+        <div class="mb-3">
+            <label class="form-label">Product status</label>
+            <select name="status" id="statusSelect" class="form-select">
+                <option value="draft">Draft</option>
+                <option value="publish">Publish</option>
+            </select>
+        </div>
+
+        <!-- TYPE -->
+        <div class="mb-3">
+            <label class="form-label">Product type</label>
+            <select name="type" id="productType" class="form-select">
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+            </select>
+        </div>
+
+        <!-- PRICE -->
+        <div id="priceSection" class="mb-3" style="display:none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="number" name="originalprice"
+                           value="{{#editproduct}}{{price}}{{/editproduct}}"
+                           class="form-control"
+                           placeholder="Original price">
+                </div>
+
+                <div class="col-md-6">
+                    <input type="number" name="saleprice"
+                           value="{{#editproduct}}{{saleprice}}{{/editproduct}}"
+                           class="form-control"
+                           placeholder="Sale price">
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVE -->
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+                {{#isediting}}Update{{/isediting}}
+                {{^isediting}}Create{{/isediting}}
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const categorySelect = document.getElementById('categorySelect');
+    const courseSelect = document.getElementById('courseSelect');
+    const productType = document.getElementById('productType');
+    const statusSelect = document.getElementById('statusSelect');
+    const priceSection = document.getElementById('priceSection');
+    const titleInput = document.getElementById('titleInput');
+    const imageInput = document.getElementById('productimage');
+    const imagePickerBtn = document.getElementById('imagePickerBtn');
+    const imagePickerLabel = document.getElementById('imagePickerLabel');
+
+    const selCat = document.getElementById('selectedCategoryId').value;
+    const selCourse = document.getElementById('selectedCourseId').value;
+    const statusVal = document.getElementById('statusVal').value;
+    const typeVal = document.getElementById('typeVal').value;
+
+    if (categorySelect && selCat) categorySelect.value = selCat;
+    if (courseSelect && selCourse) courseSelect.value = selCourse;
+    if (statusSelect && statusVal) statusSelect.value = statusVal;
+    if (productType && typeVal) productType.value = typeVal;
+
+    // SHOW PRICE
+    function togglePrice() {
+        priceSection.style.display = (productType.value === 'free') ? 'none' : 'block';
+    }
+
+    productType.addEventListener('change', togglePrice);
+    togglePrice();
+
+    // FILTER COURSES
+    function filterCourses(resetSelection) {
+        const selected = categorySelect.value;
+
+        document.querySelectorAll('#courseSelect option').forEach(opt => {
+            if (!opt.dataset.category) {
+                return;
+            }
+            opt.hidden = opt.dataset.category !== selected;
+        });
+
+        if (resetSelection) {
+            courseSelect.value = '';
+        }
+    }
+
+    categorySelect.addEventListener('change', function() {
+        filterCourses(true);
+    });
+
+    if (selCat) {
+        filterCourses(false);
+    }
+
+    // AUTO-FILL TITLE FROM SELECTED COURSE
+    courseSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (!selectedOption || !selectedOption.value) {
+            return;
+        }
+
+        if (titleInput) {
+            titleInput.value = selectedOption.text.trim();
+        }
+    });
+
+    // IMAGE FILE PICKER BUTTON
+    if (imagePickerBtn && imageInput) {
+        imagePickerBtn.addEventListener('click', function() {
+            imageInput.click();
+        });
+    }
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            if (!this.files || !this.files.length) {
+                return;
+            }
+
+            const file = this.files[0];
+            const allowedtypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'];
+            const valid = allowedtypes.includes(file.type);
+
+            if (!valid) {
+                this.value = '';
+                imagePickerLabel.textContent = 'Only image files are allowed (PNG, JPG, JPEG, GIF, WEBP, BMP, SVG).';
+                return;
+            }
+
+            imagePickerLabel.textContent = file.name;
+        });
+    }
+
+});
+</script>
