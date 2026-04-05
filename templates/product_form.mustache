@@ -1,15 +1,21 @@
-<div id="productDrawer" class="product-drawer">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    {{#isediting}}
+        <h5 class="mb-0">Edit your product</h5>
+    {{/isediting}}
+    {{^isediting}}
+        <h5 class="mb-0">Add a new product</h5>
+    {{/isediting}}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        {{#isediting}}
-            <h5 class="mb-0">Edit your product</h5>
-        {{/isediting}}
-        {{^isediting}}
-            <h5 class="mb-0">Add a new product</h5>
-        {{/isediting}}
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeDrawer('productDrawer')">✕</button>
+</div>
 
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeDrawer('productDrawer')">✕</button>
-    </div>
+{{#isadding}}
+<div style="display:none;" class="debug-context">
+Categories: {{#categories}}{{id}},{{/categories}}|
+Courses: {{#courses}}{{id}},{{/courses}}|
+DescriptionEditor exists: {{#descriptioneditor}}yes{{/descriptioneditor}}{{^descriptioneditor}}no{{/descriptioneditor}}
+</div>
+{{/isadding}}
 
     <form method="post" enctype="multipart/form-data" id="productForm">
 
@@ -126,8 +132,6 @@
         </div>
 
     </form>
-
-</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

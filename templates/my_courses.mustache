@@ -5,6 +5,9 @@
             <div class="d-flex gap-2">
                 <a href="{{homeurl}}" class="btn btn-outline-primary btn-sm">Catalogue</a>
                 <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Panier</a>
+                <a href="{{commandesurl}}" class="btn btn-info btn-sm">
+                    <i class="fa fa-list"></i> Commandes
+                </a>
             </div>
         </div>
     </div>
@@ -13,16 +16,36 @@
         <div class="card-header"><strong>Cours achetés</strong></div>
         <div class="card-body">
             {{#hascourses}}
-            <div class="row g-3">
+            <div class="row g-4">
                 {{#courses}}
-                <div class="col-12 col-lg-6">
-                    <div class="border rounded p-3 h-100">
-                        <h5 class="mb-1">{{coursename}}</h5>
-                        {{#showproductname}}
-                        <div class="text-muted mb-2">Produit: {{productname}}</div>
-                        {{/showproductname}}
-                        <div class="small text-muted mb-3">Acheté le {{purchaseat}}</div>
-                        <a href="{{courseurl}}" class="btn btn-success btn-sm">Démarrer le cours</a>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                        {{#hasproductimage}}
+                        <div class="position-relative" style="height:200px; overflow:hidden;">
+                            <img src="{{productimage}}" alt="{{coursename}}" class="img-fluid w-100 h-100" style="object-fit:cover;">
+                        </div>
+                        {{/hasproductimage}}
+                        {{^hasproductimage}}
+                        <div class="bg-light w-100" style="height:200px; display:flex; align-items:center; justify-content:center;">
+                            <div class="text-muted text-center">
+                                <i class="fa fa-image fa-2x"></i>
+                                <p class="mt-2">Pas d'image</p>
+                            </div>
+                        </div>
+                        {{/hasproductimage}}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{coursename}}</h6>
+                            {{#showproductname}}
+                            <div class="text-muted small mb-2">{{productname}}</div>
+                            {{/showproductname}}
+                            <div class="text-muted small mb-3">
+                                <i class="fa fa-calendar"></i> {{purchaseat}}
+                            </div>
+                            <a href="{{courseurl}}" class="btn btn-success btn-sm mt-auto">
+                                <i class="fa fa-play"></i> Démarrer le cours
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {{/courses}}
@@ -34,48 +57,8 @@
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header"><strong>Commandes passées</strong></div>
-        <div class="table-responsive">
-            {{#hasorders}}
-            <table class="table mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Produit</th>
-                        <th>Cours</th>
-                        <th>Montant</th>
-                        <th>Date</th>
-                        <th>Facture</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#orders}}
-                    <tr>
-                        <td>#{{id}}</td>
-                        <td>
-                            <div>{{productname}}</div>
-                            {{#hasbundleproducts}}
-                            <div class="small text-muted">Produits: {{bundleproducts}}</div>
-                            {{/hasbundleproducts}}
-                        </td>
-                        <td>
-                            {{#hascourse}}<a href="{{courseurl}}">{{coursename}}</a>{{/hascourse}}
-                            {{^hascourse}}{{coursename}}{{/hascourse}}
-                        </td>
-                        <td>${{amount}}</td>
-                        <td>{{timecreated}}</td>
-                        <td><a href="{{invoiceurl}}" class="btn btn-outline-primary btn-sm">Facture</a></td>
-                    </tr>
-                    {{/orders}}
-                </tbody>
-            </table>
-            {{/hasorders}}
-            {{^hasorders}}
-            <div class="p-3">
-                <div class="alert alert-info mb-0">Aucune commande trouvée.</div>
-            </div>
-            {{/hasorders}}
-        </div>
+    <div class="alert alert-info mt-4" role="alert">
+        <i class="fa fa-info-circle"></i> Pour voir toutes vos commandes avec détails complets et télécharger vos factures, visitez la <a href="{{commandesurl}}" class="alert-link">page des commandes</a>.
     </div>
+
 </div>

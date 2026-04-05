@@ -1,0 +1,122 @@
+<div class="container mt-4">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{backtomycoursesurl}}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> Retour à mes cours
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Commande #{{id}}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Date de commande:</strong> {{timecreated}}</p>
+                            <p class="mb-0"><strong>Montant HT:</strong> ${{subtotal}}</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {{#hastvapercent}}
+                            <p class="mb-2"><strong>TVA ({{tvapercent}}%):</strong> ${{taxamount}}</p>
+                            {{/hastvapercent}}
+                            <p class="mb-0"><strong class="text-success fs-5">Montant Total:</strong> <span class="text-success fs-5">${{grandtotal}}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{#hasproduct}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Produit / Cours acheté</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {{#product.hasimage}}
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <img src="{{product.image}}" alt="{{product.name}}" class="img-fluid rounded" style="max-height:250px; object-fit:cover;">
+                        </div>
+                        <div class="col-md-9">
+                        {{/product.hasimage}}
+                        {{^product.hasimage}}
+                        <div class="col-md-12">
+                        {{/product.hasimage}}
+                            <h4>{{product.name}}</h4>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-info">{{product.type}}</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>Prix du produit:</strong> <span class="text-success">${{product.price}}</span>
+                            </div>
+
+                            {{#product.hasdescription}}
+                            <div class="mb-3">
+                                <strong>Description:</strong>
+                                <div class="text-muted small mt-2">
+                                    {{{product.description}}}
+                                </div>
+                            </div>
+                            {{/product.hasdescription}}
+
+                            {{#product.course}}
+                            <div class="mb-3">
+                                <strong>Cours lié:</strong>
+                                <div class="mt-2">
+                                    <a href="{{product.course.url}}" class="btn btn-success btn-sm">
+                                        <i class="fa fa-play"></i> Accéder au cours: {{product.course.name}}
+                                    </a>
+                                </div>
+                            </div>
+                            {{/product.course}}
+
+                            {{#product.hasbundleitems}}
+                            <div class="mt-4">
+                                <strong>Articles du pack:</strong>
+                                <div class="row g-3 mt-2">
+                                    {{#product.bundleitems}}
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            {{#hasimage}}
+                                            <img src="{{image}}" alt="{{name}}" class="card-img-top" style="height:150px; object-fit:cover;">
+                                            {{/hasimage}}
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{name}}</h6>
+                                                {{#course}}
+                                                <p class="small text-muted mb-2">{{course.name}}</p>
+                                                <a href="{{course.url}}" class="btn btn-sm btn-outline-primary">Accéder</a>
+                                                {{/course}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{/product.bundleitems}}
+                                </div>
+                            </div>
+                            {{/product.hasbundleitems}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/hasproduct}}
+
+    <div class="row">
+        <div class="col-12">
+            <a href="{{invoiceurl}}" class="btn btn-primary">
+                <i class="fa fa-download"></i> Télécharger la facture (PDF)
+            </a>
+        </div>
+    </div>
+
+</div>

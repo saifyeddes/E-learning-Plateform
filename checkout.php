@@ -168,6 +168,11 @@ $discountamount = 0.0;
 $discountdisplay = '';
 $newtotal = $total;
 
+$tvapercent = (float)get_config('local_elearning_system', 'vat_percent');
+if ($tvapercent < 0 || $tvapercent > 100) {
+    $tvapercent = 0.0;
+}
+
 if (optional_param('removecoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
     unset($SESSION->local_elearning_system_coupon);
     $couponsuccess = 'Coupon removed.';
@@ -226,6 +231,12 @@ if (!empty($SESSION->local_elearning_system_coupon)) {
     }
 }
 
+$taxamount = ($newtotal * $tvapercent) / 100;
+if ($taxamount < 0) {
+    $taxamount = 0.0;
+}
+$grandtotal = $newtotal + $taxamount;
+
 $checkoutreturnurl = (new moodle_url('/local/elearning_system/checkout.php'))->out(false);
 
 $loginurl = (new moodle_url('/login/index.php', ['wantsurl' => $checkoutreturnurl]))->out(false);
@@ -244,7 +255,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/checkout', [
     'products' => $products,
     'hasproducts' => !empty($products),
-    'total' => number_format($newtotal, 2),
+    'total' => number_format($grandtotal, 2),
     'isloggedin' => $isloggedin,
     'cartcount' => array_sum($SESSION->local_elearning_system_cart),
     'loginerrors' => $loginerrors,
@@ -266,6 +277,12 @@ echo $OUTPUT->render_from_template('local_elearning_system/checkout', [
     'appliedcoupon' => $appliedcoupon,
     'discountdisplay' => $discountdisplay,
     'newtotal' => number_format($newtotal, 2),
+    'subtotal' => number_format($total, 2),
+    'taxamount' => number_format($taxamount, 2),
+    'tvapercent' => number_format($tvapercent, 2),
+    'grandtotal' => number_format($grandtotal, 2),
+    'hasdiscount' => $discountamount > 0,
+    'discountamount' => number_format($discountamount, 2),
     'couponerror' => $couponerror,
     'hascouponerror' => !empty($couponerror),
     'couponsuccess' => $couponsuccess,

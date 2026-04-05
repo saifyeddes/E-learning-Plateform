@@ -1,9 +1,7 @@
-<div id="bundleDrawerInner">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0">{{#iseditingbundle}}Edit bundle{{/iseditingbundle}}{{^iseditingbundle}}Add bundle{{/iseditingbundle}}</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeBundleDrawer()">X</button>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">{{#iseditingbundle}}Edit bundle{{/iseditingbundle}}{{^iseditingbundle}}Add bundle{{/iseditingbundle}}</h5>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeBundleDrawer()">X</button>
+</div>
 
     <form method="post" action="{{productsurl}}" enctype="multipart/form-data" id="bundleForm">
         <input type="hidden" name="sesskey" value="{{sesskey}}">
@@ -89,7 +87,6 @@
             <button type="submit" class="btn btn-primary">{{#iseditingbundle}}Update bundle{{/iseditingbundle}}{{^iseditingbundle}}Create bundle{{/iseditingbundle}}</button>
         </div>
     </form>
-</div>
 
 <script>
 (function() {

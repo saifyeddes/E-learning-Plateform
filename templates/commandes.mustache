@@ -1,0 +1,194 @@
+<div class="container mt-4">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Mes commandes</h2>
+                <div>
+                    <a href="{{mycoursesurl}}" class="btn btn-outline-secondary btn-sm">Mes cours</a>
+                    <a href="{{homeurl}}" class="btn btn-outline-primary btn-sm">Catalogue</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{#hasorders}}
+    <div class="row">
+        {{#orders}}
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0 cursor-pointer" style="cursor:pointer;" onclick="openOrderDrawer({{id}})">
+                {{#hasproductimage}}
+                <div class="position-relative overflow-hidden" style="height:180px;">
+                    <img src="{{productimage}}" alt="{{productname}}" class="w-100 h-100" style="object-fit:cover;">
+                </div>
+                {{/hasproductimage}}
+                {{^hasproductimage}}
+                <div class="bg-light w-100" style="height:180px; display:flex; align-items:center; justify-content:center;">
+                    <div class="text-muted text-center">
+                        <i class="fa fa-shopping-bag fa-2x"></i>
+                    </div>
+                </div>
+                {{/hasproductimage}}
+                
+                <div class="card-body">
+                    <h6 class="card-title">#{{id}} - {{productname}}</h6>
+                    {{#hascourse}}
+                    <p class="small text-muted mb-2">{{coursename}}</p>
+                    {{/hascourse}}
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="text-success fw-bold">${{amount}}</span>
+                        <small class="text-muted">{{timecreated}}</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-light border-0">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary w-100" onclick="event.stopPropagation(); openOrderDrawer({{id}}); return false;">
+                            <i class="fa fa-eye"></i> Détails
+                        </button>
+                        <a href="{{pdfurl}}" class="btn btn-sm btn-success w-100" onclick="event.stopPropagation(); triggerInvoiceDownload(this.href); return false;">
+                            <i class="fa fa-download"></i> Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/orders}}
+    </div>
+    {{/hasorders}}
+
+    {{^hasorders}}
+    <div class="alert alert-info" role="alert">
+        <i class="fa fa-info-circle"></i> Vous n'avez pas encore de commandes.
+    </div>
+    {{/hasorders}}
+
+</div>
+
+<!-- DRAWER DETAIL TEMPLATES -->
+{{#orders}}
+<template id="orderDetailTemplate{{id}}">
+    <div class="order-detail-wrapper">
+        <div class="mb-3 d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Commande #{{id}}</h5>
+            <a href="{{pdfurl}}" class="btn btn-sm btn-success" onclick="triggerInvoiceDownload(this.href); return false;">
+                <i class="fa fa-download"></i> Download PDF
+            </a>
+        </div>
+
+        <div class="row mb-4">
+            {{#hasproductimage}}
+            <div class="col-md-4">
+                <img src="{{productimage}}" alt="{{productname}}" class="img-fluid rounded" style="max-height:200px; object-fit:cover;">
+            </div>
+            <div class="col-md-8">
+            {{/hasproductimage}}
+            {{^hasproductimage}}
+            <div class="col-12">
+            {{/hasproductimage}}
+                <h6>{{productname}}</h6>
+                {{#hascourse}}
+                <p class="mb-2">
+                    <strong>Cours:</strong>
+                    <a href="{{courseurl}}" target="_blank">{{coursename}}</a>
+                </p>
+                {{/hascourse}}
+                <p class="mb-2">
+                    <strong>Date:</strong> {{timecreated}}
+                </p>
+                <p class="mb-2">
+                    <strong>Prix produit:</strong> <span class="text-success fw-bold">${{productprice}}</span>
+                </p>
+                <p class="mb-2">
+                    <strong>Montant commande:</strong> ${{amount}}
+                </p>
+                {{#hasdescription}}
+                <div class="mt-3">
+                    <strong>Description:</strong>
+                    <div class="small text-muted mt-2">
+                        {{{description}}}
+                    </div>
+                </div>
+                {{/hasdescription}}
+            </div>
+        </div>
+
+        {{#hasbundleitems}}
+        <div class="border-top pt-3 mb-3">
+            <strong class="mb-3 d-block">Articles du pack:</strong>
+            <div class="row g-2">
+                {{#bundleitems}}
+                <div class="col-md-6">
+                    <div class="border rounded p-2" style="height:100%; display:flex; flex-direction:column;">
+                        {{#hasimage}}
+                        <img src="{{image}}" alt="{{name}}" class="img-fluid rounded mb-2" style="height:120px; object-fit:cover;">
+                        {{/hasimage}}
+                        <h6 class="small mb-1">{{name}}</h6>
+                        {{#course}}
+                        <a href="{{course.url}}" class="btn btn-xs btn-outline-primary" style="padding:2px 8px; font-size:11px;">Accéder</a>
+                        {{/course}}
+                    </div>
+                </div>
+                {{/bundleitems}}
+            </div>
+        </div>
+        {{/hasbundleitems}}
+
+    </div>
+</template>
+{{/orders}}
+
+<div id="orderDrawerOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.3); display:none; z-index:1050;"></div>
+<div id="orderDrawer" style="position:fixed; top:0; right:-760px; width:760px; max-width:100vw; height:100vh; background:#fff; box-shadow:-4px 0 20px rgba(0,0,0,0.15); padding:20px; overflow-y:auto; transition:right 0.3s ease; z-index:1055;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0">Détails de la commande</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeOrderDrawer()">✕</button>
+    </div>
+    <div id="orderDrawerContent"></div>
+</div>
+
+<script>
+function openOrderDrawer(orderId) {
+    var template = document.getElementById('orderDetailTemplate' + orderId);
+    var content = document.getElementById('orderDrawerContent');
+    var drawer = document.getElementById('orderDrawer');
+    var overlay = document.getElementById('orderDrawerOverlay');
+
+    if (!template || !content || !drawer || !overlay) {
+        return;
+    }
+
+    content.innerHTML = template.innerHTML;
+    overlay.style.display = 'block';
+    drawer.style.right = '0';
+}
+
+function closeOrderDrawer() {
+    var drawer = document.getElementById('orderDrawer');
+    var overlay = document.getElementById('orderDrawerOverlay');
+    if (drawer) {
+        drawer.style.right = '-760px';
+    }
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+function triggerInvoiceDownload(url) {
+    if (url.indexOf('pdf=1') === -1) {
+        var sep = url.indexOf('?') !== -1 ? '&' : '?';
+        url = url + sep + 'pdf=1';
+    }
+    var separator = url.indexOf('?') !== -1 ? '&' : '?';
+    window.location.href = url + separator + 'downloadts=' + Date.now();
+}
+
+document.getElementById('orderDrawerOverlay')?.addEventListener('click', function() {
+    closeOrderDrawer();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeOrderDrawer();
+    }
+});
+</script>

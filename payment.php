@@ -151,6 +151,11 @@ if ($stripecurrency === '') {
     $stripecurrency = 'usd';
 }
 
+$tvapercent = (float)get_config('local_elearning_system', 'vat_percent');
+if ($tvapercent < 0 || $tvapercent > 100) {
+    $tvapercent = 0.0;
+}
+
 $simulatesuccess = (int)get_config('local_elearning_system', 'simulate_success');
 
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
@@ -209,6 +214,11 @@ if ($action === 'start') {
     ];
 
     $idx = 0;
+    $remainingfixedcoupondiscount = 0.0;
+    if ($appliedcoupon && (string)$appliedcoupon->discounttype === 'fixed') {
+        $remainingfixedcoupondiscount = max(0.0, (float)$appliedcoupon->discountvalue);
+    }
+
     foreach ($records as $r) {
         $qty = (int)($SESSION->local_elearning_system_cart[$r->id] ?? 0);
         if ($qty <= 0) {
@@ -227,11 +237,13 @@ if ($action === 'start') {
         $discountperunit = 0.0;
         $promocode = '';
 
-        if ($appliedcoupon && (int)($appliedcoupon->targetproductid ?? 0) === (int)$r->id) {
+        if ($appliedcoupon) {
             $discountvalue = (float)$appliedcoupon->discountvalue;
             $discounttype = (string)$appliedcoupon->discounttype;
             if ($discounttype === 'fixed') {
-                $displayprice = max(0.0, $displayprice - $discountvalue);
+                $fixeddiscount = min($remainingfixedcoupondiscount, $displayprice);
+                $displayprice = max(0.0, $displayprice - $fixeddiscount);
+                $remainingfixedcoupondiscount = max(0.0, $remainingfixedcoupondiscount - $fixeddiscount);
             } else {
                 $displayprice = max(0.0, $displayprice - (($displayprice * $discountvalue) / 100));
             }
@@ -239,7 +251,8 @@ if ($action === 'start') {
             $promocode = (string)$appliedcoupon->code;
         }
 
-        $lineamount = $displayprice * $qty;
+        $pricewithtax = $displayprice + (($displayprice * $tvapercent) / 100);
+        $lineamount = $pricewithtax * $qty;
         $discountamount = $discountperunit * $qty;
         $totalamount += $lineamount;
 
@@ -250,7 +263,7 @@ if ($action === 'start') {
             'discountamount' => number_format($discountamount, 2, '.', ''),
         ];
 
-        $stripeunitamount = (int)round($displayprice * 100);
+        $stripeunitamount = (int)round($pricewithtax * 100);
         if ($stripeunitamount < 0) {
             $stripeunitamount = 0;
         }
