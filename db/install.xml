@@ -46,6 +46,8 @@
                 <FIELD NAME="amount" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" COMMENT="Order amount"/>
                 <FIELD NAME="promocode" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="Applied promo code if any"/>
                 <FIELD NAME="discountamount" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" COMMENT="Discount amount applied to this order item"/>
+                <FIELD NAME="durationmonths" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" COMMENT="Selected access duration in months"/>
+                <FIELD NAME="expiresat" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Access expiration timestamp"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Order creation timestamp"/>
 
             </FIELDS>

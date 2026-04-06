@@ -32,6 +32,8 @@
                 
                 <div class="card-body">
                     <h6 class="card-title">#{{id}} - {{productname}}</h6>
+                    {{#isactiveorder}}<span class="badge bg-success mb-2">Actif</span>{{/isactiveorder}}
+                    {{#isexpiredorder}}<span class="badge bg-secondary mb-2">Expiré</span>{{/isexpiredorder}}
                     {{#hascourse}}
                     <p class="small text-muted mb-2">{{coursename}}</p>
                     {{/hascourse}}
@@ -95,6 +97,11 @@
                 <p class="mb-2">
                     <strong>Date:</strong> {{timecreated}}
                 </p>
+                <p class="mb-2">
+                    <strong>Durée choisie:</strong> {{durationmonths}} mois
+                </p>
+                {{#isactiveorder}}<div class="badge bg-success mb-2">Accès actif</div>{{/isactiveorder}}
+                {{#isexpiredorder}}<div class="badge bg-secondary mb-2">Accès expiré</div>{{/isexpiredorder}}
                 <p class="mb-2">
                     <strong>Prix produit:</strong> <span class="text-success fw-bold">${{productprice}}</span>
                 </p>

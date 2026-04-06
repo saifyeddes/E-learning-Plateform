@@ -1,6 +1,7 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -123,6 +124,7 @@ if (!$isloggedin && optional_param('registersubmit', 0, PARAM_BOOL) && confirm_s
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
 }
+local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
 
 if (empty($SESSION->local_elearning_system_cart)) {
     redirect(new moodle_url('/local/elearning_system/cart.php'));
@@ -142,19 +144,28 @@ if (!empty($cartids)) {
         $saleprice = !empty($r->saleprice) ? (float)$r->saleprice : 0.0;
         $displayprice = $saleprice > 0 ? $saleprice : $price;
 
-        $qty = (int)($SESSION->local_elearning_system_cart[$r->id] ?? 1);
-        if ($qty < 1) {
-            $qty = 1;
+        $cartitem = local_elearning_system_get_cart_item($SESSION->local_elearning_system_cart, (int)$r->id);
+        $durationmonths = (int)$cartitem['durationmonths'];
+        if ($durationmonths < 1) {
+            $durationmonths = 1;
+        }
+        if ($durationmonths > 24) {
+            $durationmonths = 24;
         }
 
-        $line = $displayprice * $qty;
+        $SESSION->local_elearning_system_cart[(int)$r->id] = [
+            'qty' => 1,
+            'durationmonths' => $durationmonths,
+        ];
+
+        $line = $displayprice * $durationmonths;
         $total += $line;
         $linebyproduct[(int)$r->id] = $line;
 
         $products[] = [
             'id' => (int)$r->id,
             'name' => format_string($r->name),
-            'qty' => $qty,
+            'durationmonths' => $durationmonths,
             'price' => number_format($displayprice, 2),
             'lineprice' => number_format($line, 2),
         ];
@@ -257,7 +268,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/checkout', [
     'hasproducts' => !empty($products),
     'total' => number_format($grandtotal, 2),
     'isloggedin' => $isloggedin,
-    'cartcount' => array_sum($SESSION->local_elearning_system_cart),
+    'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'loginerrors' => $loginerrors,
     'hasloginerrors' => !empty($loginerrors),
     'loginidentifier' => s($loginidentifier),

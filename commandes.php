@@ -1,6 +1,7 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 $context = context_system::instance();
@@ -73,8 +74,12 @@ $orders = [];
 $pageheading = 'Mes commandes';
 
 if ($DB->get_manager()->table_exists('elearning_orders')) {
+    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    $ordercolumns = $DB->get_columns('elearning_orders');
+    $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
         $sql = "SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
-                    p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image, p.description, p.price, p.saleprice,
+                       p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image, p.description, p.price, p.saleprice,
+                       {$expireselect},
                    c.fullname AS coursename
               FROM {elearning_orders} o
          LEFT JOIN {elearning_products} p ON p.id = o.productid
@@ -85,6 +90,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
     $records = $DB->get_records_sql($sql, ['userid' => (int)$USER->id]);
 
     foreach ($records as $r) {
+        $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
         $courseid = !empty($r->courseid) ? (int)$r->courseid : 0;
         [$productimage, $hasproductimage] = local_elearning_system_resolve_order_image(
             $r->image ?? '',
@@ -169,6 +175,9 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'total' => number_format($total, 2),
             'hastvapercent' => ($tvapercent > 0),
             'timecreated' => userdate((int)$r->timecreated),
+            'durationmonths' => max(1, (int)($r->durationmonths ?? 1)),
+            'isactiveorder' => $isactiveorder,
+            'isexpiredorder' => !$isactiveorder,
             'description' => !empty($r->description) ? format_text($r->description, FORMAT_HTML) : '',
             'hasdescription' => !empty($r->description),
             'isbundle' => $isbundle,

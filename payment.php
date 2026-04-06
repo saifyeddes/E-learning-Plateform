@@ -1,6 +1,7 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 $context = context_system::instance();
@@ -13,37 +14,7 @@ $PAGE->set_heading('Payment');
 global $DB, $CFG, $USER;
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
-    if (!$DB->get_manager()->table_exists('elearning_orders')) {
-        return false;
-    }
-
-    if ($DB->record_exists('elearning_orders', ['userid' => $userid, 'productid' => $productid])) {
-        return true;
-    }
-
-    $product = $DB->get_record('elearning_products', ['id' => $productid], 'id,courseid', IGNORE_MISSING);
-    if ($product && !empty($product->courseid)) {
-        $coursecontext = context_course::instance((int)$product->courseid, IGNORE_MISSING);
-        /** @var context $coursecontext */
-        if ($coursecontext && is_enrolled($coursecontext, $userid, '', true)) {
-            return true;
-        }
-    }
-
-    $orders = $DB->get_records('elearning_orders', ['userid' => $userid], '', 'id,productid');
-    foreach ($orders as $order) {
-        $bundleproduct = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,isbundle,bundleitems', IGNORE_MISSING);
-        if (!$bundleproduct || empty($bundleproduct->isbundle) || empty($bundleproduct->bundleitems)) {
-            continue;
-        }
-
-        $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$bundleproduct->bundleitems)))));
-        if (in_array($productid, $bundleitemids, true)) {
-            return true;
-        }
-    }
-
-    return false;
+    return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
 }
 
 /**
@@ -80,10 +51,12 @@ function local_elearning_system_get_product_courseids(stdClass $product, moodle_
  *
  * @param int $productid
  * @param int $userid
+ * @param int $durationmonths
+ * @param int $purchasetime
  * @param moodle_database $DB
  * @return void
  */
-function local_elearning_system_enrol_user_for_product(int $productid, int $userid, moodle_database $DB): void {
+function local_elearning_system_enrol_user_for_product(int $productid, int $userid, int $durationmonths, int $purchasetime, moodle_database $DB): void {
     $product = $DB->get_record('elearning_products', ['id' => $productid], 'id,courseid,isbundle,bundleitems', IGNORE_MISSING);
     if (!$product) {
         return;
@@ -129,10 +102,12 @@ function local_elearning_system_enrol_user_for_product(int $productid, int $user
             continue;
         }
 
+        $timeend = local_elearning_system_calculate_expiration($purchasetime, $durationmonths);
+
         // Prevent welcome email hook from trying to send from invalid noreply.
         $instanceforenrol = clone $manualinstance;
         $instanceforenrol->customint1 = ENROL_DO_NOT_SEND_EMAIL;
-        $manualplugin->enrol_user($instanceforenrol, $userid, $studentroleid, time(), 0, ENROL_USER_ACTIVE);
+        $manualplugin->enrol_user($instanceforenrol, $userid, $studentroleid, time(), $timeend, ENROL_USER_ACTIVE);
     }
 }
 
@@ -161,6 +136,8 @@ $simulatesuccess = (int)get_config('local_elearning_system', 'simulate_success')
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
 }
+local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
+local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
 
 if (!isset($SESSION->local_elearning_system_pending_order) || !is_array($SESSION->local_elearning_system_pending_order)) {
     $SESSION->local_elearning_system_pending_order = [];
@@ -220,10 +197,19 @@ if ($action === 'start') {
     }
 
     foreach ($records as $r) {
-        $qty = (int)($SESSION->local_elearning_system_cart[$r->id] ?? 0);
-        if ($qty <= 0) {
-            continue;
+        $cartitem = local_elearning_system_get_cart_item($SESSION->local_elearning_system_cart, (int)$r->id);
+        $durationmonths = (int)$cartitem['durationmonths'];
+        if ($durationmonths < 1) {
+            $durationmonths = 1;
         }
+        if ($durationmonths > 24) {
+            $durationmonths = 24;
+        }
+
+        $SESSION->local_elearning_system_cart[(int)$r->id] = [
+            'qty' => 1,
+            'durationmonths' => $durationmonths,
+        ];
 
         if (local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$r->id, $DB)) {
             unset($SESSION->local_elearning_system_cart[$r->id]);
@@ -252,15 +238,19 @@ if ($action === 'start') {
         }
 
         $pricewithtax = $displayprice + (($displayprice * $tvapercent) / 100);
-        $lineamount = $pricewithtax * $qty;
-        $discountamount = $discountperunit * $qty;
+        $lineamount = $pricewithtax * $durationmonths;
+        $discountamount = $discountperunit;
         $totalamount += $lineamount;
+
+        $expiresat = local_elearning_system_calculate_expiration(time(), $durationmonths);
 
         $pendingitems[] = [
             'productid' => (int)$r->id,
             'amount' => number_format($lineamount, 2, '.', ''),
             'promocode' => $promocode,
             'discountamount' => number_format($discountamount, 2, '.', ''),
+            'durationmonths' => $durationmonths,
+            'expiresat' => $expiresat,
         ];
 
         $stripeunitamount = (int)round($pricewithtax * 100);
@@ -268,9 +258,10 @@ if ($action === 'start') {
             $stripeunitamount = 0;
         }
         $stripepostfields['line_items[' . $idx . '][price_data][currency]'] = $stripecurrency;
-        $stripepostfields['line_items[' . $idx . '][price_data][product_data][name]'] = format_string($r->name);
+        $stripename = format_string($r->name) . ' (' . $durationmonths . ' mois)';
+        $stripepostfields['line_items[' . $idx . '][price_data][product_data][name]'] = $stripename;
         $stripepostfields['line_items[' . $idx . '][price_data][unit_amount]'] = $stripeunitamount;
-        $stripepostfields['line_items[' . $idx . '][quantity]'] = $qty;
+        $stripepostfields['line_items[' . $idx . '][quantity]'] = $durationmonths;
         $idx++;
     }
 
@@ -302,9 +293,16 @@ if ($action === 'start') {
             if (isset($ordercolumns['discountamount'])) {
                 $order->discountamount = (float)($item['discountamount'] ?? 0);
             }
-            $order->timecreated = time();
+            if (isset($ordercolumns['durationmonths'])) {
+                $order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
+            }
+            if (isset($ordercolumns['expiresat'])) {
+                $order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
+            }
+            $ordertimecreated = time();
+            $order->timecreated = $ordertimecreated;
             $DB->insert_record('elearning_orders', $order);
-            local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, $DB);
+            local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, (int)$item['durationmonths'], $ordertimecreated, $DB);
         }
 
         if ($appliedcoupon) {
@@ -407,9 +405,16 @@ if ($paidsuccess) {
                 if (isset($ordercolumns['discountamount'])) {
                     $order->discountamount = (float)($item['discountamount'] ?? 0);
                 }
-                $order->timecreated = time();
+                if (isset($ordercolumns['durationmonths'])) {
+                    $order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
+                }
+                if (isset($ordercolumns['expiresat'])) {
+                    $order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
+                }
+                $ordertimecreated = time();
+                $order->timecreated = $ordertimecreated;
                 $DB->insert_record('elearning_orders', $order);
-                local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, $DB);
+                local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, (int)$item['durationmonths'], $ordertimecreated, $DB);
             }
         }
     }

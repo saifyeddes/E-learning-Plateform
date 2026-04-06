@@ -46,9 +46,11 @@ if ($DB->get_manager()->table_exists('elearning_products')) {
 if ($DB->get_manager()->table_exists('elearning_orders')) {
     $ordercolumns = $DB->get_columns('elearning_orders');
     $promoselect = isset($ordercolumns['promocode']) ? 'o.promocode AS promocode' : "'' AS promocode";
+    $durationselect = isset($ordercolumns['durationmonths']) ? 'o.durationmonths AS durationmonths' : '1 AS durationmonths';
 
     $sql = "SELECT o.id, o.userid, o.productid, o.amount, o.timecreated,
                    {$promoselect},
+                   {$durationselect},
                    u.firstname, u.lastname, u.email,
                    p.name AS productname
               FROM {elearning_orders} o
@@ -66,6 +68,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         $productname = !empty($r->productname) ? format_string($r->productname) : '-';
         $email = (string)($r->email ?? '-');
         $promocode = trim((string)($r->promocode ?? ''));
+        $durationmonths = max(1, (int)($r->durationmonths ?? 1));
 
         if ($selectedproductid !== 0 && (int)$r->productid !== $selectedproductid) {
             continue;
@@ -78,6 +81,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
                 $email,
                 $productname,
                 $promocode,
+                (string)($r->durationmonths ?? 1),
                 (string)$r->amount,
             ]));
             $needle = core_text::strtolower($searchquery);
@@ -93,6 +97,8 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'email' => s($email),
             'product' => $productname,
             'promo' => $promocode !== '' ? ('Yes (' . s($promocode) . ')') : 'No',
+            'durationmonths' => $durationmonths,
+            'durationachetee' => $durationmonths . ' mois',
             'amount' => number_format((float)$r->amount, 2),
             'timecreated' => userdate((int)$r->timecreated),
             'invoiceurl' => (new moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),

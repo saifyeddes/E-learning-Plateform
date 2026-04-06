@@ -4,7 +4,7 @@
 
 <div class="card border-0 shadow-sm" style="max-width: 720px;">
     <div class="card-body">
-        <p class="text-muted mb-3">Set one global TVA (%) for this client. The same TVA is applied to all products and all bundles at checkout.</p>
+        <p class="text-muted mb-3">Set one global TVA (%) and one global currency for this client. The same settings are applied to all products and bundles at checkout.</p>
 
         {{#hassuccessmessage}}
         <div class="alert alert-success">{{successmessage}}</div>
@@ -36,7 +36,16 @@
             </div>
 
             <div class="col-md-6">
-                <button type="submit" class="btn btn-primary">Save TVA</button>
+                <label class="form-label"><strong>Currency</strong></label>
+                <select name="currency" class="form-select">
+                    {{#currencyoptions}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                    {{/currencyoptions}}
+                </select>
+            </div>
+
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Save settings</button>
             </div>
         </form>
     </div>

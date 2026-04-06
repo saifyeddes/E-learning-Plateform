@@ -8,7 +8,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_local_elearning_system_upgrade($oldversion) {
-    global $DB;
+    global $DB, $CFG;
 
     $dbman = $DB->get_manager();
 
@@ -135,6 +135,47 @@ function xmldb_local_elearning_system_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026040202, 'local', 'elearning_system');
+    }
+
+    if ($oldversion < 2026040503) {
+
+        $table = new xmldb_table('elearning_orders');
+
+        $field = new xmldb_field('durationmonths', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 1, 'discountamount');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('expiresat', XMLDB_TYPE_INTEGER, '10', null, false, false, null, 'durationmonths');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Backfill existing orders as 1 month subscriptions from purchase date.
+        $orders = $DB->get_records('elearning_orders', null, '', 'id,timecreated,durationmonths,expiresat');
+        foreach ($orders as $order) {
+            $record = new stdClass();
+            $record->id = (int)$order->id;
+            $record->durationmonths = !empty($order->durationmonths) ? (int)$order->durationmonths : 1;
+            if (!empty($order->expiresat)) {
+                $record->expiresat = (int)$order->expiresat;
+            } else {
+                $months = max(1, min(24, (int)$record->durationmonths));
+                $date = new DateTime('@' . (int)$order->timecreated);
+                $date->setTimezone(core_date::get_server_timezone_object());
+                $date->modify('+' . $months . ' months');
+                $record->expiresat = (int)$date->getTimestamp();
+            }
+            $DB->update_record('elearning_orders', $record);
+        }
+
+        upgrade_plugin_savepoint(true, 2026040503, 'local', 'elearning_system');
+    }
+
+    if ($oldversion < 2026040601) {
+        require_once($CFG->dirroot . '/local/elearning_system/lib.php');
+        local_elearning_system_sync_enrolments_to_course_enddates($DB);
+        upgrade_plugin_savepoint(true, 2026040601, 'local', 'elearning_system');
     }
 
     return true;

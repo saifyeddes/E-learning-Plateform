@@ -13,7 +13,7 @@
                 <thead>
                     <tr>
                         <th>Product</th>
-                        <th>Qty</th>
+                        <th>Durée d'accès</th>
                         <th>Price</th>
                         <th>Line Total</th>
                         <th></th>
@@ -24,11 +24,10 @@
                     <tr>
                         <td><a href="{{producturl}}">{{name}}</a></td>
                         <td>
-                            <div class="d-inline-flex align-items-center gap-1">
-                                <a href="{{decreaseurl}}" class="btn btn-sm btn-outline-secondary" aria-label="Decrease">-</a>
-                                <span class="px-2">{{qty}}</span>
-                                <a href="{{increaseurl}}" class="btn btn-sm btn-outline-secondary" aria-label="Increase">+</a>
-                            </div>
+                            <form method="post" action="{{setdurationurl}}" class="m-0 d-flex align-items-center gap-2">
+                                <input type="number" name="durationmonths" class="form-control form-control-sm" min="1" max="24" step="1" value="{{durationmonths}}" style="max-width: 120px;">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">OK</button>
+                            </form>
                         </td>
                         <td>${{price}}</td>
                         <td>${{lineprice}}</td>

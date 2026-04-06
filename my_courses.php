@@ -1,6 +1,7 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 $context = context_system::instance();
@@ -74,8 +75,13 @@ $orders = [];
 $coursesbyid = [];
 
 if ($DB->get_manager()->table_exists('elearning_orders')) {
+    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    $ordercolumns = $DB->get_columns('elearning_orders');
+
+    $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
     $sql = "SELECT o.id, o.amount, o.timecreated,
                 p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image,
+                {$expireselect},
                    c.fullname AS coursename
               FROM {elearning_orders} o
          LEFT JOIN {elearning_products} p ON p.id = o.productid
@@ -86,6 +92,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
     $records = $DB->get_records_sql($sql, ['userid' => (int)$USER->id]);
 
     foreach ($records as $r) {
+        $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
         $isbundle = !empty($r->isbundle);
         $courseid = !empty($r->courseid) ? (int)$r->courseid : 0;
         $hascourse = $courseid > 0 && !empty($r->coursename);
@@ -96,7 +103,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             $courseid
         );
 
-        if ($hascourse && !isset($coursesbyid[$courseid])) {
+        if ($isactiveorder && $hascourse && !isset($coursesbyid[$courseid])) {
             $coursesbyid[$courseid] = [
                 'courseid' => $courseid,
                 'coursename' => format_string($r->coursename),
@@ -109,7 +116,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             ];
         }
 
-        if ($isbundle && !empty($r->bundleitems)) {
+        if ($isactiveorder && $isbundle && !empty($r->bundleitems)) {
             $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$r->bundleitems)))));
             if (!empty($bundleitemids)) {
                 $bundleproducts = $DB->get_records_list('elearning_products', 'id', $bundleitemids, '', 'id,name,courseid,image');
@@ -171,6 +178,8 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'courseurl' => $hascourse ? (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
             'amount' => number_format((float)$r->amount, 2),
             'timecreated' => userdate((int)$r->timecreated),
+            'durationmonths' => max(1, (int)($r->durationmonths ?? 1)),
+            'isexpired' => !$isactiveorder,
             'detailsurl' => (new moodle_url('/local/elearning_system/order_detail.php', ['id' => (int)$r->id]))->out(false),
             'invoiceurl' => (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)$r->id]))->out(false),
         ];

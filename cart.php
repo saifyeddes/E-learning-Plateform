@@ -1,6 +1,7 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -12,37 +13,7 @@ $PAGE->set_heading('Your Cart');
 global $DB, $CFG;
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
-    if (!$DB->get_manager()->table_exists('elearning_orders')) {
-        return false;
-    }
-
-    if ($DB->record_exists('elearning_orders', ['userid' => $userid, 'productid' => $productid])) {
-        return true;
-    }
-
-    $product = $DB->get_record('elearning_products', ['id' => $productid], 'id,courseid', IGNORE_MISSING);
-    if ($product && !empty($product->courseid)) {
-        $coursecontext = context_course::instance((int)$product->courseid, IGNORE_MISSING);
-        /** @var context $coursecontext */
-        if ($coursecontext && is_enrolled($coursecontext, $userid, '', true)) {
-            return true;
-        }
-    }
-
-    $orders = $DB->get_records('elearning_orders', ['userid' => $userid], '', 'id,productid');
-    foreach ($orders as $order) {
-        $bundleproduct = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,isbundle,bundleitems', IGNORE_MISSING);
-        if (!$bundleproduct || empty($bundleproduct->isbundle) || empty($bundleproduct->bundleitems)) {
-            continue;
-        }
-
-        $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$bundleproduct->bundleitems)))));
-        if (in_array($productid, $bundleitemids, true)) {
-            return true;
-        }
-    }
-
-    return false;
+    return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
 }
 
 $isloggedin = isloggedin() && !isguestuser();
@@ -50,12 +21,16 @@ $isloggedin = isloggedin() && !isguestuser();
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
 }
+local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
+
+if ($isloggedin) {
+    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+}
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $itemid = optional_param('id', 0, PARAM_INT);
-$qty = optional_param('qty', 1, PARAM_INT);
 
-if (in_array($action, ['remove', 'clear', 'increase', 'decrease', 'setqty'])) {
+if (in_array($action, ['remove', 'clear', 'setduration'])) {
     require_sesskey();
 }
 
@@ -64,26 +39,14 @@ if ($action === 'remove' && $itemid > 0) {
     redirect(new moodle_url('/local/elearning_system/cart.php'));
 }
 
-if ($action === 'increase' && $itemid > 0) {
-    $SESSION->local_elearning_system_cart[$itemid] = 1;
-    redirect(new moodle_url('/local/elearning_system/cart.php'));
-}
-
-if ($action === 'decrease' && $itemid > 0) {
+if ($action === 'setduration' && $itemid > 0) {
+    $durationmonths = optional_param('durationmonths', 1, PARAM_INT);
+    $durationmonths = max(1, min(24, $durationmonths));
     if (isset($SESSION->local_elearning_system_cart[$itemid])) {
-        $SESSION->local_elearning_system_cart[$itemid]--;
-        if ($SESSION->local_elearning_system_cart[$itemid] <= 0) {
-            unset($SESSION->local_elearning_system_cart[$itemid]);
-        }
-    }
-    redirect(new moodle_url('/local/elearning_system/cart.php'));
-}
-
-if ($action === 'setqty' && $itemid > 0) {
-    if ($qty <= 0) {
-        unset($SESSION->local_elearning_system_cart[$itemid]);
-    } else {
-        $SESSION->local_elearning_system_cart[$itemid] = 1;
+        $SESSION->local_elearning_system_cart[$itemid] = [
+            'qty' => 1,
+            'durationmonths' => $durationmonths,
+        ];
     }
     redirect(new moodle_url('/local/elearning_system/cart.php'));
 }
@@ -127,27 +90,32 @@ if (!empty($cartids)) {
             continue;
         }
 
-        $qty = (int)($SESSION->local_elearning_system_cart[$r->id] ?? 1);
-        if ($qty < 1) {
-            $qty = 1;
+        $cartitem = local_elearning_system_get_cart_item($SESSION->local_elearning_system_cart, (int)$r->id);
+        $durationmonths = (int)$cartitem['durationmonths'];
+        if ($durationmonths < 1) {
+            $durationmonths = 1;
         }
-        if ($qty > 1) {
-            $qty = 1;
-            $SESSION->local_elearning_system_cart[$r->id] = 1;
+        if ($durationmonths > 24) {
+            $durationmonths = 24;
         }
 
-        $line = $displayprice * $qty;
+        // Force single-purchase quantity per product in cart.
+        $SESSION->local_elearning_system_cart[$r->id] = [
+            'qty' => 1,
+            'durationmonths' => $durationmonths,
+        ];
+
+        $line = $displayprice * $durationmonths;
         $total += $line;
 
         $products[] = [
             'id' => (int)$r->id,
             'name' => format_string($r->name),
-            'qty' => $qty,
             'price' => number_format($displayprice, 2),
+            'durationmonths' => $durationmonths,
             'lineprice' => number_format($line, 2),
             'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => (int)$r->id]))->out(false),
-            'increaseurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'increase', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
-            'decreaseurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'decrease', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
+            'setdurationurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'setduration', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
             'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
         ];
     }
@@ -162,7 +130,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/cart', [
     'total' => number_format($total, 2),
     'checkouturl' => $checkouturl,
     'isloggedin' => $isloggedin,
-    'cartcount' => array_sum($SESSION->local_elearning_system_cart),
+    'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'loginurl' => (new moodle_url('/login/index.php', ['wantsurl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false)]))->out(false),
     'accounturl' => (new moodle_url('/my/'))->out(false),
