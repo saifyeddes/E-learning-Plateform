@@ -19,6 +19,11 @@ function local_elearning_system_is_product_covered_by_purchase(int $userid, int 
 }
 
 $isloggedin = isloggedin() && !isguestuser();
+$beneficiaryuserid = (int)$USER->id;
+if ($isloggedin) {
+    $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $beneficiaryuserid = (int)$usercontext['targetuserid'];
+}
 
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
@@ -27,9 +32,9 @@ local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system
 
 $purchasedproductids = [];
 if ($isloggedin) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    local_elearning_system_cleanup_expired_orders_for_user($beneficiaryuserid, $DB);
     if ($DB->get_manager()->table_exists('elearning_orders')) {
-        $orders = $DB->get_records('elearning_orders', ['userid' => (int)$USER->id], '', 'id,productid,expiresat');
+        $orders = $DB->get_records('elearning_orders', ['userid' => $beneficiaryuserid], '', 'id,productid,expiresat');
         $ordercolumns = $DB->get_columns('elearning_orders');
         foreach ($orders as $order) {
             if (!local_elearning_system_is_order_active($order, $ordercolumns)) {
@@ -116,7 +121,7 @@ foreach ($records as $r) {
     ];
 
     if ($isloggedin) {
-        $item['ispurchased'] = local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$r->id, $DB);
+        $item['ispurchased'] = local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$r->id, $DB);
     }
 
     if (!empty($r->isbundle)) {

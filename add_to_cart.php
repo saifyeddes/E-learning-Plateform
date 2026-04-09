@@ -43,10 +43,12 @@ local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system
 $isloggedin = isloggedin() && !isguestuser();
 
 if ($isloggedin) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $beneficiaryuserid = (int)$usercontext['targetuserid'];
+    local_elearning_system_cleanup_expired_orders_for_user($beneficiaryuserid, $DB);
 }
 if ($isloggedin) {
-    if (local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$productid, $DB)) {
+    if (local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$productid, $DB)) {
         \core\notification::add('This product or bundle is already purchased.', \core\output\notification::NOTIFY_WARNING);
         $target = '/local/elearning_system/cart.php';
         if ($return === 'product') {

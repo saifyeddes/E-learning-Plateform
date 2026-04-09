@@ -1,11 +1,16 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 $orderid = required_param('id', PARAM_INT);
 
 global $DB, $USER, $CFG, $OUTPUT;
+
+$usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+$isparentaccount = !empty($usercontext['isparentaccount']);
+$childids = !empty($usercontext['childids']) && is_array($usercontext['childids']) ? $usercontext['childids'] : [];
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -22,7 +27,12 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
     }
     
     // Check if order belongs to current user
-    if ((int)$order->userid !== (int)$USER->id && !has_capability('local/elearning_system:manage', $context)) {
+    $canvieworder = ((int)$order->userid === (int)$USER->id);
+    if (!$canvieworder && $isparentaccount) {
+        $canvieworder = in_array((int)$order->userid, array_map('intval', $childids), true);
+    }
+
+    if (!$canvieworder && !has_capability('local/elearning_system:manage', $context)) {
         throw new moodle_exception('accessdenied', 'admin');
     }
 }

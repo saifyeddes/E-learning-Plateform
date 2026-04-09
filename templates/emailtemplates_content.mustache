@@ -1,0 +1,346 @@
+<style>
+.emailtemplate-drawer {
+    position: fixed;
+    top: 0;
+    right: -900px;
+    width: 900px;
+    max-width: 100vw;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    padding: 25px;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 1055;
+}
+
+.emailtemplate-drawer.open {
+    right: 0;
+}
+
+#emailTemplatesDrawerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    display: none;
+    z-index: 1050;
+}
+
+.template-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h3 class="mb-0">Email Templates</h3>
+    <button type="button" class="btn btn-primary" onclick="openEmailTemplatesDrawer();">Configure templates</button>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <label for="templateRecipientSearch" class="form-label"><strong>Students to send to</strong></label>
+        {{#hasstudents}}
+        <input type="search" id="templateRecipientSearch" class="form-control mb-2" placeholder="Search a student by name or email and click to add" autocomplete="off">
+        <div id="studentRecipientSuggestions" class="list-group mb-2" style="max-height: 220px; overflow-y: auto;"></div>
+        <input type="hidden" id="templateRecipientUserIds" value="">
+        
+        <div id="selectedRecipientsContainer" class="mb-2 p-2 bg-light border rounded" style="min-height: 36px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span class="text-muted small" id="noSelectionText">No students selected yet</span>
+        </div>
+        
+        <div class="form-text">Type to search, then click a suggestion to add the student. Use the <strong>✕</strong> button to remove students.</div>
+        {{/hasstudents}}
+        {{^hasstudents}}
+        <div class="alert alert-warning mb-0">No student with a valid email was found.</div>
+        {{/hasstudents}}
+    </div>
+</div>
+
+{{#hassuccessmessage}}
+<div class="alert alert-success">{{successmessage}}</div>
+{{/hassuccessmessage}}
+
+{{#haserrors}}
+<div class="alert alert-danger">
+    <ul class="mb-0">
+        {{#errors}}
+        <li>{{.}}</li>
+        {{/errors}}
+    </ul>
+</div>
+{{/haserrors}}
+
+{{#hastemplates}}
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {{#templates}}
+        <div class="template-card" id="email-template-{{key}}">
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                <strong>{{title}}</strong>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEmailTemplatesDrawer('{{key}}');">Edit</button>
+                    <form method="post" action="{{formurl}}" class="d-inline" id="send-template-form-{{key}}">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <input type="hidden" name="action" value="sendtest">
+                        <input type="hidden" name="templatekey" value="{{key}}">
+                        <input type="hidden" name="recipientuserids" value="">
+                        <button type="button" class="btn btn-sm btn-success" onclick="sendTemplatePreview('{{key}}');">Envoyer</button>
+                    </form>
+                </div>
+            </div>
+            <div class="small text-muted mt-1"><strong>Subject:</strong> {{subject}}</div>
+            <div class="small text-muted mt-1 text-truncate"><strong>Body:</strong> {{{body}}}</div>
+        </div>
+        {{/templates}}
+    </div>
+</div>
+{{/hastemplates}}
+
+<div id="emailTemplatesDrawerOverlay"></div>
+
+<div class="emailtemplate-drawer" id="emailTemplatesDrawer" style="display:none;">
+    <div class="position-relative">
+        <button type="button" onclick="closeEmailTemplatesDrawer();" class="btn btn-sm btn-outline-secondary position-absolute" style="top:-10px; right:-10px;">✕</button>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Configure Email Templates</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info small">
+                    Placeholders: {{placeholdershelp}}
+                </div>
+
+                <form method="post" action="{{formurl}}" class="row g-3">
+                    <input type="hidden" name="action" value="save">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    {{#templates}}
+                    <div class="col-12" id="email-template-form-{{key}}">
+                        <div class="border rounded p-3 bg-light {{#isselected}}border-primary{{/isselected}}">
+                            <h6 class="mb-3">{{title}}</h6>
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Subject</strong></label>
+                                <input type="text" name="{{key}}_subject" class="form-control" value="{{subject}}" required>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label"><strong>Body</strong></label>
+                                <textarea name="{{key}}_body" class="form-control" rows="7" required>{{body}}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {{/templates}}
+
+                    <div class="col-12 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-success">Save templates</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="closeEmailTemplatesDrawer();">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function clearEmailTemplatesDrawerQueryParams() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('open');
+    window.history.replaceState({}, '', url);
+}
+
+function closeEmailTemplatesDrawer() {
+    const overlay = document.getElementById('emailTemplatesDrawerOverlay');
+    const drawer = document.getElementById('emailTemplatesDrawer');
+    if (drawer) {
+        drawer.classList.remove('open');
+        drawer.style.display = 'none';
+    }
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    clearEmailTemplatesDrawerQueryParams();
+}
+
+function openEmailTemplatesDrawer(templateKey) {
+    const overlay = document.getElementById('emailTemplatesDrawerOverlay');
+    const drawer = document.getElementById('emailTemplatesDrawer');
+    if (overlay) {
+        overlay.style.display = 'block';
+    }
+    if (drawer) {
+        drawer.style.display = 'block';
+        void drawer.offsetWidth;
+        drawer.classList.add('open');
+    }
+
+    if (templateKey) {
+        setTimeout(function() {
+            const target = document.getElementById('email-template-form-' + templateKey);
+            if (target) {
+                target.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+        }, 150);
+    }
+}
+
+window.localElearningSystemStudentMap = {
+    {{#students}}
+    "{{searchlabel}}": "{{id}}",
+    {{/students}}
+};
+
+window.localElearningSystemStudentsList = [
+    {{#students}}
+    {id: "{{id}}", fullname: "{{fullname}}", email: "{{email}}", searchlabel: "{{searchlabel}}"},
+    {{/students}}
+];
+
+let selectedRecipientIds = [];
+
+function getSelectedRecipientIds() {
+    return selectedRecipientIds.slice();
+}
+
+function syncSelectedRecipientIds() {
+    const hidden = document.getElementById('templateRecipientUserIds');
+    if (hidden) {
+        hidden.value = selectedRecipientIds.join(',');
+    }
+}
+
+function updateSelectedRecipientsDisplay() {
+    const selectedIds = getSelectedRecipientIds();
+    const container = document.getElementById('selectedRecipientsContainer');
+    const noText = document.getElementById('noSelectionText');
+    
+    if (!container) return;
+    
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+    
+    if (selectedIds.length === 0) {
+        noText.style.display = 'inline';
+        container.appendChild(noText);
+        return;
+    }
+    
+    noText.style.display = 'none';
+    
+    selectedIds.forEach(function(studentId) {
+        const student = (window.localElearningSystemStudentsList || []).find(s => parseInt(s.id, 10) === studentId);
+        if (student) {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary d-flex align-items-center gap-2';
+            badge.innerHTML = student.fullname + ' <button type="button" class="btn-close btn-close-white" onclick="removeRecipient(' + studentId + '); return false;" style="font-size: 0.75em;"></button>';
+            container.appendChild(badge);
+        }
+    });
+}
+
+function renderStudentSuggestions(query) {
+    const suggestionsContainer = document.getElementById('studentRecipientSuggestions');
+    if (!suggestionsContainer) {
+        return;
+    }
+
+    suggestionsContainer.innerHTML = '';
+
+    const search = (query || '').trim().toLowerCase();
+    if (search.length < 2) {
+        return;
+    }
+
+    const selectedIds = getSelectedRecipientIds();
+    const matches = (window.localElearningSystemStudentsList || []).filter(function(student) {
+        if (selectedIds.includes(parseInt(student.id, 10))) {
+            return false;
+        }
+        return (student.searchlabel || '').toLowerCase().indexOf(search) !== -1;
+    }).slice(0, 8);
+
+    matches.forEach(function(student) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = student.fullname + ' - ' + student.email;
+        item.addEventListener('click', function() {
+            addRecipient(parseInt(student.id, 10));
+            const searchInput = document.getElementById('templateRecipientSearch');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
+            renderStudentSuggestions('');
+        });
+        suggestionsContainer.appendChild(item);
+    });
+}
+
+function addRecipient(studentId) {
+    studentId = parseInt(studentId, 10);
+    if (!isNaN(studentId) && !selectedRecipientIds.includes(studentId)) {
+        selectedRecipientIds.push(studentId);
+        syncSelectedRecipientIds();
+        updateSelectedRecipientsDisplay();
+    }
+    
+    const search = document.getElementById('templateRecipientSearch');
+    if (search) {
+        search.value = '';
+    }
+
+    renderStudentSuggestions('');
+}
+
+function removeRecipient(studentId) {
+    studentId = parseInt(studentId, 10);
+    selectedRecipientIds = selectedRecipientIds.filter(id => id !== studentId);
+    syncSelectedRecipientIds();
+    updateSelectedRecipientsDisplay();
+}
+
+function sendTemplatePreview(templateKey) {
+    const recipientUserIds = document.getElementById('templateRecipientUserIds');
+    const selectedIds = getSelectedRecipientIds();
+    
+    if (!recipientUserIds || selectedIds.length === 0) {
+        alert('Please add at least one student before sending.');
+        document.getElementById('templateRecipientSearch')?.focus();
+        return;
+    }
+    
+    const form = document.getElementById('send-template-form-' + templateKey);
+    if (!form) {
+        return;
+    }
+
+    const recipientInput = form.querySelector('input[name="recipientuserids"]');
+    if (recipientInput) {
+        recipientInput.value = selectedIds.join(',');
+    }
+
+    form.submit();
+}
+
+document.getElementById('templateRecipientSearch')?.addEventListener('input', function() {
+    renderStudentSuggestions(this.value);
+});
+
+syncSelectedRecipientIds();
+
+updateSelectedRecipientsDisplay();
+
+document.getElementById('emailTemplatesDrawerOverlay')?.addEventListener('click', closeEmailTemplatesDrawer);
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEmailTemplatesDrawer();
+    }
+});
+
+{{#showdrawer}}
+openEmailTemplatesDrawer({{#selectedtemplatekey}}'{{selectedtemplatekey}}'{{/selectedtemplatekey}}{{^selectedtemplatekey}}null{{/selectedtemplatekey}});
+{{/showdrawer}}
+</script>

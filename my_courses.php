@@ -13,6 +13,11 @@ $PAGE->set_heading('Mes cours');
 
 global $DB, $USER, $CFG;
 
+$usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+$targetuserid = (int)$usercontext['targetuserid'];
+$isparentaccount = !empty($usercontext['isparentaccount']);
+$targetfullname = trim((string)($usercontext['targetfullname'] ?? ''));
+
 /**
  * Resolve image URL for a product, falling back to the course overview image.
  *
@@ -75,7 +80,7 @@ $orders = [];
 $coursesbyid = [];
 
 if ($DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    local_elearning_system_cleanup_expired_orders_for_user($targetuserid, $DB);
     $ordercolumns = $DB->get_columns('elearning_orders');
 
     $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
@@ -89,7 +94,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
              WHERE o.userid = :userid
           ORDER BY o.id DESC";
 
-    $records = $DB->get_records_sql($sql, ['userid' => (int)$USER->id]);
+    $records = $DB->get_records_sql($sql, ['userid' => $targetuserid]);
 
     foreach ($records as $r) {
         $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
@@ -188,12 +193,79 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
 
 $courses = array_values($coursesbyid);
 
+$availablecourses = [];
+$eligibleproductscount = 0;
+if ($DB->get_manager()->table_exists('elearning_products')) {
+    $allproducts = $DB->get_records('elearning_products', null, 'id DESC');
+    foreach ($allproducts as $product) {
+        $productid = (int)$product->id;
+        if ($productid <= 0) {
+            continue;
+        }
+
+        $price = !empty($product->price) ? (float)$product->price : 0.0;
+        $saleprice = !empty($product->saleprice) ? (float)$product->saleprice : 0.0;
+        $displayprice = $saleprice > 0 ? $saleprice : $price;
+        $status = strtolower(trim((string)($product->status ?? '')));
+        $rawtype = strtolower(trim((string)($product->type ?? '')));
+        if ($displayprice <= 0) {
+            $type = 'free';
+        } else if (in_array($rawtype, ['paid', 'subscription', 'subscroiption', 'subcription', 'subscribe', 'premium'])) {
+            $type = 'paid';
+        } else {
+            $type = 'free';
+        }
+
+        if (empty($product->isbundle) && $type === 'paid' && $status !== 'publish') {
+            continue;
+        }
+
+        $eligibleproductscount++;
+
+        if (local_elearning_system_is_product_covered_by_active_purchase($targetuserid, $productid, $DB)) {
+            continue;
+        }
+
+        $courseid = !empty($product->courseid) ? (int)$product->courseid : 0;
+        $coursename = '';
+        if ($courseid > 0) {
+            $course = $DB->get_record('course', ['id' => $courseid], 'id,fullname', IGNORE_MISSING);
+            if ($course) {
+                $coursename = format_string($course->fullname);
+            }
+        }
+
+        [$productimage, $hasproductimage] = local_elearning_system_resolve_product_or_course_image(
+            $product->image ?? '',
+            $courseid
+        );
+
+        $availablecourses[] = [
+            'id' => $productid,
+            'productname' => format_string((string)$product->name),
+            'coursename' => $coursename,
+            'hascoursename' => $coursename !== '',
+            'price' => number_format($displayprice, 2),
+            'isfree' => $displayprice <= 0,
+            'productimage' => $productimage,
+            'hasproductimage' => $hasproductimage,
+            'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => $productid]))->out(false),
+        ];
+    }
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/my_courses', [
     'courses' => $courses,
     'hascourses' => !empty($courses),
+    'availablecourses' => $availablecourses,
+    'hasavailablecourses' => !empty($availablecourses),
+    'haseligibleproducts' => $eligibleproductscount > 0,
+    'alleligibleproductspurchased' => $eligibleproductscount > 0 && empty($availablecourses),
     'orders' => $orders,
     'hasorders' => !empty($orders),
+    'isparentaccount' => $isparentaccount,
+    'targetfullname' => $targetfullname,
     'homeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'commandesurl' => (new moodle_url('/local/elearning_system/commandes.php'))->out(false),

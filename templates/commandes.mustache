@@ -3,7 +3,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2>Mes commandes</h2>
+                <h2>{{pageheading}}</h2>
                 <div>
                     <a href="{{mycoursesurl}}" class="btn btn-outline-secondary btn-sm">Mes cours</a>
                     <a href="{{homeurl}}" class="btn btn-outline-primary btn-sm">Catalogue</a>
@@ -11,6 +11,12 @@
             </div>
         </div>
     </div>
+
+    {{#isparentaccount}}
+    <div class="alert alert-info">
+        Vous consultez les commandes de votre enfant: <strong>{{targetfullname}}</strong>
+    </div>
+    {{/isparentaccount}}
 
     {{#hasorders}}
     <div class="row">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/elearning_system/db" VERSION="2026040202" COMMENT="XMLDB file for elearning system"
+<XMLDB PATH="local/elearning_system/db" VERSION="2026040800" COMMENT="XMLDB file for elearning system"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
 
@@ -55,6 +55,31 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
             </KEYS>
+
+        </TABLE>
+
+        <TABLE NAME="elearning_parent_links" COMMENT="Table storing parent-child links">
+
+            <FIELDS>
+
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+                <FIELD NAME="parentuserid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Parent user ID"/>
+                <FIELD NAME="childuserid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Child user ID"/>
+                <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Admin user ID who created the link"/>
+                <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Last modification timestamp"/>
+
+            </FIELDS>
+
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+            </KEYS>
+
+            <INDEXES>
+                <INDEX NAME="parent_child_uix" UNIQUE="true" FIELDS="parentuserid,childuserid" COMMENT="Unique parent-child pair"/>
+                <INDEX NAME="parent_idx" UNIQUE="false" FIELDS="parentuserid" COMMENT="Parent lookup"/>
+                <INDEX NAME="child_idx" UNIQUE="false" FIELDS="childuserid" COMMENT="Child lookup"/>
+            </INDEXES>
 
         </TABLE>
 

@@ -13,6 +13,11 @@ $PAGE->set_heading('Mes commandes');
 
 global $DB, $USER, $CFG;
 
+$usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+$targetuserid = (int)$usercontext['targetuserid'];
+$isparentaccount = !empty($usercontext['isparentaccount']);
+$targetfullname = trim((string)($usercontext['targetfullname'] ?? ''));
+
 /**
  * Resolve image URL for a product, falling back to course overview image.
  *
@@ -73,8 +78,12 @@ function local_elearning_system_resolve_order_image($productimagepath, $courseid
 $orders = [];
 $pageheading = 'Mes commandes';
 
+if ($isparentaccount && $targetfullname !== '') {
+    $pageheading = 'Commandes de ' . $targetfullname;
+}
+
 if ($DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+    local_elearning_system_cleanup_expired_orders_for_user($targetuserid, $DB);
     $ordercolumns = $DB->get_columns('elearning_orders');
     $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
         $sql = "SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
@@ -87,7 +96,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
              WHERE o.userid = :userid
           ORDER BY o.id DESC";
 
-    $records = $DB->get_records_sql($sql, ['userid' => (int)$USER->id]);
+    $records = $DB->get_records_sql($sql, ['userid' => $targetuserid]);
 
     foreach ($records as $r) {
         $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
@@ -191,6 +200,9 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
 $templatedata = [
     'orders' => $orders,
     'hasorders' => !empty($orders),
+    'isparentaccount' => $isparentaccount,
+    'targetfullname' => $targetfullname,
+    'pageheading' => $pageheading,
     'homeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
     'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
 ];

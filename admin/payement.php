@@ -246,14 +246,18 @@ $templatedata = [
     'dashboardurl' => (new moodle_url('/local/elearning_system/admin/dashboard.php'))->out(false),
     'productsurl' => (new moodle_url('/local/elearning_system/admin/products.php'))->out(false),
     'ordersurl' => (new moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
+    'parentsurl' => (new moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
     'couponsurl' => (new moodle_url('/local/elearning_system/admin/coupons.php'))->out(false),
     'payementurl' => (new moodle_url('/local/elearning_system/admin/payement.php'))->out(false),
+    'emailtemplatesurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
 
     'isdashboard' => false,
     'isproducts' => false,
     'isorders' => false,
+    'isparents' => false,
     'iscoupons' => false,
     'ispayement' => true,
+    'isemailtemplates' => false,
 
     'errors' => $errors,
     'haserrors' => !empty($errors),

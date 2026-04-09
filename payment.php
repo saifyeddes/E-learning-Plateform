@@ -133,11 +133,16 @@ if ($tvapercent < 0 || $tvapercent > 100) {
 
 $simulatesuccess = (int)get_config('local_elearning_system', 'simulate_success');
 
+$usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+$beneficiaryuserid = (int)$usercontext['targetuserid'];
+$isparentaccount = !empty($usercontext['isparentaccount']);
+$beneficiaryfullname = trim((string)($usercontext['targetfullname'] ?? ''));
+
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
 }
 local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
-local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
+local_elearning_system_cleanup_expired_orders_for_user($beneficiaryuserid, $DB);
 
 if (!isset($SESSION->local_elearning_system_pending_order) || !is_array($SESSION->local_elearning_system_pending_order)) {
     $SESSION->local_elearning_system_pending_order = [];
@@ -211,7 +216,7 @@ if ($action === 'start') {
             'durationmonths' => $durationmonths,
         ];
 
-        if (local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$r->id, $DB)) {
+        if (local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$r->id, $DB)) {
             unset($SESSION->local_elearning_system_cart[$r->id]);
             continue;
         }
@@ -271,6 +276,7 @@ if ($action === 'start') {
 
     $SESSION->local_elearning_system_pending_order = [
         'userid' => (int)$USER->id,
+        'beneficiaryuserid' => $beneficiaryuserid,
         'items' => $pendingitems,
         'timecreated' => time(),
     ];
@@ -279,12 +285,12 @@ if ($action === 'start') {
     if ($totalamount <= 0) {
         require_once($CFG->libdir . '/enrollib.php');
         foreach ($pendingitems as $item) {
-            if (local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$item['productid'], $DB)) {
+            if (local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$item['productid'], $DB)) {
                 continue;
             }
 
             $order = new stdClass();
-            $order->userid = (int)$USER->id;
+            $order->userid = $beneficiaryuserid;
             $order->productid = (int)$item['productid'];
             $order->amount = (float)$item['amount'];
             if (isset($ordercolumns['promocode'])) {
@@ -301,8 +307,10 @@ if ($action === 'start') {
             }
             $ordertimecreated = time();
             $order->timecreated = $ordertimecreated;
-            $DB->insert_record('elearning_orders', $order);
-            local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, (int)$item['durationmonths'], $ordertimecreated, $DB);
+            $order->id = (int)$DB->insert_record('elearning_orders', $order);
+            local_elearning_system_enrol_user_for_product((int)$item['productid'], $beneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
+            local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
+            local_elearning_system_send_order_notification_if_needed($order, 'invoice', $DB);
         }
 
         if ($appliedcoupon) {
@@ -389,14 +397,15 @@ if ($paidsuccess) {
     if (!empty($SESSION->local_elearning_system_pending_order['items'])) {
         $pending = $SESSION->local_elearning_system_pending_order;
         if (!empty($pending['userid']) && (int)$pending['userid'] === (int)$USER->id) {
+            $pendingbeneficiaryuserid = !empty($pending['beneficiaryuserid']) ? (int)$pending['beneficiaryuserid'] : $beneficiaryuserid;
             require_once($CFG->libdir . '/enrollib.php');
             foreach ($pending['items'] as $item) {
-                if (local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$item['productid'], $DB)) {
+                if (local_elearning_system_is_product_covered_by_purchase($pendingbeneficiaryuserid, (int)$item['productid'], $DB)) {
                     continue;
                 }
 
                 $order = new stdClass();
-                $order->userid = (int)$USER->id;
+                $order->userid = $pendingbeneficiaryuserid;
                 $order->productid = (int)$item['productid'];
                 $order->amount = (float)$item['amount'];
                 if (isset($ordercolumns['promocode'])) {
@@ -413,8 +422,11 @@ if ($paidsuccess) {
                 }
                 $ordertimecreated = time();
                 $order->timecreated = $ordertimecreated;
-                $DB->insert_record('elearning_orders', $order);
-                local_elearning_system_enrol_user_for_product((int)$item['productid'], (int)$USER->id, (int)$item['durationmonths'], $ordertimecreated, $DB);
+                $order->id = (int)$DB->insert_record('elearning_orders', $order);
+                local_elearning_system_enrol_user_for_product((int)$item['productid'], $pendingbeneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
+                local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
+                local_elearning_system_send_order_notification_if_needed($order, 'payment_course', $DB);
+                local_elearning_system_send_order_notification_if_needed($order, 'invoice', $DB);
             }
         }
     }
@@ -446,6 +458,9 @@ if ($paidsuccess) {
 echo $OUTPUT->header();
 if ($paidsuccess) {
     echo html_writer::div('Cours achete', 'alert alert-success');
+    if ($isparentaccount && $beneficiaryfullname !== '') {
+        echo html_writer::div('Achat enregistré pour votre enfant: ' . s($beneficiaryfullname), 'alert alert-info');
+    }
     echo html_writer::link(new moodle_url('/local/elearning_system/my_courses.php'), 'Voir mes cours', ['class' => 'btn btn-success']);
 } else {
     echo html_writer::div('Achat failed', 'alert alert-danger');

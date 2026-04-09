@@ -1,12 +1,18 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 require_login();
 
 $orderid = required_param('id', PARAM_INT);
 $pdfgenerate = optional_param('pdf', 0, PARAM_INT);
 
 global $DB, $USER, $CFG, $OUTPUT;
+
+$usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+$isparentaccount = !empty($usercontext['isparentaccount']);
+$childids = !empty($usercontext['childids']) && is_array($usercontext['childids']) ? $usercontext['childids'] : [];
+$targetfullname = trim((string)($usercontext['targetfullname'] ?? ''));
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -34,7 +40,12 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
     }
     
     // Check permissions
-    if ((int)$orderdata->userid !== (int)$USER->id && !has_capability('local/elearning_system:manage', $context)) {
+    $canvieworder = ((int)$orderdata->userid === (int)$USER->id);
+    if (!$canvieworder && $isparentaccount) {
+        $canvieworder = in_array((int)$orderdata->userid, array_map('intval', $childids), true);
+    }
+
+    if (!$canvieworder && !has_capability('local/elearning_system:manage', $context)) {
         throw new moodle_exception('accessdenied', 'admin');
     }
     
@@ -150,6 +161,8 @@ $invoicehtml = [
     'taxamount' => number_format($tax, 2),
     'total' => number_format($total, 2),
     'hastvapercent' => ($tvapercent > 0),
+    'isparentaccount' => $isparentaccount,
+    'targetfullname' => $targetfullname,
     'backurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
     'pdfurl' => (new moodle_url('/local/elearning_system/invoice.php', ['id' => $orderid, 'pdf' => 1]))->out(false),
 ];

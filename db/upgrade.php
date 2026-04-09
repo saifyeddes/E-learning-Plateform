@@ -178,5 +178,29 @@ function xmldb_local_elearning_system_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026040601, 'local', 'elearning_system');
     }
 
+    if ($oldversion < 2026040602) {
+        upgrade_plugin_savepoint(true, 2026040602, 'local', 'elearning_system');
+    }
+
+    if ($oldversion < 2026040800) {
+        $table = new xmldb_table('elearning_parent_links');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('parentuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('childuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('parent_child_uix', XMLDB_INDEX_UNIQUE, ['parentuserid', 'childuserid']);
+            $table->add_index('parent_idx', XMLDB_INDEX_NOTUNIQUE, ['parentuserid']);
+            $table->add_index('child_idx', XMLDB_INDEX_NOTUNIQUE, ['childuserid']);
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026040800, 'local', 'elearning_system');
+    }
+
     return true;
 }

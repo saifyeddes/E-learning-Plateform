@@ -48,6 +48,11 @@
                     Orders
                 </a>
 
+                <a href="{{parentsurl}}"
+                   class="list-group-item list-group-item-action {{#isparents}}active{{/isparents}}">
+                    Parents
+                </a>
+
                 <a href="{{couponsurl}}" 
                    class="list-group-item list-group-item-action {{#iscoupons}}active{{/iscoupons}}">
                     Coupons
@@ -56,6 +61,11 @@
                 <a href="{{payementurl}}"
                    class="list-group-item list-group-item-action {{#ispayement}}active{{/ispayement}}">
                     Payement
+                </a>
+
+                <a href="{{emailtemplatesurl}}"
+                   class="list-group-item list-group-item-action {{#isemailtemplates}}active{{/isemailtemplates}}">
+                    Email Templates
                 </a>
 
             </div>
@@ -149,6 +159,14 @@
             {{#ispayement}}
                 {{> local_elearning_system/payement_content }}
             {{/ispayement}}
+
+            {{#isemailtemplates}}
+                {{> local_elearning_system/emailtemplates_content }}
+            {{/isemailtemplates}}
+
+            {{#isparents}}
+                {{> local_elearning_system/parents_content }}
+            {{/isparents}}
 
         </div>
 

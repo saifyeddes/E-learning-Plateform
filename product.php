@@ -17,6 +17,11 @@ function local_elearning_system_is_product_covered_by_purchase(int $userid, int 
 }
 
 $isloggedin = isloggedin() && !isguestuser();
+$beneficiaryuserid = 0;
+if ($isloggedin) {
+    $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $beneficiaryuserid = (int)$usercontext['targetuserid'];
+}
 
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
@@ -109,11 +114,11 @@ $templatedata = [
 ];
 
 if ($isloggedin && $DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
-    $templatedata['ispurchased'] = local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$productid, $DB);
+    local_elearning_system_cleanup_expired_orders_for_user($beneficiaryuserid, $DB);
+    $templatedata['ispurchased'] = local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$productid, $DB);
 
     if (!$templatedata['ispurchased']) {
-        $orders = $DB->get_records('elearning_orders', ['userid' => (int)$USER->id], '', 'id,productid');
+        $orders = $DB->get_records('elearning_orders', ['userid' => $beneficiaryuserid], '', 'id,productid');
         foreach ($orders as $order) {
             $bundleproduct = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,isbundle,bundleitems', IGNORE_MISSING);
             if (!$bundleproduct || empty($bundleproduct->isbundle) || empty($bundleproduct->bundleitems)) {
@@ -153,7 +158,7 @@ if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
             if (!empty($templatedata['ispurchased'])) {
                 $itempurchased = true;
             } else if ($isloggedin) {
-                if (local_elearning_system_is_product_covered_by_active_purchase((int)$USER->id, (int)$bundleproduct->id, $DB)) {
+                if (local_elearning_system_is_product_covered_by_active_purchase($beneficiaryuserid, (int)$bundleproduct->id, $DB)) {
                     $itempurchased = true;
                 }
             }

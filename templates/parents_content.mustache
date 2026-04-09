@@ -1,0 +1,117 @@
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h3 class="mb-0">Parents</h3>
+</div>
+
+{{#hassuccessmessage}}
+<div class="alert alert-success">{{successmessage}}</div>
+{{/hassuccessmessage}}
+
+{{#haserrors}}
+<div class="alert alert-danger">
+    <ul class="mb-0">
+        {{#errors}}
+        <li>{{.}}</li>
+        {{/errors}}
+    </ul>
+</div>
+{{/haserrors}}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="alert alert-info small mb-3">{{parentshelp}}</div>
+        <form method="post" action="{{formurl}}" class="row g-3">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="formaction" value="{{formaction}}">
+            <input type="hidden" name="linkid" value="{{editinglinkid}}">
+
+            <div class="col-md-6">
+                <label class="form-label">Parent first name</label>
+                <input type="text" name="parentfirstname" class="form-control" value="{{formparentfirstname}}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Parent last name</label>
+                <input type="text" name="parentlastname" class="form-control" value="{{formparentlastname}}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Parent email</label>
+                <input type="email" name="parentemail" class="form-control" value="{{formparentemail}}" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Parent password {{#isediting}}(optional){{/isediting}}</label>
+                <input type="password" name="parentpassword" class="form-control" {{^isediting}}required{{/isediting}}>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Child to link</label>
+                {{#hasstudents}}
+                <select name="childuserid" class="form-select" required>
+                    <option value="">Choose a child</option>
+                    {{#students}}
+                    <option value="{{id}}" {{#isselectedchild}}selected{{/isselectedchild}}>{{label}}</option>
+                    {{/students}}
+                </select>
+                {{/hasstudents}}
+                {{^hasstudents}}
+                <div class="alert alert-warning mb-0">No student account with a valid email was found.</div>
+                {{/hasstudents}}
+            </div>
+
+            <div class="col-12 d-flex gap-2 flex-wrap">
+                {{#isediting}}
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <a href="{{formurl}}" class="btn btn-outline-secondary">Cancel</a>
+                {{/isediting}}
+                {{^isediting}}
+                <button type="submit" class="btn btn-primary">Create parent account</button>
+                {{/isediting}}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h5 class="mb-3">Linked parents</h5>
+        {{#hasparentlinks}}
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Parent</th>
+                        <th>Child</th>
+                        <th>Created by</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#parentlinks}}
+                    <tr>
+                        <td>
+                            <strong>{{parentfullname}}</strong><br>
+                            <small class="text-muted">{{parentemail}}</small>
+                        </td>
+                        <td>
+                            <strong>{{childfullname}}</strong><br>
+                            <small class="text-muted">{{childemail}}</small>
+                        </td>
+                        <td>{{adminfullname}}</td>
+                        <td>{{timecreated}}</td>
+                        <td>
+                            <a href="{{editurl}}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                            <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this parent-child link?')">Remove link</a>
+                        </td>
+                    </tr>
+                    {{/parentlinks}}
+                </tbody>
+            </table>
+        </div>
+        {{/hasparentlinks}}
+        {{^hasparentlinks}}
+        <div class="alert alert-info mb-0">No parent-child links yet.</div>
+        {{/hasparentlinks}}
+    </div>
+</div>

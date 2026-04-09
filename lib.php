@@ -104,6 +104,98 @@ function local_elearning_system_cart_count(array $cart): int {
 }
 
 /**
+ * Return linked child user ids for a parent account.
+ *
+ * @param int $parentuserid
+ * @param moodle_database $DB
+ * @return int[]
+ */
+function local_elearning_system_get_parent_child_ids(int $parentuserid, moodle_database $DB): array {
+    if ($parentuserid <= 0 || !$DB->get_manager()->table_exists('elearning_parent_links')) {
+        return [];
+    }
+
+    $links = $DB->get_records('elearning_parent_links', ['parentuserid' => $parentuserid], 'id ASC', 'id,childuserid');
+    if (empty($links)) {
+        return [];
+    }
+
+    $childids = [];
+    foreach ($links as $link) {
+        $childid = (int)($link->childuserid ?? 0);
+        if ($childid > 0) {
+            $childids[$childid] = $childid;
+        }
+    }
+
+    return array_values($childids);
+}
+
+/**
+ * Resolve effective user context for parent/child linked accounts.
+ *
+ * If the current user is linked as a parent, this returns the first active child as target user.
+ * Otherwise, target user is the current user.
+ *
+ * @param int $currentuserid
+ * @param moodle_database $DB
+ * @return array<string,mixed>
+ */
+function local_elearning_system_get_effective_user_context(int $currentuserid, moodle_database $DB): array {
+    $result = [
+        'isparentaccount' => false,
+        'currentuserid' => $currentuserid,
+        'targetuserid' => $currentuserid,
+        'childids' => [],
+        'targetfullname' => '',
+        'targetemail' => '',
+    ];
+
+    if ($currentuserid <= 0) {
+        return $result;
+    }
+
+    $childids = local_elearning_system_get_parent_child_ids($currentuserid, $DB);
+    if (empty($childids)) {
+        $self = core_user::get_user($currentuserid, 'id,firstname,lastname,email', IGNORE_MISSING);
+        if ($self) {
+            $result['targetfullname'] = trim((string)$self->firstname . ' ' . (string)$self->lastname);
+            $result['targetemail'] = (string)($self->email ?? '');
+        }
+        return $result;
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($childids, SQL_PARAMS_NAMED);
+    $childrecords = $DB->get_records_select(
+        'user',
+        'id ' . $insql . ' AND deleted = 0 AND suspended = 0',
+        $params,
+        'id ASC',
+        'id,firstname,lastname,email',
+        0,
+        1
+    );
+    $child = !empty($childrecords) ? reset($childrecords) : null;
+
+    if (!$child) {
+        $self = core_user::get_user($currentuserid, 'id,firstname,lastname,email', IGNORE_MISSING);
+        if ($self) {
+            $result['targetfullname'] = trim((string)$self->firstname . ' ' . (string)$self->lastname);
+            $result['targetemail'] = (string)($self->email ?? '');
+        }
+        return $result;
+    }
+
+    $result['isparentaccount'] = true;
+    $result['targetuserid'] = (int)$child->id;
+    $result['childids'] = $childids;
+    $result['targetfullname'] = trim((string)$child->firstname . ' ' . (string)$child->lastname);
+    $result['targetemail'] = (string)($child->email ?? '');
+
+    return $result;
+}
+
+/**
  * Calculate expiration timestamp from purchase time and months.
  *
  * @param int $purchasetime
@@ -116,6 +208,365 @@ function local_elearning_system_calculate_expiration(int $purchasetime, int $mon
     $date->setTimezone(core_date::get_server_timezone_object());
     $date->modify('+' . $months . ' months');
     return (int)$date->getTimestamp();
+}
+
+/**
+ * Return the selected site currency code.
+ *
+ * @return string
+ */
+function local_elearning_system_get_site_currency_code(): string {
+    $code = core_text::strtoupper(trim((string)get_config('local_elearning_system', 'stripe_currency')));
+    if ($code === '') {
+        $code = 'USD';
+    }
+
+    return $code;
+}
+
+/**
+ * Return built-in email template definitions.
+ *
+ * @return array<string, array{subject:string,body:string}>
+ */
+function local_elearning_system_get_email_template_definitions(): array {
+    return [
+        'purchase_product' => [
+            'subject' => 'Purchase confirmed - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nYour purchase for {{productname}} has been confirmed.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\n\n{{sitefullname}}",
+        ],
+        'new_account' => [
+            'subject' => 'Welcome to {{sitefullname}}',
+            'body' => "Hello {{firstname}},\n\nYour account has been created successfully.\nLogin: {{loginurl}}\n\n{{sitefullname}}",
+        ],
+        'invoice' => [
+            'subject' => 'Invoice #{{orderid}} - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nPlease find your invoice for {{productname}}.\nInvoice number: {{orderid}}\nAmount: {{currency}} {{amount}}\nInvoice link: {{invoiceurl}}\n\n{{sitefullname}}",
+        ],
+        'renewal_account' => [
+            'subject' => 'Your access has expired - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nYour access to {{productname}} has expired on {{expireslabel}}.\nTo continue, please renew your account.\n\n{{sitefullname}}",
+        ],
+        'payment_course' => [
+            'subject' => 'Payment received - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nWe received your payment for {{productname}}.\nAmount: {{currency}} {{amount}}\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\n\n{{sitefullname}}",
+        ],
+    ];
+}
+
+/**
+ * Render a template string using moustache-like placeholders.
+ *
+ * @param string $template
+ * @param array<string, string> $variables
+ * @return string
+ */
+function local_elearning_system_render_template_string(string $template, array $variables): string {
+    $replacements = [];
+    foreach ($variables as $key => $value) {
+        $replacements['{{' . $key . '}}'] = (string)$value;
+    }
+
+    return strtr($template, $replacements);
+}
+
+/**
+ * Load the configured or default email template.
+ *
+ * @param string $templatekey
+ * @return array{subject:string,body:string}
+ */
+function local_elearning_system_get_email_template(string $templatekey): array {
+    $definitions = local_elearning_system_get_email_template_definitions();
+    if (!isset($definitions[$templatekey])) {
+        return ['subject' => '', 'body' => ''];
+    }
+
+    $subject = trim((string)get_config('local_elearning_system', $templatekey . '_subject'));
+    $body = trim((string)get_config('local_elearning_system', $templatekey . '_body'));
+
+    if ($subject === '') {
+        $subject = $definitions[$templatekey]['subject'];
+    }
+    if ($body === '') {
+        $body = $definitions[$templatekey]['body'];
+    }
+
+    return ['subject' => $subject, 'body' => $body];
+}
+
+/**
+ * Ensure a user object has the minimum fields required by email_to_user().
+ *
+ * @param stdClass $user
+ * @return stdClass
+ */
+function local_elearning_system_prepare_mail_user(stdClass $user): stdClass {
+    if (empty($user->username)) {
+        $user->username = 'user' . (int)($user->id ?? 0);
+    }
+    if (!isset($user->firstname)) {
+        $user->firstname = '';
+    }
+    if (!isset($user->lastname)) {
+        $user->lastname = '';
+    }
+    if (!isset($user->firstnamephonetic)) {
+        $user->firstnamephonetic = '';
+    }
+    if (!isset($user->lastnamephonetic)) {
+        $user->lastnamephonetic = '';
+    }
+    if (!isset($user->middlename)) {
+        $user->middlename = '';
+    }
+    if (!isset($user->alternatename)) {
+        $user->alternatename = '';
+    }
+    if (!isset($user->mailformat)) {
+        $user->mailformat = 1;
+    }
+    if (!isset($user->maildisplay)) {
+        $user->maildisplay = 1;
+    }
+    if (!isset($user->maildigest)) {
+        $user->maildigest = 0;
+    }
+    if (!isset($user->lang)) {
+        $user->lang = current_language();
+    }
+    if (!isset($user->timezone)) {
+        $user->timezone = '99';
+    }
+
+    return $user;
+}
+
+/**
+ * Build a valid sender for email_to_user().
+ *
+ * @param stdClass $recipient
+ * @return stdClass
+ */
+function local_elearning_system_get_valid_from_user(stdClass $recipient): stdClass {
+    $admin = get_admin();
+    if ($admin && !empty($admin->email) && validate_email((string)$admin->email)) {
+        return local_elearning_system_prepare_mail_user($admin);
+    }
+
+    $support = core_user::get_support_user();
+    if ($support && !empty($support->email) && validate_email((string)$support->email)) {
+        return local_elearning_system_prepare_mail_user($support);
+    }
+
+    $recipientdomain = 'example.com';
+    if (!empty($recipient->email) && strpos((string)$recipient->email, '@') !== false) {
+        $parts = explode('@', (string)$recipient->email);
+        $domain = core_text::strtolower((string)end($parts));
+        if ($domain !== '') {
+            $recipientdomain = $domain;
+        }
+    }
+
+    $fallback = new stdClass();
+    $fallback->id = 0;
+    $fallback->username = 'local_elearning_system_notifier';
+    $fallback->firstname = 'E-learning';
+    $fallback->lastname = 'Notifier';
+    $fallback->email = 'no-reply@' . $recipientdomain;
+    $fallback->mailformat = 1;
+    $fallback->maildisplay = 1;
+    $fallback->maildigest = 0;
+    $fallback->lang = !empty($recipient->lang) ? $recipient->lang : current_language();
+    $fallback->timezone = !empty($recipient->timezone) ? $recipient->timezone : '99';
+
+    return local_elearning_system_prepare_mail_user($fallback);
+}
+
+/**
+ * Check if notification log table exists.
+ *
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_has_notification_log_table(moodle_database $DB): bool {
+    return $DB->get_manager()->table_exists('elearning_notification_log');
+}
+
+/**
+ * Check if a specific notification type was already sent for an order.
+ *
+ * @param int $orderid
+ * @param string $notificationtype
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_notification_already_sent(int $orderid, string $notificationtype, moodle_database $DB): bool {
+    if (!local_elearning_system_has_notification_log_table($DB)) {
+        return false;
+    }
+
+    return $DB->record_exists('elearning_notification_log', [
+        'orderid' => $orderid,
+        'notificationtype' => $notificationtype,
+    ]);
+}
+
+/**
+ * Store notification log after successful send.
+ *
+ * @param int $orderid
+ * @param int $userid
+ * @param string $notificationtype
+ * @param moodle_database $DB
+ * @return void
+ */
+function local_elearning_system_mark_notification_sent(int $orderid, int $userid, string $notificationtype, moodle_database $DB): void {
+    if (!local_elearning_system_has_notification_log_table($DB)) {
+        return;
+    }
+
+    if (local_elearning_system_notification_already_sent($orderid, $notificationtype, $DB)) {
+        return;
+    }
+
+    $log = new stdClass();
+    $log->orderid = $orderid;
+    $log->userid = $userid;
+    $log->notificationtype = $notificationtype;
+    $log->timecreated = time();
+    $DB->insert_record('elearning_notification_log', $log);
+}
+
+/**
+ * Send a configured email notification for an order event.
+ *
+ * @param stdClass $order
+ * @param string $templatekey
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_send_order_email_with_template(stdClass $order, string $templatekey, moodle_database $DB): bool {
+    $user = core_user::get_user((int)$order->userid, '*', IGNORE_MISSING);
+    if (!$user || empty($user->email) || !validate_email((string)$user->email)) {
+        return false;
+    }
+    $user = local_elearning_system_prepare_mail_user($user);
+
+    $template = local_elearning_system_get_email_template($templatekey);
+    if ($template['subject'] === '' || $template['body'] === '') {
+        return false;
+    }
+
+    $productname = 'Produit';
+    if (!empty($order->productid)) {
+        $product = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,name', IGNORE_MISSING);
+        if ($product && !empty($product->name)) {
+            $productname = format_string($product->name);
+        }
+    }
+
+    $months = max(1, (int)($order->durationmonths ?? 1));
+    $expiresat = (int)($order->expiresat ?? local_elearning_system_get_order_expiresat($order));
+    $expireslabel = userdate($expiresat);
+    $amount = number_format((float)($order->amount ?? 0), 2);
+    $sitefullname = format_string(get_site()->fullname);
+    $invoiceurl = (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)($order->id ?? 0), 'pdf' => 1]))->out(false);
+    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+
+    $variables = [
+        'firstname' => (string)$user->firstname,
+        'lastname' => (string)$user->lastname,
+        'fullname' => fullname($user),
+        'email' => (string)$user->email,
+        'productname' => $productname,
+        'coursename' => $productname,
+        'amount' => $amount,
+        'currency' => local_elearning_system_get_site_currency_code(),
+        'durationmonths' => (string)$months,
+        'expireslabel' => $expireslabel,
+        'orderid' => (string)(int)($order->id ?? 0),
+        'invoiceurl' => $invoiceurl,
+        'loginurl' => $loginurl,
+        'sitefullname' => $sitefullname,
+    ];
+
+    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
+    $body = local_elearning_system_render_template_string($template['body'], $variables);
+    $messagehtml = nl2br(s($body));
+
+    $fromuser = local_elearning_system_get_valid_from_user($user);
+    return (bool)email_to_user($user, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
+ * Send a preview email for a configured template to a recipient.
+ *
+ * @param stdClass $recipient
+ * @param string $templatekey
+ * @return bool
+ */
+function local_elearning_system_send_template_preview(stdClass $recipient, string $templatekey): bool {
+    if (empty($recipient->email) || !validate_email((string)$recipient->email)) {
+        return false;
+    }
+
+    $recipient = local_elearning_system_prepare_mail_user($recipient);
+    $template = local_elearning_system_get_email_template($templatekey);
+    if ($template['subject'] === '' || $template['body'] === '') {
+        return false;
+    }
+
+    $variables = [
+        'firstname' => (string)($recipient->firstname ?? ''),
+        'lastname' => (string)($recipient->lastname ?? ''),
+        'fullname' => fullname($recipient),
+        'email' => (string)$recipient->email,
+        'productname' => 'Sample product',
+        'coursename' => 'Sample course',
+        'amount' => '0.00',
+        'currency' => local_elearning_system_get_site_currency_code(),
+        'durationmonths' => '1',
+        'expireslabel' => userdate(time() + DAYSECS),
+        'orderid' => 'preview',
+        'invoiceurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
+        'loginurl' => (new moodle_url('/login/index.php'))->out(false),
+        'sitefullname' => format_string(get_site()->fullname),
+    ];
+
+    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
+    $body = local_elearning_system_render_template_string($template['body'], $variables);
+    $messagehtml = nl2br(s($body));
+    $fromuser = local_elearning_system_get_valid_from_user($recipient);
+
+    return (bool)email_to_user($recipient, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
+ * Send email notification once per order and type.
+ *
+ * @param stdClass $order
+ * @param string $templatekey
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_send_order_notification_if_needed(stdClass $order, string $templatekey, moodle_database $DB): bool {
+    $orderid = (int)($order->id ?? 0);
+    $userid = (int)($order->userid ?? 0);
+    if ($orderid <= 0 || $userid <= 0) {
+        return false;
+    }
+
+    if (local_elearning_system_notification_already_sent($orderid, $templatekey, $DB)) {
+        return true;
+    }
+
+    $sent = local_elearning_system_send_order_email_with_template($order, $templatekey, $DB);
+    if ($sent) {
+        local_elearning_system_mark_notification_sent($orderid, $userid, $templatekey, $DB);
+    }
+
+    return $sent;
 }
 
 /**
