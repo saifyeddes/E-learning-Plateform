@@ -10,6 +10,7 @@ $PAGE->set_url('/local/elearning_system/store.php');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Store');
 $PAGE->set_heading('Store');
+local_elearning_system_force_auth_login_url('/local/elearning_system/store.php');
 
 global $DB, $CFG, $USER;
 
@@ -95,6 +96,7 @@ foreach ($records as $r) {
 
 // Check if user is logged in
 $isloggedin = isloggedin() && !isguestuser();
+$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/store.php']))->out(false);
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/store', [
@@ -103,6 +105,6 @@ echo $OUTPUT->render_from_template('local_elearning_system/store', [
     'products' => $products,
     'hasproducts' => !empty($products),
     'isloggedin' => $isloggedin,
-    'loginurl' => (new moodle_url('/login/index.php'))->out(false),
+    'loginurl' => $authurl,
 ]);
 echo $OUTPUT->footer();

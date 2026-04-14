@@ -570,6 +570,24 @@ function local_elearning_system_send_order_notification_if_needed(stdClass $orde
 }
 
 /**
+ * Force Moodle header login link to use local auth page.
+ *
+ * @param string $returnlocalurl local URL path where user should be returned after login.
+ * @return void
+ */
+function local_elearning_system_force_auth_login_url(string $returnlocalurl): void {
+    global $CFG;
+
+    if ($returnlocalurl === '' || $returnlocalurl[0] !== '/') {
+        $returnlocalurl = '/local/elearning_system/index.php';
+    }
+
+    $CFG->alternateloginurl = (new moodle_url('/local/elearning_system/auth.php', [
+        'return' => $returnlocalurl,
+    ]))->out(false);
+}
+
+/**
  * Return true when order is active considering expiresat column.
  *
  * @param stdClass $order

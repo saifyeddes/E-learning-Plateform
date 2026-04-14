@@ -1,3 +1,5 @@
+{{> local_elearning_system/client_styles }}
+<div class="es-client">
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -46,7 +48,12 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{{clearcarturl}}" class="btn btn-outline-danger">Clear Cart</a>
+                {{#isloggedin}}
                 <a href="{{checkouturl}}" class="btn btn-primary">Proceed to Checkout</a>
+                {{/isloggedin}}
+                {{^isloggedin}}
+                <a href="{{authurl}}" class="btn btn-primary">Proceed to Checkout</a>
+                {{/isloggedin}}
             </div>
         </div>
     </div>
@@ -57,4 +64,5 @@
         Your cart is empty.
     </div>
     {{/hasproducts}}
+</div>
 </div>

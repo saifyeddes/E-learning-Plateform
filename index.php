@@ -11,6 +11,7 @@ $PAGE->set_url('/local/elearning_system/index.php');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Courses');
 $PAGE->set_heading('Available Courses');
+local_elearning_system_force_auth_login_url('/local/elearning_system/index.php');
 
 global $DB, $CFG, $USER;
 
@@ -133,6 +134,8 @@ foreach ($records as $r) {
 
 echo $OUTPUT->header();
 
+$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/index.php']))->out(false);
+
 echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'bundles' => $bundles,
     'hasbundles' => !empty($bundles),
@@ -142,7 +145,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
-    'loginurl' => (new moodle_url('/login/index.php', ['wantsurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false)]))->out(false),
+    'loginurl' => $authurl,
     'accounturl' => (new moodle_url('/my/'))->out(false),
 ]);
 

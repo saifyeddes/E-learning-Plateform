@@ -1,5 +1,7 @@
 <?php
 
+use moodle_url;
+
 require('../../../config.php');
 require_once($CFG->dirroot . '/user/lib.php');
 require_once(__DIR__ . '/../lib.php');
@@ -20,6 +22,8 @@ $errors = [];
 $successmessage = '';
 $students = [];
 $parentlinks = [];
+$page = max(1, optional_param('page', 1, PARAM_INT));
+$perpage = 5;
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $linkid = optional_param('id', 0, PARAM_INT);
@@ -74,7 +78,7 @@ foreach ($studentrecords as $studentrecord) {
 
 if ($action === 'deletelink' && $linkid > 0 && confirm_sesskey()) {
     $DB->delete_records('elearning_parent_links', ['id' => $linkid]);
-    redirect(new moodle_url('/local/elearning_system/admin/parents.php'), 'Parent-child link removed successfully.');
+    redirect(new \moodle_url('/local/elearning_system/admin/parents.php'), 'Parent-child link removed successfully.');
 }
 
 if ($action === 'edit' && $linkid > 0) {
@@ -169,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                redirect(new moodle_url('/local/elearning_system/admin/parents.php'), 'Parent account created and linked successfully.');
+                redirect(new \moodle_url('/local/elearning_system/admin/parents.php'), 'Parent account created and linked successfully.');
             }
         }
     } else if ($formaction === 'update') {
@@ -224,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $linkupdate->timemodified = time();
             $DB->update_record('elearning_parent_links', $linkupdate);
 
-            redirect(new moodle_url('/local/elearning_system/admin/parents.php'), 'Parent link updated successfully.');
+            redirect(new \moodle_url('/local/elearning_system/admin/parents.php'), 'Parent link updated successfully.');
         }
     }
 }
@@ -270,11 +274,11 @@ if ($DB->get_manager()->table_exists('elearning_parent_links')) {
             'childemail' => s((string)($record->childemail ?? '-')),
             'adminfullname' => format_string($adminfullname),
             'timecreated' => userdate((int)$record->timecreated),
-            'editurl' => (new moodle_url('/local/elearning_system/admin/parents.php', [
+            'editurl' => (new \moodle_url('/local/elearning_system/admin/parents.php', [
                 'action' => 'edit',
                 'id' => (int)$record->id,
             ]))->out(false),
-            'deleteurl' => (new moodle_url('/local/elearning_system/admin/parents.php', [
+            'deleteurl' => (new \moodle_url('/local/elearning_system/admin/parents.php', [
                 'action' => 'deletelink',
                 'id' => (int)$record->id,
                 'sesskey' => sesskey(),
@@ -283,14 +287,61 @@ if ($DB->get_manager()->table_exists('elearning_parent_links')) {
     }
 }
 
+$totalparentlinks = count($parentlinks);
+$totalpages = max(1, (int)ceil($totalparentlinks / $perpage));
+if ($page > $totalpages) {
+    $page = $totalpages;
+}
+$offset = ($page - 1) * $perpage;
+$parentlinks = array_slice($parentlinks, $offset, $perpage);
+
+$pageitems = [];
+if ($totalpages > 1) {
+    $pageitems[] = [
+        'label' => 'Precedent',
+        'url' => $page > 1 ? (new \moodle_url('/local/elearning_system/admin/parents.php', ['page' => $page - 1]))->out(false) : null,
+        'disabled' => $page <= 1,
+        'isnav' => true,
+    ];
+
+    $windowstart = max(1, $page - 1);
+    $windowend = min($totalpages, $page + 1);
+    $ellipsis = false;
+    for ($i = 1; $i <= $totalpages; $i++) {
+        $showpage = ($i === 1) || ($i === $totalpages) || ($i >= $windowstart && $i <= $windowend);
+        if (!$showpage) {
+            if (!$ellipsis) {
+                $pageitems[] = ['isellipsis' => true];
+                $ellipsis = true;
+            }
+            continue;
+        }
+
+        $ellipsis = false;
+        $pageitems[] = [
+            'ispage' => true,
+            'label' => (string)$i,
+            'url' => (new \moodle_url('/local/elearning_system/admin/parents.php', ['page' => $i]))->out(false),
+            'active' => $i === $page,
+        ];
+    }
+
+    $pageitems[] = [
+        'label' => 'Suivante',
+        'url' => $page < $totalpages ? (new \moodle_url('/local/elearning_system/admin/parents.php', ['page' => $page + 1]))->out(false) : null,
+        'disabled' => $page >= $totalpages,
+        'isnav' => true,
+    ];
+}
+
 $templatedata = [
-    'dashboardurl' => (new moodle_url('/local/elearning_system/admin/dashboard.php'))->out(false),
-    'productsurl' => (new moodle_url('/local/elearning_system/admin/products.php'))->out(false),
-    'ordersurl' => (new moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
-    'parentsurl' => (new moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
-    'couponsurl' => (new moodle_url('/local/elearning_system/admin/coupons.php'))->out(false),
-    'payementurl' => (new moodle_url('/local/elearning_system/admin/payement.php'))->out(false),
-    'emailtemplatesurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
+    'dashboardurl' => (new \moodle_url('/local/elearning_system/admin/dashboard.php'))->out(false),
+    'productsurl' => (new \moodle_url('/local/elearning_system/admin/products.php'))->out(false),
+    'ordersurl' => (new \moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
+    'parentsurl' => (new \moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
+    'couponsurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php'))->out(false),
+    'payementurl' => (new \moodle_url('/local/elearning_system/admin/payement.php'))->out(false),
+    'emailtemplatesurl' => (new \moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
 
     'isdashboard' => false,
     'isproducts' => false,
@@ -315,7 +366,9 @@ $templatedata = [
     'hasstudents' => !empty($students),
     'parentlinks' => $parentlinks,
     'hasparentlinks' => !empty($parentlinks),
-    'formurl' => (new moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
+    'pageitems' => $pageitems,
+    'haspagination' => ($totalpages > 1),
+    'formurl' => (new \moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
     'parentshelp' => 'Create a manual Moodle account for the parent using the email and password entered here, then link the account to one child.'
 ];
 

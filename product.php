@@ -9,6 +9,7 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/product.php', ['id' => $productid]);
 $PAGE->set_pagelayout('standard');
+local_elearning_system_force_auth_login_url('/local/elearning_system/product.php?id=' . $productid);
 
 global $DB, $CFG;
 
@@ -27,6 +28,8 @@ if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_e
     $SESSION->local_elearning_system_cart = [];
 }
 local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
+
+$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/product.php?id=' . $productid]))->out(false);
 
 $productrecord = $DB->get_record('elearning_products', ['id' => $productid], '*', MUST_EXIST);
 
@@ -104,7 +107,8 @@ $templatedata = [
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'checkouturl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false),
     'checkoutreturnurl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false),
-    'loginurl' => (new moodle_url('/login/index.php', ['wantsurl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false)]))->out(false),
+    'authurl' => $authurl,
+    'loginurl' => $authurl,
     'signupurl' => (new moodle_url('/login/signup.php', ['wantsurl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false)]))->out(false),
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'backurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),

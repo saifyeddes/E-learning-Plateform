@@ -25,6 +25,8 @@ $selectedcategoryid = optional_param('categoryid', 0, PARAM_INT);
 $selectedcourseid = optional_param('courseid', 0, PARAM_INT);
 $selectedtypefilter = optional_param('typefilter', '', PARAM_ALPHA);
 $selectedstatusfilter = optional_param('statusfilter', '', PARAM_ALPHA);
+$page = max(1, optional_param('page', 1, PARAM_INT));
+$perpage = 5;
 
 $listparams = [];
 if ($searchquery !== '') {
@@ -224,6 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // PRODUCTS LIST
 $products = [];
+$pageitems = [];
 
 // FORM DATA (all categories and courses)
 $categories = [];
@@ -308,7 +311,7 @@ $statusfilters = [
     ],
 ];
 
-$records = $DB->get_records('elearning_products',null,'id DESC');
+$records = $DB->get_records('elearning_products', null, 'id DESC');
 
 $bundleavailableproducts = [];
 $selectedbundleidsforedit = [];
@@ -424,6 +427,52 @@ foreach ($records as $r) {
 ];
 }
 
+$totalproducts = count($products);
+$totalpages = max(1, (int)ceil($totalproducts / $perpage));
+if ($page > $totalpages) {
+    $page = $totalpages;
+}
+$offset = ($page - 1) * $perpage;
+$products = array_slice($products, $offset, $perpage);
+
+if ($totalpages > 1) {
+    $pageitems[] = [
+        'label' => 'Precedent',
+        'url' => $page > 1 ? (new moodle_url('/local/elearning_system/admin/products.php', $listparams + ['page' => $page - 1]))->out(false) : null,
+        'disabled' => $page <= 1,
+        'isnav' => true,
+    ];
+
+    $windowstart = max(1, $page - 1);
+    $windowend = min($totalpages, $page + 1);
+    $ellipsis = false;
+    for ($i = 1; $i <= $totalpages; $i++) {
+        $showpage = ($i === 1) || ($i === $totalpages) || ($i >= $windowstart && $i <= $windowend);
+        if (!$showpage) {
+            if (!$ellipsis) {
+                $pageitems[] = ['isellipsis' => true];
+                $ellipsis = true;
+            }
+            continue;
+        }
+
+        $ellipsis = false;
+        $pageitems[] = [
+            'ispage' => true,
+            'label' => (string)$i,
+            'url' => (new moodle_url('/local/elearning_system/admin/products.php', $listparams + ['page' => $i]))->out(false),
+            'active' => $i === $page,
+        ];
+    }
+
+    $pageitems[] = [
+        'label' => 'Suivante',
+        'url' => $page < $totalpages ? (new moodle_url('/local/elearning_system/admin/products.php', $listparams + ['page' => $page + 1]))->out(false) : null,
+        'disabled' => $page >= $totalpages,
+        'isnav' => true,
+    ];
+}
+
 // EDIT
 $editproduct = null;
 if ($editid) {
@@ -502,6 +551,10 @@ $templatedata = [
     'typefilters'=>$typefilters,
     'statusfilters'=>$statusfilters,
     'searchquery'=>$searchquery,
+    'pageitems' => $pageitems,
+    'haspagination' => ($totalpages > 1),
+    'currentpage' => $page,
+    'totalpages' => $totalpages,
     'bundleavailableproducts' => $bundleavailableproducts,
     'editbundle' => $editbundle,
     'iseditingbundle' => ($editbundle !== null),

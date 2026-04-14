@@ -1,3 +1,5 @@
+{{> local_elearning_system/client_styles }}
+<div class="es-client">
 <div class="container-fluid">
     <div class="mb-3">
         <a href="{{backurl}}" class="btn btn-link p-0">Back to courses</a>
@@ -90,7 +92,7 @@
                         <a href="{{courseurl}}" class="btn btn-outline-secondary">Open Course</a>
                         {{/isloggedin}}
                         {{^isloggedin}}
-                        <a href="{{checkouturl}}#authpanel" class="btn btn-success">Buy Now</a>
+                        <a href="{{authurl}}" class="btn btn-success">Buy Now</a>
                         {{/isloggedin}}
                         {{/hascourse}}
                     </div>
@@ -98,4 +100,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>

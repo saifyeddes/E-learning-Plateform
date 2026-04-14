@@ -1,5 +1,7 @@
 <?php
 
+use moodle_url;
+
 require('../../../config.php');
 require_login();
 
@@ -16,6 +18,8 @@ global $DB;
 
 $searchquery = trim((string)optional_param('search', '', PARAM_TEXT));
 $selectedproductid = optional_param('productid', 0, PARAM_INT);
+$page = max(1, optional_param('page', 1, PARAM_INT));
+$perpage = 5;
 
 $listparams = [];
 if ($searchquery !== '') {
@@ -26,6 +30,7 @@ if ($selectedproductid !== 0) {
 }
 
 $orders = [];
+$pageitems = [];
 $productfilters = [[
     'value' => 0,
     'label' => 'All products',
@@ -101,9 +106,55 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'durationachetee' => $durationmonths . ' mois',
             'amount' => number_format((float)$r->amount, 2),
             'timecreated' => userdate((int)$r->timecreated),
-            'invoiceurl' => (new moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),
+            'invoiceurl' => (new \moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),
         ];
     }
+}
+
+$totalorders = count($orders);
+$totalpages = max(1, (int)ceil($totalorders / $perpage));
+if ($page > $totalpages) {
+    $page = $totalpages;
+}
+$offset = ($page - 1) * $perpage;
+$orders = array_slice($orders, $offset, $perpage);
+
+if ($totalpages > 1) {
+    $pageitems[] = [
+        'label' => 'Precedent',
+        'url' => $page > 1 ? (new \moodle_url('/local/elearning_system/admin/orders.php', $listparams + ['page' => $page - 1]))->out(false) : null,
+        'disabled' => $page <= 1,
+        'isnav' => true,
+    ];
+
+    $windowstart = max(1, $page - 1);
+    $windowend = min($totalpages, $page + 1);
+    $ellipsis = false;
+    for ($i = 1; $i <= $totalpages; $i++) {
+        $showpage = ($i === 1) || ($i === $totalpages) || ($i >= $windowstart && $i <= $windowend);
+        if (!$showpage) {
+            if (!$ellipsis) {
+                $pageitems[] = ['isellipsis' => true];
+                $ellipsis = true;
+            }
+            continue;
+        }
+
+        $ellipsis = false;
+        $pageitems[] = [
+            'ispage' => true,
+            'label' => (string)$i,
+            'url' => (new \moodle_url('/local/elearning_system/admin/orders.php', $listparams + ['page' => $i]))->out(false),
+            'active' => $i === $page,
+        ];
+    }
+
+    $pageitems[] = [
+        'label' => 'Suivante',
+        'url' => $page < $totalpages ? (new \moodle_url('/local/elearning_system/admin/orders.php', $listparams + ['page' => $page + 1]))->out(false) : null,
+        'disabled' => $page >= $totalpages,
+        'isnav' => true,
+    ];
 }
 
 $hasfilters = ($searchquery !== '' || $selectedproductid !== 0);
@@ -115,15 +166,17 @@ $templatedata = [
     'noordersmessage' => $hasfilters ? 'No orders match your filters.' : 'No orders yet.',
     'searchquery' => $searchquery,
     'productfilters' => $productfilters,
-    'filterurl' => (new moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
+    'filterurl' => (new \moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
+    'pageitems' => $pageitems,
+    'haspagination' => ($totalpages > 1),
 
-    'dashboardurl' => (new moodle_url('/local/elearning_system/admin/dashboard.php'))->out(false),
-    'productsurl' => (new moodle_url('/local/elearning_system/admin/products.php'))->out(false),
-    'ordersurl' => (new moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
-    'parentsurl' => (new moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
-    'couponsurl' => (new moodle_url('/local/elearning_system/admin/coupons.php'))->out(false),
-    'payementurl' => (new moodle_url('/local/elearning_system/admin/payement.php'))->out(false),
-    'emailtemplatesurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
+    'dashboardurl' => (new \moodle_url('/local/elearning_system/admin/dashboard.php'))->out(false),
+    'productsurl' => (new \moodle_url('/local/elearning_system/admin/products.php'))->out(false),
+    'ordersurl' => (new \moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
+    'parentsurl' => (new \moodle_url('/local/elearning_system/admin/parents.php'))->out(false),
+    'couponsurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php'))->out(false),
+    'payementurl' => (new \moodle_url('/local/elearning_system/admin/payement.php'))->out(false),
+    'emailtemplatesurl' => (new \moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
 
     'isdashboard' => false,
     'isproducts' => false,

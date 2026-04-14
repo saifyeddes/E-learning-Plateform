@@ -76,6 +76,7 @@ if (!empty($product->courseid)) {
 }
 
 $isloggedin = isloggedin() && !isguestuser();
+$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => (new moodle_url('/local/elearning_system/product.php', ['id' => $productid]))->out(false)]))->out(false);
 
 $PAGE->set_title($product->name);
 $PAGE->set_heading($product->name);
@@ -96,7 +97,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/store_product_details
     'hascourse' => $hascourse,
     'courseurl' => $courseurl,
     'isloggedin' => $isloggedin,
-    'loginurl' => (new moodle_url('/login/index.php'))->out(false),
+    'loginurl' => $authurl,
     'backurl' => (new moodle_url('/local/elearning_system/store.php'))->out(false),
 ]);
 echo $OUTPUT->footer();

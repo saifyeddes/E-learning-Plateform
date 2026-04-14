@@ -9,6 +9,7 @@ $PAGE->set_url('/local/elearning_system/cart.php');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Cart');
 $PAGE->set_heading('Your Cart');
+local_elearning_system_force_auth_login_url('/local/elearning_system/cart.php');
 
 global $DB, $CFG;
 
@@ -122,6 +123,7 @@ if (!empty($cartids)) {
 }
 
 $checkouturl = (new moodle_url('/local/elearning_system/checkout.php'))->out(false);
+$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/checkout.php']))->out(false);
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/cart', [
@@ -129,10 +131,11 @@ echo $OUTPUT->render_from_template('local_elearning_system/cart', [
     'hasproducts' => !empty($products),
     'total' => number_format($total, 2),
     'checkouturl' => $checkouturl,
+    'authurl' => $authurl,
     'isloggedin' => $isloggedin,
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
-    'loginurl' => (new moodle_url('/login/index.php', ['wantsurl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false)]))->out(false),
+    'loginurl' => (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/cart.php']))->out(false),
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'storeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
     'clearcarturl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'clear', 'sesskey' => sesskey()]))->out(false),

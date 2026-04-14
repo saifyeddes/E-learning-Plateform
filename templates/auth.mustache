@@ -1,0 +1,131 @@
+{{> local_elearning_system/client_styles }}
+<div class="es-client">
+<div class="container-fluid es-checkout-page">
+    <div class="row mb-3 es-checkout-hero align-items-center">
+        <div class="col-12 col-lg-8">
+            <h3 class="mb-1">Connexion</h3>
+            <p class="mb-0 text-muted es-checkout-subtitle">Connectez-vous ou creez un compte pour continuer votre achat.</p>
+        </div>
+        <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
+            <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Back to Cart</a>
+        </div>
+    </div>
+</div>
+
+<div id="authpanel" class="container-fluid mt-3 es-auth-wrap">
+    <div class="alert alert-info mb-3 es-auth-note" role="alert">
+        Veuillez vous connecter ou vous inscrire pour effectuer votre achat.
+    </div>
+
+    <div class="es-auth-features mb-3">
+        <div class="es-auth-feature"><i class="fa fa-shield-alt" aria-hidden="true"></i> Paiement securise</div>
+        <div class="es-auth-feature"><i class="fa fa-bolt" aria-hidden="true"></i> Activation rapide</div>
+        <div class="es-auth-feature"><i class="fa fa-headset" aria-hidden="true"></i> Support disponible</div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 es-auth-card">
+                <div class="card-body">
+                    <h4 class="mb-1 es-auth-title">
+                        <span class="es-auth-icon"><i class="fa fa-sign-in-alt" aria-hidden="true"></i></span>
+                        Se connecter
+                    </h4>
+                    <p class="text-muted es-auth-subtitle">Accedez a votre compte pour finaliser votre commande.</p>
+                    {{#hasloginerrors}}
+                    <div class="alert alert-danger" role="alert">
+                        {{#loginerrors}}
+                        <div>{{message}}</div>
+                        {{/loginerrors}}
+                    </div>
+                    {{/hasloginerrors}}
+
+                    <form action="{{authurl}}" method="post" autocomplete="on" class="es-auth-form">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <input type="hidden" name="return" value="{{returnurl}}">
+                        <input type="hidden" name="loginsubmit" value="1">
+                        <div class="mb-3">
+                            <label for="checkout-username" class="form-label">Identifiant ou e-mail</label>
+                            <input id="checkout-username" class="form-control" type="text" name="login_username" value="{{loginidentifier}}" placeholder="nom.utilisateur ou email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="checkout-password" class="form-label">Mot de passe</label>
+                            <input id="checkout-password" class="form-control" type="password" name="login_password" placeholder="Votre mot de passe" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary es-auth-submit">Se connecter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 es-auth-card">
+                <div class="card-body">
+                    <h4 class="mb-1 es-auth-title">
+                        <span class="es-auth-icon"><i class="fa fa-user-plus" aria-hidden="true"></i></span>
+                        S’inscrire
+                    </h4>
+                    <p class="text-muted es-auth-subtitle">Creez votre compte pour activer vos cours apres paiement.</p>
+                    {{#hasregistererrors}}
+                    <div class="alert alert-danger" role="alert">
+                        {{#registererrors}}
+                        <div>{{message}}</div>
+                        {{/registererrors}}
+                    </div>
+                    {{/hasregistererrors}}
+
+                    <form action="{{authurl}}" method="post" autocomplete="on" class="es-auth-form">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <input type="hidden" name="return" value="{{returnurl}}">
+                        <input type="hidden" name="registersubmit" value="1">
+
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-firstname" class="form-label">Prénom</label>
+                                <input id="reg-firstname" class="form-control" type="text" name="reg_firstname" value="{{registerfirstname}}" placeholder="Votre prenom" required>
+                            </div>
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-lastname" class="form-label">Nom</label>
+                                <input id="reg-lastname" class="form-control" type="text" name="reg_lastname" value="{{registerlastname}}" placeholder="Votre nom" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-username" class="form-label">Identifiant</label>
+                            <input id="reg-username" class="form-control" type="text" name="reg_username" value="{{registerusername}}" placeholder="Choisissez un identifiant" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-email" class="form-label">Adresse e-mail</label>
+                            <input id="reg-email" class="form-control" type="email" name="reg_email" value="{{registeremail}}" placeholder="vous@exemple.com" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reg-password" class="form-label">Mot de passe</label>
+                            <input id="reg-password" class="form-control" type="password" name="reg_password" placeholder="Creez un mot de passe" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-city" class="form-label">Ville</label>
+                                <input id="reg-city" class="form-control" type="text" name="reg_city" value="{{registercity}}" placeholder="Votre ville">
+                            </div>
+                            <div class="col-12 col-md-6 mb-3">
+                                <label for="reg-country" class="form-label">Pays</label>
+                                <select id="reg-country" class="custom-select form-control" name="reg_country">
+                                    <option value="">Choisir...</option>
+                                    {{#countries}}
+                                    <option value="{{code}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                                    {{/countries}}
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary es-auth-submit">S’inscrire</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
