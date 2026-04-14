@@ -366,6 +366,153 @@
     border: 2px solid #fff;
 }
 
+.es-chatbot-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 999px;
+    background: #0f6cbf;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(15, 108, 191, 0.35);
+    z-index: 2000;
+}
+
+.es-chatbot-fab:hover,
+.es-chatbot-fab:focus {
+    background: #0d5aa0;
+}
+
+.es-chatbot-fab i {
+    font-size: 1.25rem;
+}
+
+.es-chatbot-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 88px;
+    width: min(380px, calc(100vw - 20px));
+    height: 470px;
+    border: 1px solid var(--es-line);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 36px rgba(25, 35, 45, 0.22);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.es-chatbot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid var(--es-line);
+    background: linear-gradient(135deg, rgba(15, 108, 191, 0.08), rgba(15, 108, 191, 0.02));
+}
+
+.es-chatbot-close {
+    border: 0;
+    background: transparent;
+    color: #475467;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.es-chatbot-messages {
+    flex: 1;
+    overflow: auto;
+    padding: 0.72rem;
+    background: #f8fafc;
+}
+
+.es-chatbot-msg {
+    max-width: 88%;
+    margin-bottom: 0.5rem;
+    padding: 0.48rem 0.62rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.es-chatbot-msg-bot {
+    background: #ffffff;
+    border: 1px solid #d7e4f5;
+    color: #102a43;
+}
+
+.es-chatbot-msg-user {
+    margin-left: auto;
+    background: #0f6cbf;
+    color: #fff;
+}
+
+.es-chatbot-meta {
+    max-width: 88%;
+    margin-bottom: 0.6rem;
+}
+
+.es-chatbot-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.es-chatbot-suggestion-btn {
+    border: 1px solid #bfd7f3;
+    background: #eef5fd;
+    color: #0d4f8b;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.es-chatbot-rating {
+    margin-top: 0.45rem;
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+}
+
+.es-chatbot-rating-label {
+    font-size: 0.76rem;
+    color: #475467;
+    margin-right: 0.2rem;
+}
+
+.es-chatbot-rating-star {
+    border: 0;
+    background: transparent;
+    color: #d0d5dd;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.es-chatbot-rating-star.active {
+    color: #f59e0b;
+}
+
+.es-chatbot-form {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.6rem;
+    border-top: 1px solid var(--es-line);
+    background: #fff;
+}
+
+.es-chatbot-form .form-control {
+    min-height: 40px;
+}
+
+.es-chatbot-form .btn {
+    min-width: 92px;
+}
+
 @media (max-width: 768px) {
     .es-client {
         padding: 0.8rem;
@@ -391,5 +538,228 @@
     .es-client .es-auth-submit {
         width: 100%;
     }
+
+    .es-chatbot-fab {
+        right: 14px;
+        bottom: 14px;
+        width: 52px;
+        height: 52px;
+    }
+
+    .es-chatbot-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        bottom: 74px;
+        height: 62vh;
+    }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.localElearningSystemChatbotInit) {
+        return;
+    }
+    window.localElearningSystemChatbotInit = true;
+
+    const body = document.body;
+    if (!body) {
+        return;
+    }
+
+    const chatbotFab = document.createElement('button');
+    chatbotFab.type = 'button';
+    chatbotFab.id = 'esChatbotFab';
+    chatbotFab.className = 'es-chatbot-fab';
+    chatbotFab.setAttribute('aria-label', 'Open chatbot');
+    chatbotFab.setAttribute('title', 'Chatbot');
+    chatbotFab.innerHTML = '<i class="fa fa-comments"></i>';
+
+    const chatbotPanel = document.createElement('div');
+    chatbotPanel.id = 'esChatbotPanel';
+    chatbotPanel.className = 'es-chatbot-panel d-none';
+    chatbotPanel.setAttribute('role', 'dialog');
+    chatbotPanel.setAttribute('aria-modal', 'false');
+    chatbotPanel.setAttribute('aria-label', 'Course assistant');
+    chatbotPanel.innerHTML = '' +
+        '<div class="es-chatbot-head">' +
+            '<strong>Assistant IA</strong>' +
+            '<button type="button" id="esChatbotClose" class="es-chatbot-close" aria-label="Close chatbot">&times;</button>' +
+        '</div>' +
+        '<div id="esChatbotMessages" class="es-chatbot-messages">' +
+            '<div class="es-chatbot-msg es-chatbot-msg-bot">Bonjour. Demandez un prix ou un achat direct. Exemple: acheter Physique pour 2 mois.</div>' +
+        '</div>' +
+        '<form id="esChatbotForm" class="es-chatbot-form">' +
+            '<input id="esChatbotInput" type="text" class="form-control" placeholder="Ecrivez votre demande..." autocomplete="off">' +
+            '<button type="submit" class="btn btn-primary">Envoyer</button>' +
+        '</form>';
+
+    body.appendChild(chatbotFab);
+    body.appendChild(chatbotPanel);
+
+    const chatbotClose = document.getElementById('esChatbotClose');
+    const chatbotForm = document.getElementById('esChatbotForm');
+    const chatbotInput = document.getElementById('esChatbotInput');
+    const chatbotMessages = document.getElementById('esChatbotMessages');
+
+    const appendChatMessage = function(text, isBot) {
+        if (!chatbotMessages) {
+            return;
+        }
+        const el = document.createElement('div');
+        el.className = 'es-chatbot-msg ' + (isBot ? 'es-chatbot-msg-bot' : 'es-chatbot-msg-user');
+        el.textContent = text;
+        chatbotMessages.appendChild(el);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    };
+
+    const appendChatMeta = function() {
+        if (!chatbotMessages) {
+            return null;
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'es-chatbot-meta';
+        chatbotMessages.appendChild(meta);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        return meta;
+    };
+
+    const renderSuggestions = function(metaContainer, suggestions) {
+        if (!metaContainer || !Array.isArray(suggestions) || !suggestions.length) {
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'es-chatbot-suggestions';
+
+        suggestions.slice(0, 3).forEach(function(suggestion) {
+            if (!suggestion || typeof suggestion !== 'string') {
+                return;
+            }
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'es-chatbot-suggestion-btn';
+            btn.textContent = suggestion;
+            btn.addEventListener('click', function() {
+                chatbotInput.value = suggestion;
+                sendQuestion(suggestion);
+            });
+            wrapper.appendChild(btn);
+        });
+
+        if (wrapper.childNodes.length > 0) {
+            metaContainer.appendChild(wrapper);
+        }
+    };
+
+    const renderRating = function(metaContainer) {
+        if (!metaContainer) {
+            return;
+        }
+
+        const rating = document.createElement('div');
+        rating.className = 'es-chatbot-rating';
+
+        const label = document.createElement('span');
+        label.className = 'es-chatbot-rating-label';
+        label.textContent = 'Votre avis';
+        rating.appendChild(label);
+
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('button');
+            star.type = 'button';
+            star.className = 'es-chatbot-rating-star';
+            star.textContent = '★';
+            star.setAttribute('aria-label', i + ' etoiles');
+            star.addEventListener('click', function() {
+                stars.forEach(function(s, idx) {
+                    s.classList.toggle('active', idx < i);
+                });
+                appendChatMessage('Merci pour votre avis: ' + i + '/5.', true);
+            });
+            stars.push(star);
+            rating.appendChild(star);
+        }
+
+        metaContainer.appendChild(rating);
+    };
+
+    const sendQuestion = function(question) {
+        if (!question) {
+            return;
+        }
+
+        appendChatMessage(question, false);
+        chatbotInput.value = '';
+
+        const wwwroot = (window.M && M.cfg && M.cfg.wwwroot) ? M.cfg.wwwroot : '';
+        const sesskey = (window.M && M.cfg && M.cfg.sesskey) ? M.cfg.sesskey : '';
+        const endpoint = wwwroot + '/local/elearning_system/chatbot.php';
+
+        if (!endpoint || !sesskey) {
+            appendChatMessage('Session invalide. Rechargez la page puis reessayez.', true);
+            return;
+        }
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: new URLSearchParams({
+                sesskey: sesskey,
+                message: question
+            }).toString()
+        })
+        .then(function(res) {
+            return res.json();
+        })
+        .then(function(data) {
+            const reply = (data && data.reply) ? data.reply : 'Je n ai pas compris. Essayez avec un nom de cours.';
+            appendChatMessage(reply, true);
+
+            const meta = appendChatMeta();
+            renderSuggestions(meta, data && data.suggestions ? data.suggestions : []);
+            if (!data || data.showrating !== false) {
+                renderRating(meta);
+            }
+
+            if (data && data.redirecturl) {
+                setTimeout(function() {
+                    window.location.href = data.redirecturl;
+                }, 900);
+            }
+        })
+        .catch(function() {
+            appendChatMessage('Erreur reseau. Reessayez.', true);
+        });
+    };
+
+    chatbotFab.addEventListener('click', function() {
+        chatbotPanel.classList.toggle('d-none');
+        if (!chatbotPanel.classList.contains('d-none') && chatbotInput) {
+            chatbotInput.focus();
+        }
+    });
+
+    if (chatbotClose) {
+        chatbotClose.addEventListener('click', function() {
+            chatbotPanel.classList.add('d-none');
+        });
+    }
+
+    if (!chatbotForm || !chatbotInput) {
+        return;
+    }
+
+    chatbotForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const question = chatbotInput.value.trim();
+        sendQuestion(question);
+    });
+});
+</script>

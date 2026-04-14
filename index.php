@@ -147,6 +147,8 @@ echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
     'loginurl' => $authurl,
     'accounturl' => (new moodle_url('/my/'))->out(false),
+    'chatbotendpoint' => (new moodle_url('/local/elearning_system/chatbot.php'))->out(false),
+    'sesskey' => sesskey(),
 ]);
 
 echo $OUTPUT->footer();
