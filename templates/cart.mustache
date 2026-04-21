@@ -1,58 +1,85 @@
 {{> local_elearning_system/client_styles }}
 <div class="es-client">
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h3 class="mb-0">Your Cart</h3>
+<div class="container-fluid es-cart-page">
+    <div class="es-cart-hero mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h3 class="mb-1">Your Cart</h3>
+                <p class="es-cart-subtitle mb-0">Ajustez la duree d acces. Le prix se met a jour automatiquement.</p>
+            </div>
             <a href="{{storeurl}}" class="btn btn-outline-secondary btn-sm">Continue Shopping</a>
         </div>
     </div>
 
     {{#hasproducts}}
-    <div class="card mb-3">
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Durée d'accès</th>
-                        <th>Price</th>
-                        <th>Line Total</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#products}}
-                    <tr>
-                        <td><a href="{{producturl}}">{{name}}</a></td>
-                        <td>
-                            <form method="post" action="{{setdurationurl}}" class="m-0 d-flex align-items-center gap-2">
-                                <input type="number" name="durationmonths" class="form-control form-control-sm" min="1" max="24" step="1" value="{{durationmonths}}" style="max-width: 120px;">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">OK</button>
+    <div class="row g-3 mb-3" id="esCartItems">
+        {{#products}}
+        <div class="col-12">
+            <article class="card es-cart-item" data-unitprice="{{unitpriceraw}}">
+                <div class="card-body">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-12 col-md-2">
+                            <a href="{{producturl}}" class="es-cart-thumb">
+                                {{#hasimage}}
+                                <img src="{{image}}" alt="{{name}}" class="img-fluid rounded">
+                                {{/hasimage}}
+                                {{^hasimage}}
+                                <div class="es-cart-thumb-placeholder"><i class="fa fa-image"></i></div>
+                                {{/hasimage}}
+                            </a>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <h5 class="mb-1"><a href="{{producturl}}">{{name}}</a></h5>
+                            <div class="text-muted small">Unit price: $<span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / month</div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label mb-1">Durée d'accès (mois)</label>
+                            <form method="post" action="{{setdurationurl}}" class="m-0 es-cart-duration-form" novalidate>
+                                <div class="es-cart-stepper">
+                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="-1" aria-label="Diminuer la duree">-</button>
+                                    <input
+                                        type="number"
+                                        name="durationmonths"
+                                        class="form-control es-cart-duration"
+                                        min="1"
+                                        max="24"
+                                        step="1"
+                                        value="{{durationmonths}}"
+                                        data-unitprice="{{unitpriceraw}}"
+                                        aria-label="Duree en mois pour {{name}}"
+                                    >
+                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="1" aria-label="Augmenter la duree">+</button>
+                                </div>
                             </form>
-                        </td>
-                        <td>${{price}}</td>
-                        <td>${{lineprice}}</td>
-                        <td><a href="{{removeurl}}" class="btn btn-sm btn-outline-danger">Remove</a></td>
-                    </tr>
-                    {{/products}}
-                </tbody>
-            </table>
+                            <div class="small text-muted mt-1 es-cart-autosave">Auto update</div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="small text-muted">Line Total</div>
+                            <div class="fw-bold es-cart-line-price" data-linevalue="{{linepriceraw}}">${{lineprice}}</div>
+                        </div>
+                        <div class="col-6 col-md-2 col-lg-1 d-flex align-items-center justify-content-end">
+                            <a href="{{removeurl}}" class="btn btn-sm btn-outline-danger es-cart-remove-btn">Remove</a>
+                        </div>
+                    </div>
+                </div>
+            </article>
         </div>
+        {{/products}}
     </div>
 
-    <div class="card">
-        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <strong>Total:</strong> ${{total}}
+    <div class="card es-cart-summary-card">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="es-cart-total-wrap">
+                <span class="text-muted d-block">Grand total</span>
+                <strong class="es-cart-total-value" id="esCartTotal">${{total}}</strong>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{{clearcarturl}}" class="btn btn-outline-danger">Clear Cart</a>
                 {{#isloggedin}}
-                <a href="{{checkouturl}}" class="btn btn-primary">Proceed to Checkout</a>
+                <a href="{{checkouturl}}" class="btn btn-primary es-cart-cta">Proceed to Checkout</a>
                 {{/isloggedin}}
                 {{^isloggedin}}
-                <a href="{{authurl}}" class="btn btn-primary">Proceed to Checkout</a>
+                <a href="{{authurl}}" class="btn btn-primary es-cart-cta">Proceed to Checkout</a>
                 {{/isloggedin}}
             </div>
         </div>
@@ -66,3 +93,99 @@
     {{/hasproducts}}
 </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cartItems = Array.from(document.querySelectorAll('.es-cart-item'));
+    const totalEl = document.getElementById('esCartTotal');
+
+    if (!cartItems.length || !totalEl) {
+        return;
+    }
+
+    const clampMonths = function(value) {
+        const n = parseInt(value, 10);
+        if (isNaN(n)) {
+            return 1;
+        }
+        return Math.max(1, Math.min(24, n));
+    };
+
+    const parseMoney = function(raw) {
+        if (raw === null || raw === undefined) {
+            return 0;
+        }
+        const cleaned = String(raw).replace(',', '.').replace(/[^0-9.\-]/g, '');
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const recalcTotals = function() {
+        let grand = 0;
+        cartItems.forEach(function(item) {
+            const input = item.querySelector('.es-cart-duration');
+            const lineEl = item.querySelector('.es-cart-line-price');
+            const unitTextEl = item.querySelector('.es-cart-unit-price');
+            if (!input || !lineEl) {
+                return;
+            }
+
+            let unit = parseMoney(item.getAttribute('data-unitprice'));
+            if (unit <= 0) {
+                unit = parseMoney(input.getAttribute('data-unitprice'));
+            }
+            if (unit <= 0 && unitTextEl) {
+                unit = parseMoney(unitTextEl.getAttribute('data-unittext') || unitTextEl.textContent);
+            }
+
+            const months = clampMonths(input.value);
+            input.value = months;
+            const line = unit * months;
+            lineEl.setAttribute('data-linevalue', line.toFixed(2));
+            lineEl.textContent = '$' + line.toFixed(2);
+            grand += line;
+        });
+
+        totalEl.textContent = '$' + grand.toFixed(2);
+    };
+
+    const scheduleSubmit = function(form) {
+        window.clearTimeout(form._autosaveTimer);
+        form._autosaveTimer = window.setTimeout(function() {
+            form.submit();
+        }, 500);
+    };
+
+    cartItems.forEach(function(item) {
+        const form = item.querySelector('.es-cart-duration-form');
+        const input = item.querySelector('.es-cart-duration');
+        const stepBtns = Array.from(item.querySelectorAll('.es-cart-step'));
+
+        if (!form || !input) {
+            return;
+        }
+
+        input.addEventListener('input', function() {
+            recalcTotals();
+            scheduleSubmit(form);
+        });
+
+        input.addEventListener('change', function() {
+            recalcTotals();
+            scheduleSubmit(form);
+        });
+
+        stepBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const step = parseInt(btn.getAttribute('data-step') || '0', 10);
+                const next = clampMonths((parseInt(input.value || '1', 10) || 1) + step);
+                input.value = next;
+                recalcTotals();
+                scheduleSubmit(form);
+            });
+        });
+    });
+
+    recalcTotals();
+});
+</script>

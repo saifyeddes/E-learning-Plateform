@@ -267,6 +267,123 @@
     z-index: 1055;
 }
 
+.ea-chatbot-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 999px;
+    background: #0f6cbf;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(15, 108, 191, 0.35);
+    z-index: 2000;
+}
+
+.ea-chatbot-fab:hover,
+.ea-chatbot-fab:focus {
+    background: #0d5aa0;
+}
+
+.ea-chatbot-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 88px;
+    width: min(420px, calc(100vw - 20px));
+    height: 500px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 36px rgba(25, 35, 45, 0.22);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ea-chatbot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(135deg, rgba(15, 108, 191, 0.08), rgba(15, 108, 191, 0.02));
+}
+
+.ea-chatbot-close {
+    border: 0;
+    background: transparent;
+    color: #475467;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.ea-chatbot-messages {
+    flex: 1;
+    overflow: auto;
+    padding: 0.72rem;
+    background: #f8fafc;
+}
+
+.ea-chatbot-msg {
+    max-width: 90%;
+    margin-bottom: 0.5rem;
+    padding: 0.48rem 0.62rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.ea-chatbot-msg-bot {
+    background: #ffffff;
+    border: 1px solid #d7e4f5;
+    color: #102a43;
+}
+
+.ea-chatbot-msg-user {
+    margin-left: auto;
+    background: #0f6cbf;
+    color: #fff;
+}
+
+.ea-chatbot-meta {
+    max-width: 90%;
+    margin-bottom: 0.6rem;
+}
+
+.ea-chatbot-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.ea-chatbot-suggestion-btn {
+    border: 1px solid #bfd7f3;
+    background: #eef5fd;
+    color: #0d4f8b;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.ea-chatbot-invoice {
+    margin-top: 0.45rem;
+}
+
+.ea-chatbot-form {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.6rem;
+    border-top: 1px solid var(--line);
+    background: #fff;
+}
+
+.ea-chatbot-form .form-control {
+    min-height: 40px;
+}
+
 .product-drawer.open {
     right: 0;
 }
@@ -277,6 +394,73 @@
     background: rgba(0,0,0,0.3);
     display: none;
     z-index: 1050;
+}
+
+.elearn-delete-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: min(560px, calc(100vw - 28px));
+    background: #fff;
+    border: 1px solid #c8d9ec;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(16, 42, 67, 0.32);
+    z-index: 2100;
+    transform: translate(-50%, -46%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.elearn-delete-toast.is-open {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+}
+
+.elearn-delete-toast__content {
+    padding: 24px 24px 20px;
+}
+
+.elearn-delete-toast__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-bottom: 0.45rem;
+}
+
+.elearn-delete-toast__title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #102a43;
+}
+
+.elearn-delete-toast__close {
+    border: 0;
+    background: transparent;
+    color: #526d8c;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.elearn-delete-toast__message {
+    margin: 0 0 1.1rem;
+    font-size: 1rem;
+    color: #243b53;
+}
+
+.elearn-delete-toast__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+}
+
+@media (max-width: 575.98px) {
+    .elearn-delete-toast__content {
+        padding: 18px 16px 16px;
+    }
 }
 
 @media (max-width: 991.98px) {
@@ -307,6 +491,21 @@
 
     .elearn-main {
         padding: 0.25rem;
+    }
+
+    .ea-chatbot-fab {
+        right: 12px;
+        bottom: 12px;
+        width: 52px;
+        height: 52px;
+    }
+
+    .ea-chatbot-panel {
+        right: 8px;
+        left: 8px;
+        width: auto;
+        bottom: 70px;
+        height: 62vh;
     }
 }
 
@@ -521,6 +720,20 @@
     {{> local_elearning_system/bundle_form }}
 </div>
 
+<div class="elearn-delete-toast" id="elearnDeleteToast" role="alertdialog" aria-labelledby="elearnDeleteToastTitle" aria-describedby="elearnDeleteToastMessage" aria-hidden="true">
+    <div class="elearn-delete-toast__content">
+        <div class="elearn-delete-toast__head">
+            <span class="elearn-delete-toast__title" id="elearnDeleteToastTitle">Confirm deletion</span>
+            <button type="button" class="elearn-delete-toast__close" id="elearnDeleteToastClose" aria-label="Close">&times;</button>
+        </div>
+        <p class="elearn-delete-toast__message" id="elearnDeleteToastMessage">Delete this item?</p>
+        <div class="elearn-delete-toast__actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="elearnDeleteToastCancel">Cancel</button>
+            <button type="button" class="btn btn-sm btn-danger" id="elearnDeleteToastConfirm">Delete</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function clearDrawerQueryParams() {
     const url = new URL(window.location.href);
@@ -593,6 +806,68 @@ if (params.has('addnew') || params.has('edit')) {
 if (params.has('addbundle') || params.has('editbundle')) {
     openDrawer('bundleDrawer');
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.localElearningDeleteToastInit) {
+        return;
+    }
+    window.localElearningDeleteToastInit = true;
+
+    const toast = document.getElementById('elearnDeleteToast');
+    const messageNode = document.getElementById('elearnDeleteToastMessage');
+    const confirmBtn = document.getElementById('elearnDeleteToastConfirm');
+    const cancelBtn = document.getElementById('elearnDeleteToastCancel');
+    const closeBtn = document.getElementById('elearnDeleteToastClose');
+
+    if (!toast || !messageNode || !confirmBtn || !cancelBtn || !closeBtn) {
+        return;
+    }
+
+    let pendingDeleteUrl = '';
+
+    const closeToast = function() {
+        toast.classList.remove('is-open');
+        toast.setAttribute('aria-hidden', 'true');
+        pendingDeleteUrl = '';
+    };
+
+    const openToastForLink = function(link) {
+        pendingDeleteUrl = link.getAttribute('href') || '';
+        messageNode.textContent = link.getAttribute('data-confirm-message') || 'Delete this item?';
+        confirmBtn.textContent = link.getAttribute('data-confirm-action') || 'Delete';
+        toast.classList.add('is-open');
+        toast.setAttribute('aria-hidden', 'false');
+        confirmBtn.focus();
+    };
+
+    document.addEventListener('click', function(e) {
+        const deleteTrigger = e.target.closest('.js-elearn-confirm-delete');
+        if (!deleteTrigger) {
+            return;
+        }
+        e.preventDefault();
+        openToastForLink(deleteTrigger);
+    });
+
+    closeBtn.addEventListener('click', closeToast);
+    cancelBtn.addEventListener('click', closeToast);
+
+    confirmBtn.addEventListener('click', function() {
+        if (pendingDeleteUrl) {
+            window.location.assign(pendingDeleteUrl);
+            return;
+        }
+        closeToast();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && toast.classList.contains('is-open')) {
+            closeToast();
+        }
+    });
+});
 </script>
 
 <script>
@@ -674,4 +949,177 @@ if (params.has('addbundle') || params.has('editbundle')) {
         }
     });
 })();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.localElearningAdminChatbotInit) {
+        return;
+    }
+    window.localElearningAdminChatbotInit = true;
+
+    const body = document.body;
+    if (!body) {
+        return;
+    }
+
+    const fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = 'eaChatbotFab';
+    fab.className = 'ea-chatbot-fab';
+    fab.setAttribute('aria-label', 'Open admin assistant');
+    fab.innerHTML = '<i class="fa fa-robot"></i>';
+
+    const panel = document.createElement('div');
+    panel.id = 'eaChatbotPanel';
+    panel.className = 'ea-chatbot-panel d-none';
+    panel.innerHTML = '' +
+        '<div class="ea-chatbot-head">' +
+            '<strong>Assistant IA Admin</strong>' +
+            '<button type="button" id="eaChatbotClose" class="ea-chatbot-close" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div id="eaChatbotMessages" class="ea-chatbot-messages">' +
+            '<div class="ea-chatbot-msg ea-chatbot-msg-bot">Exemple: saif cours physique, ou facture saif pour cours physique.</div>' +
+        '</div>' +
+        '<form id="eaChatbotForm" class="ea-chatbot-form">' +
+            '<input id="eaChatbotInput" type="text" class="form-control" placeholder="Requete admin..." autocomplete="off">' +
+            '<button type="submit" class="btn btn-primary">Envoyer</button>' +
+        '</form>';
+
+    body.appendChild(fab);
+    body.appendChild(panel);
+
+    const closeBtn = document.getElementById('eaChatbotClose');
+    const form = document.getElementById('eaChatbotForm');
+    const input = document.getElementById('eaChatbotInput');
+    const messages = document.getElementById('eaChatbotMessages');
+
+    const appendMessage = function(text, isBot) {
+        if (!messages) {
+            return;
+        }
+        const msg = document.createElement('div');
+        msg.className = 'ea-chatbot-msg ' + (isBot ? 'ea-chatbot-msg-bot' : 'ea-chatbot-msg-user');
+        msg.textContent = text;
+        messages.appendChild(msg);
+        messages.scrollTop = messages.scrollHeight;
+    };
+
+    const appendMeta = function() {
+        if (!messages) {
+            return null;
+        }
+        const meta = document.createElement('div');
+        meta.className = 'ea-chatbot-meta';
+        messages.appendChild(meta);
+        messages.scrollTop = messages.scrollHeight;
+        return meta;
+    };
+
+    const renderSuggestions = function(meta, suggestions, askFn) {
+        if (!meta || !Array.isArray(suggestions) || !suggestions.length) {
+            return;
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'ea-chatbot-suggestions';
+
+        suggestions.slice(0, 3).forEach(function(suggestion) {
+            if (!suggestion || typeof suggestion !== 'string') {
+                return;
+            }
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ea-chatbot-suggestion-btn';
+            btn.textContent = suggestion;
+            btn.addEventListener('click', function() {
+                askFn(suggestion);
+            });
+            wrap.appendChild(btn);
+        });
+
+        if (wrap.childNodes.length > 0) {
+            meta.appendChild(wrap);
+        }
+    };
+
+    const renderInvoiceButton = function(meta, invoiceurl, label) {
+        if (!meta || !invoiceurl) {
+            return;
+        }
+        const box = document.createElement('div');
+        box.className = 'ea-chatbot-invoice';
+
+        const link = document.createElement('a');
+        link.href = invoiceurl;
+        link.className = 'btn btn-sm btn-outline-primary';
+        link.textContent = label || 'Telecharger facture';
+        box.appendChild(link);
+
+        meta.appendChild(box);
+    };
+
+    const askAdminBot = function(question) {
+        const text = (question || '').trim();
+        if (!text) {
+            return;
+        }
+        appendMessage(text, false);
+        if (input) {
+            input.value = '';
+        }
+
+        const wwwroot = (window.M && M.cfg && M.cfg.wwwroot) ? M.cfg.wwwroot : '';
+        const sesskey = (window.M && M.cfg && M.cfg.sesskey) ? M.cfg.sesskey : '';
+        const endpoint = wwwroot + '/local/elearning_system/admin/chatbot.php';
+
+        if (!wwwroot || !sesskey) {
+            appendMessage('Session invalide. Rechargez la page puis reessayez.', true);
+            return;
+        }
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: new URLSearchParams({
+                sesskey: sesskey,
+                message: text
+            }).toString()
+        })
+        .then(function(res) {
+            return res.json();
+        })
+        .then(function(data) {
+            const reply = (data && data.reply) ? data.reply : 'Reponse indisponible.';
+            appendMessage(reply, true);
+            const meta = appendMeta();
+            renderInvoiceButton(meta, data ? data.invoiceurl : '', data ? data.invoicelabel : '');
+            renderSuggestions(meta, data && data.suggestions ? data.suggestions : [], askAdminBot);
+        })
+        .catch(function() {
+            appendMessage('Erreur reseau. Reessayez.', true);
+        });
+    };
+
+    fab.addEventListener('click', function() {
+        panel.classList.toggle('d-none');
+        if (!panel.classList.contains('d-none') && input) {
+            input.focus();
+        }
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            panel.classList.add('d-none');
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            askAdminBot(input ? input.value : '');
+        });
+    }
+});
 </script>

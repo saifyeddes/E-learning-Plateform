@@ -320,6 +320,123 @@
     box-shadow: var(--es-shadow);
 }
 
+.es-client .es-cart-page {
+    position: relative;
+}
+
+.es-client .es-cart-hero {
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--es-line);
+    border-radius: 1rem;
+    background: radial-gradient(circle at top right, rgba(15, 108, 191, 0.1), transparent 58%), var(--es-paper);
+    box-shadow: var(--es-shadow);
+}
+
+.es-client .es-cart-subtitle {
+    font-size: 0.93rem;
+    color: var(--es-muted);
+}
+
+.es-client .es-cart-item {
+    border-color: color-mix(in srgb, var(--es-accent) 14%, var(--es-line));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.es-client .es-cart-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(33, 37, 41, 0.1);
+}
+
+.es-client .es-cart-thumb {
+    display: block;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--es-accent) 18%, var(--es-line));
+    background: #f4f8fd;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.es-client .es-cart-thumb img {
+    width: 100%;
+    height: 118px;
+    object-fit: cover;
+    display: block;
+}
+
+.es-client .es-cart-thumb-placeholder {
+    height: 118px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8aa2bb;
+    font-size: 1.25rem;
+    background: linear-gradient(145deg, #eef4fb, #f9fbff);
+}
+
+.es-client .es-cart-duration {
+    font-weight: 600;
+    text-align: center;
+}
+
+.es-client .es-cart-duration::-webkit-outer-spin-button,
+.es-client .es-cart-duration::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.es-client .es-cart-duration {
+    -moz-appearance: textfield;
+}
+
+.es-client .es-cart-stepper {
+    display: grid;
+    grid-template-columns: 38px minmax(68px, 1fr) 38px;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 220px;
+}
+
+.es-client .es-cart-step {
+    width: 38px;
+    height: 38px;
+    border-radius: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+}
+
+.es-client .es-cart-remove-btn {
+    white-space: nowrap;
+}
+
+.es-client .es-cart-autosave {
+    opacity: 0.85;
+}
+
+.es-client .es-cart-line-price {
+    font-size: 1.05rem;
+    color: var(--es-accent);
+}
+
+.es-client .es-cart-summary-card {
+    border-color: color-mix(in srgb, var(--es-accent) 18%, var(--es-line));
+}
+
+.es-client .es-cart-total-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.es-client .es-cart-total-value {
+    font-size: 1.35rem;
+    color: var(--es-accent);
+}
+
+.es-client .es-cart-cta {
+    min-width: 190px;
+    font-weight: 600;
+}
+
 .es-client .es-home-hero .text-muted {
     color: var(--es-muted) !important;
 }
@@ -539,6 +656,11 @@
         width: 100%;
     }
 
+    .es-client .es-cart-stepper {
+        max-width: 100%;
+        grid-template-columns: 40px minmax(70px, 1fr) 40px;
+    }
+
     .es-chatbot-fab {
         right: 14px;
         bottom: 14px;
@@ -588,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<button type="button" id="esChatbotClose" class="es-chatbot-close" aria-label="Close chatbot">&times;</button>' +
         '</div>' +
         '<div id="esChatbotMessages" class="es-chatbot-messages">' +
-            '<div class="es-chatbot-msg es-chatbot-msg-bot">Bonjour. Demandez un prix ou un achat direct. Exemple: acheter Physique pour 2 mois.</div>' +
+            '<div class="es-chatbot-msg es-chatbot-msg-bot">Exemples: prix phys, achete math 5 mois, buy science 2, voir mes cours, checkout.</div>' +
         '</div>' +
         '<form id="esChatbotForm" class="es-chatbot-form">' +
             '<input id="esChatbotInput" type="text" class="form-control" placeholder="Ecrivez votre demande..." autocomplete="off">' +

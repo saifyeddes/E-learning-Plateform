@@ -81,11 +81,16 @@ function local_elearning_system_chatbot_match_product(string $normalizedmessage,
         $score = 0;
 
         foreach ($tokens as $token) {
-            if (strlen($token) < 3) {
+            if (strlen($token) < 2) {
                 continue;
             }
+            // Exact substring match
             if (strpos($name, $token) !== false) {
                 $score += 2;
+            }
+            // Prefix match (for abbreviations like phys, math, etc)
+            if (strlen($token) <= 5 && strpos($name, $token) === 0) {
+                $score += 3;
             }
         }
 
@@ -202,8 +207,9 @@ foreach ($records as $r) {
 $normalized = local_elearning_system_chatbot_normalize($message);
 $months = local_elearning_system_chatbot_extract_months($normalized);
 
-$ispriceintent = (bool)preg_match('/\b(prix|combien|cout|tarif|price)\b/', $normalized);
-$isbuyintent = (bool)preg_match('/\b(acheter|buy|payer|checkout|commander|prendre|inscrire)\b/', $normalized);
+$ispriceintent = (bool)preg_match('/\b(prix|combien|cout|tarif|price|cost)\b/', $normalized);
+$isbuyintent = (bool)preg_match('/\b(achete|acheter|buy|payer|checkout|commander|prendre|inscrire|purchase)\b/', $normalized);
+$isviewintent = (bool)preg_match('/\b(voir|view|show|affiche|display|mes|my|mes cours|my courses)\b/', $normalized);
 $isbundleintent = (bool)preg_match('/\b(bundle|pack)\b/', $normalized);
 
 $matched = local_elearning_system_chatbot_match_product($normalized, $catalog, $isbundleintent);
@@ -232,10 +238,55 @@ if (!$matched && !$isbundleintent && (bool)preg_match('/\b(cours|course)\b/', $n
     }
 }
 
-if (!$matched && !$ispriceintent && !$isbuyintent) {
+if ($isviewintent && isloggedin() && !isguestuser()) {
+    $userctx = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $targetuserid = (int)($userctx['targetuserid'] ?? 0);
+
+    if ($targetuserid > 0 && $DB->get_manager()->table_exists('elearning_orders')) {
+        $ordercolumns = $DB->get_columns('elearning_orders');
+        $durationselect = isset($ordercolumns['durationmonths']) ? 'o.durationmonths AS durationmonths' : '1 AS durationmonths';
+        $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat AS expiresat' : '0 AS expiresat';
+
+        $orders = $DB->get_records_sql(
+            "SELECT o.id, o.timecreated, {$durationselect}, {$expireselect}, p.name AS productname
+                FROM {elearning_orders} o
+           LEFT JOIN {elearning_products} p ON p.id = o.productid
+               WHERE o.userid = ?
+            ORDER BY o.id DESC",
+            [$targetuserid]
+        );
+
+        if (!empty($orders)) {
+            $listlines = [];
+            foreach ($orders as $o) {
+                $productname = !empty($o->productname) ? format_string((string)$o->productname) : 'Cours';
+                $months = max(1, (int)($o->durationmonths ?? 1));
+                $listlines[] = '- ' . $productname . ' (' . $months . ' mois)';
+            }
+
+            echo json_encode([
+                'ok' => true,
+                'reply' => 'Vous avez ' . count($orders) . ' cours achete(s):\n' . implode('\n', $listlines),
+                'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
+                'showrating' => false,
+            ]);
+            exit;
+        }
+    }
+
     echo json_encode([
         'ok' => true,
-        'reply' => 'Je peux vous aider sur: prix des cours/bundles, et achat direct (ex: acheter Physique pour 2 mois).',
+        'reply' => 'Vous n avez pas de cours achetes encore.',
+        'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
+        'showrating' => false,
+    ]);
+    exit;
+}
+
+if (!$matched && !$ispriceintent && !$isbuyintent && !$isviewintent) {
+    echo json_encode([
+        'ok' => true,
+        'reply' => 'Commandes acceptees: prix Physique, acheter Math 5 mois, voir mes cours, voir cours achetes, buy Science 3, checkout.',
         'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
         'showrating' => true,
     ]);

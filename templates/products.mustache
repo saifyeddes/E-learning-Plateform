@@ -136,8 +136,9 @@
 <i class="fa {{#isbundle}}fa-layer-group{{/isbundle}}{{^isbundle}}fa-pen{{/isbundle}}"></i>
 </a>
 
-<a href="{{deleteurl}}" class="text-danger"
-onclick="return confirm('Delete this product?')">
+<a href="{{deleteurl}}" class="text-danger js-elearn-confirm-delete"
+data-confirm-message="Delete this product?"
+data-confirm-action="Delete">
 <i class="fa fa-trash"></i>
 </a>
 </td>

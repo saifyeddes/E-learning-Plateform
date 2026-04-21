@@ -102,7 +102,7 @@
                         <td>{{timecreated}}</td>
                         <td>
                             <a href="{{editurl}}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
-                            <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this parent-child link?')">Remove link</a>
+                            <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger js-elearn-confirm-delete" data-confirm-message="Remove this parent-child link?" data-confirm-action="Remove">Remove link</a>
                         </td>
                     </tr>
                     {{/parentlinks}}

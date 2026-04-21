@@ -87,7 +87,7 @@
                     <td>{{expirydate}}</td>
                     <td>
                         <a href="{{editurl}}" class="btn btn-sm btn-outline-primary me-2">Edit</a>
-                        <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this coupon?')">Delete</a>
+                        <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger js-elearn-confirm-delete" data-confirm-message="Delete this coupon?" data-confirm-action="Delete">Delete</a>
                     </td>
                 </tr>
                 {{/coupons}}

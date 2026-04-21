@@ -109,12 +109,25 @@ if (!empty($cartids)) {
         $line = $displayprice * $durationmonths;
         $total += $line;
 
+        $image = trim((string)($r->image ?? ''));
+        $hasimage = ($image !== '');
+        if ($hasimage && strpos($image, 'http') !== 0) {
+            if ($image[0] !== '/') {
+                $image = '/' . $image;
+            }
+            $image = $CFG->wwwroot . $image;
+        }
+
         $products[] = [
             'id' => (int)$r->id,
             'name' => format_string($r->name),
             'price' => number_format($displayprice, 2),
+            'unitpriceraw' => number_format($displayprice, 2, '.', ''),
             'durationmonths' => $durationmonths,
             'lineprice' => number_format($line, 2),
+            'linepriceraw' => number_format($line, 2, '.', ''),
+            'hasimage' => $hasimage,
+            'image' => $image,
             'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => (int)$r->id]))->out(false),
             'setdurationurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'setduration', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
             'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
