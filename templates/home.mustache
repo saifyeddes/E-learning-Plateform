@@ -23,6 +23,70 @@
         </div>
     </div>
 
+    <section class="es-home-carousel card mb-3" aria-label="Site presentation">
+        <div class="es-home-carousel-inner" id="esHomeCarousel">
+            <article class="es-home-slide is-active">
+                <div class="es-home-slide-content">
+                    <span class="es-home-slide-kicker">Learn Better</span>
+                    <h2>Build skills with curated courses</h2>
+                    <p>Explore free and premium lessons, discover clear learning paths, and start improving today.</p>
+                    <div class="es-home-slide-actions">
+                        <a href="#homeCourseList" class="btn btn-primary">Browse courses</a>
+                        {{#isloggedin}}
+                        <a href="{{mycoursesurl}}" class="btn btn-outline-secondary">My courses</a>
+                        {{/isloggedin}}
+                        {{^isloggedin}}
+                        <a href="{{loginurl}}" class="btn btn-outline-secondary">Sign in</a>
+                        {{/isloggedin}}
+                    </div>
+                </div>
+                <div class="es-home-slide-art" aria-hidden="true">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="Students learning in classroom" loading="eager">
+                </div>
+            </article>
+
+            <article class="es-home-slide">
+                <div class="es-home-slide-content">
+                    <span class="es-home-slide-kicker">Smart Bundles</span>
+                    <h2>Save time with ready-made packs</h2>
+                    <p>Choose bundles prepared by educators and access grouped content with one checkout flow.</p>
+                    <div class="es-home-slide-actions">
+                        <a href="#homeBundleList" class="btn btn-primary">View bundles</a>
+                        <a href="{{carturl}}" class="btn btn-outline-secondary">Open cart</a>
+                    </div>
+                </div>
+                <div class="es-home-slide-art" aria-hidden="true">
+                    <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80" alt="Students collaborating around educational material" loading="lazy">
+                </div>
+            </article>
+
+            <article class="es-home-slide">
+                <div class="es-home-slide-content">
+                    <span class="es-home-slide-kicker">Fast Access</span>
+                    <h2>Enroll in minutes and start now</h2>
+                    <p>Use quick filters, secure checkout, and instant access to your content across devices.</p>
+                    <div class="es-home-slide-actions">
+                        <a href="#homeFilters" class="btn btn-primary">Find a course</a>
+                        <a href="{{carturl}}" class="btn btn-outline-secondary">Checkout</a>
+                    </div>
+                </div>
+                <div class="es-home-slide-art" aria-hidden="true">
+                    <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="Student using laptop for online learning" loading="lazy">
+                </div>
+            </article>
+        </div>
+
+        <div class="es-home-carousel-nav" aria-label="Carousel navigation">
+            <button type="button" class="es-home-carousel-btn" id="esHomePrev" aria-label="Previous slide">
+                <i class="fa fa-chevron-left"></i>
+            </button>
+            <div class="es-home-carousel-dots" id="esHomeDots"></div>
+            <button type="button" class="es-home-carousel-btn" id="esHomeNext" aria-label="Next slide">
+                <i class="fa fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
     {{#hasproducts}}
     <div class="card mb-3 es-home-filters">
         <div class="card-body">
@@ -187,6 +251,84 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const carouselRoot = document.getElementById('esHomeCarousel');
+    const carouselPrev = document.getElementById('esHomePrev');
+    const carouselNext = document.getElementById('esHomeNext');
+    const carouselDots = document.getElementById('esHomeDots');
+
+    if (carouselRoot && carouselPrev && carouselNext && carouselDots) {
+        const slides = Array.from(carouselRoot.querySelectorAll('.es-home-slide'));
+        let activeIndex = Math.max(0, slides.findIndex(function(slide) {
+            return slide.classList.contains('is-active');
+        }));
+        let timer = null;
+
+        const renderDots = function() {
+            carouselDots.innerHTML = '';
+            slides.forEach(function(_, idx) {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'es-home-dot';
+                dot.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
+                dot.classList.toggle('is-active', idx === activeIndex);
+                dot.addEventListener('click', function() {
+                    setActive(idx);
+                    restartTimer();
+                });
+                carouselDots.appendChild(dot);
+            });
+        };
+
+        const setActive = function(index) {
+            activeIndex = (index + slides.length) % slides.length;
+            slides.forEach(function(slide, idx) {
+                slide.classList.toggle('is-active', idx === activeIndex);
+            });
+            Array.from(carouselDots.querySelectorAll('.es-home-dot')).forEach(function(dot, idx) {
+                dot.classList.toggle('is-active', idx === activeIndex);
+            });
+        };
+
+        const nextSlide = function() {
+            setActive(activeIndex + 1);
+        };
+
+        const prevSlide = function() {
+            setActive(activeIndex - 1);
+        };
+
+        const restartTimer = function() {
+            if (timer) {
+                clearInterval(timer);
+            }
+            timer = setInterval(nextSlide, 2000);
+        };
+
+        carouselNext.addEventListener('click', function() {
+            nextSlide();
+            restartTimer();
+        });
+
+        carouselPrev.addEventListener('click', function() {
+            prevSlide();
+            restartTimer();
+        });
+
+        carouselRoot.addEventListener('mouseenter', function() {
+            if (timer) {
+                clearInterval(timer);
+            }
+        });
+
+        carouselRoot.addEventListener('mouseleave', function() {
+            restartTimer();
+        });
+
+        renderDots();
+        setActive(activeIndex);
+        restartTimer();
+    }
+
     const searchInput = document.getElementById('homeSearch');
     const typeFilter = document.getElementById('homeTypeFilter');
     const resetBtn = document.getElementById('homeResetFilter');
