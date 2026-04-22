@@ -198,7 +198,7 @@ $templatedata = [
     'formurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
     'showdrawer' => $showdrawer,
     'selectedtemplatekey' => $selectedtemplatekey,
-    'placeholdershelp' => '{{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{productname}}, {{coursename}}, {{amount}}, {{currency}}, {{durationmonths}}, {{expireslabel}}, {{orderid}}, {{invoiceurl}}, {{loginurl}}, {{sitefullname}}',
+    'placeholdershelp' => '{{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{parentfirstname}}, {{parentlastname}}, {{parentfullname}}, {{childfirstname}}, {{childlastname}}, {{childfullname}}, {{productname}}, {{coursename}}, {{amount}}, {{currency}}, {{durationmonths}}, {{expireslabel}}, {{orderid}}, {{invoiceurl}}, {{loginurl}}, {{sitefullname}} - Templates: purchase_product, purchase_for_child, new_account, invoice, renewal_account, expiration_reminder, payment_course',
 ];
 
 echo $OUTPUT->header();

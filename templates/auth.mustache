@@ -1,131 +1,459 @@
 {{> local_elearning_system/client_styles }}
 <div class="es-client">
-<div class="container-fluid es-checkout-page">
-    <div class="row mb-3 es-checkout-hero align-items-center">
-        <div class="col-12 col-lg-8">
-            <h3 class="mb-1">Connexion</h3>
-            <p class="mb-0 text-muted es-checkout-subtitle">Connectez-vous ou creez un compte pour continuer votre achat.</p>
+
+<style>
+.es-auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.es-auth-wrapper {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+    .es-auth-wrapper {
+        grid-template-columns: 1fr;
+    }
+    .es-auth-illustration {
+        display: none !important;
+    }
+}
+
+.es-auth-left {
+    padding: 50px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    min-height: 500px;
+}
+
+.es-auth-right {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.es-auth-illustration {
+    text-align: center;
+    padding: 40px;
+}
+
+.es-auth-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 30px;
+    background: #f0f0f0;
+    border-radius: 25px;
+    padding: 4px;
+}
+
+.es-auth-tab {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.es-auth-tab.active {
+    background: white;
+    color: #667eea;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.es-auth-tab:hover {
+    color: #667eea;
+}
+
+.es-auth-form-container {
+    display: none !important;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    right: 0;
+    width: 100%;
+}
+
+.es-auth-form-container.active {
+    display: block !important;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+}
+
+.es-auth-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+}
+
+.es-auth-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.es-auth-form-group {
+    margin-bottom: 18px;
+}
+
+.es-auth-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.es-auth-form-group input,
+.es-auth-form-group select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+.es-auth-form-group input:focus,
+.es-auth-form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.es-auth-submit {
+    width: 100%;
+    padding: 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+.es-auth-submit:hover {
+    background: #5568d3;
+}
+
+.es-auth-social-separator {
+    margin: 12px 0;
+    text-align: center;
+    font-size: 12px;
+    color: #8b8b8b;
+}
+
+.es-auth-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f1f1f;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.es-auth-google:hover {
+    text-decoration: none;
+    color: #1f1f1f;
+    border-color: #c8ccd1;
+    background: #f8f9fa;
+}
+
+.es-auth-google-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #db4437;
+    border: 1px solid #dadce0;
+}
+
+.es-auth-google-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.es-auth-forgot {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.es-auth-forgot a {
+    font-size: 13px;
+    color: #667eea;
+    text-decoration: none;
+}
+
+.es-auth-forgot a:hover {
+    text-decoration: underline;
+}
+
+.es-auth-errors {
+    background: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
+.es-auth-toast {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10050;
+    background: #fff4e5;
+    color: #8a4b00;
+    border: 1px solid #ffd59b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    max-width: 360px;
+    font-size: 13px;
+}
+
+.es-auth-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 500px) {
+    .es-auth-row {
+        grid-template-columns: 1fr;
+    }
+    .es-auth-left {
+        padding: 40px 25px;
+    }
+}
+</style>
+
+<div class="es-auth-container">
+    {{#hasoauthtoast}}
+    <div id="es-auth-toast" class="es-auth-toast">{{oauthtoastmessage}}</div>
+    {{/hasoauthtoast}}
+
+    <div class="es-auth-wrapper">
+        <!-- Left Panel -->
+        <div class="es-auth-left">
+            <!-- Tabs -->
+            <div class="es-auth-tabs">
+                <button type="button" class="es-auth-tab active" onclick="switchAuthTab('login', this);">Login </button>
+                <button type="button" class="es-auth-tab" onclick="switchAuthTab('signup', this);">SignUp</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login" class="es-auth-form-container active">
+                <h2 class="es-auth-title">LOG IN</h2>
+                <p class="es-auth-subtitle">Enter your credentials to access your account</p>
+
+                {{#hasloginerrors}}
+                <div class="es-auth-errors">
+                    {{#loginerrors}}<div>{{message}}</div>{{/loginerrors}}
+                </div>
+                {{/hasloginerrors}}
+
+                <form action="{{authurl}}" method="post" autocomplete="on">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="return" value="{{returnurl}}">
+                    <input type="hidden" name="loginsubmit" value="1">
+
+                    <div class="es-auth-form-group">
+                        <label>Email Address</label>
+                        <input type="text" name="login_username" value="{{loginidentifier}}" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="es-auth-form-group">
+                        <label>Password</label>
+                        <input type="password" name="login_password" placeholder="••••••••" required>
+                    </div>
+
+                    {{#hasoauthproviders}}
+                    <div class="es-auth-social-separator">or</div>
+                    {{#oauthproviders}}
+                    <a class="es-auth-google" href="{{url}}">
+                        {{#iconurl}}<img class="es-auth-google-img" src="{{iconurl}}" alt="{{name}}">{{/iconurl}}
+                        {{^iconurl}}
+                        <span class="es-auth-google-icon">G</span>
+                        {{/iconurl}}
+                        Continue with {{name}}
+                    </a>
+                    {{/oauthproviders}}
+                    {{/hasoauthproviders}}
+
+                    <div class="es-auth-forgot">
+                        <a href="#">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="es-auth-submit">Log In</button>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup" class="es-auth-form-container">
+                <h2 class="es-auth-title">SIGN UP</h2>
+                <p class="es-auth-subtitle">Create your account to get started</p>
+
+                {{#hasregistererrors}}
+                <div class="es-auth-errors">
+                    {{#registererrors}}<div>{{message}}</div>{{/registererrors}}
+                </div>
+                {{/hasregistererrors}}
+
+                <form action="{{authurl}}" method="post" autocomplete="on">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <input type="hidden" name="return" value="{{returnurl}}">
+                    <input type="hidden" name="registersubmit" value="1">
+
+                    <div class="es-auth-row">
+                        <div class="es-auth-form-group">
+                            <label>First Name</label>
+                            <input type="text" name="reg_firstname" value="{{registerfirstname}}" placeholder="John" required>
+                        </div>
+                        <div class="es-auth-form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="reg_lastname" value="{{registerlastname}}" placeholder="Doe" required>
+                        </div>
+                    </div>
+
+                    <div class="es-auth-form-group">
+                        <label>Username</label>
+                        <input type="text" name="reg_username" value="{{registerusername}}" placeholder="johndoe" required>
+                    </div>
+
+                    <div class="es-auth-form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="reg_email" value="{{registeremail}}" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="es-auth-form-group">
+                        <label>Password</label>
+                        <input type="password" name="reg_password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="es-auth-row">
+                        <div class="es-auth-form-group">
+                            <label>City</label>
+                            <input type="text" name="reg_city" value="{{registercity}}" placeholder="New York">
+                        </div>
+                        <div class="es-auth-form-group">
+                            <label>Country</label>
+                            <select name="reg_country">
+                                <option value="">Select...</option>
+                                {{#countries}}<option value="{{code}}" {{#selected}}selected{{/selected}}>{{name}}</option>{{/countries}}
+                            </select>
+                        </div>
+                    </div>
+
+                    {{#hasoauthproviders}}
+                    <div class="es-auth-social-separator">or</div>
+                    {{#oauthproviders}}
+                    <a class="es-auth-google" href="{{url}}">
+                        {{#iconurl}}<img class="es-auth-google-img" src="{{iconurl}}" alt="{{name}}">{{/iconurl}}
+                        {{^iconurl}}
+                        <span class="es-auth-google-icon">G</span>
+                        {{/iconurl}}
+                        Continue with {{name}}
+                    </a>
+                    {{/oauthproviders}}
+                    {{/hasoauthproviders}}
+
+                    <button type="submit" class="es-auth-submit">Sign Up</button>
+                </form>
+            </div>
         </div>
-        <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
-            <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Back to Cart</a>
+
+        <!-- Right Panel with Illustration -->
+        <div class="es-auth-right">
+            <div class="es-auth-illustration">
+                <svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="140" cy="140" r="120" fill="rgba(255,255,255,0.1)"/>
+                    <text x="140" y="160" font-size="60" fill="white" text-anchor="middle" font-weight="bold">📚</text>
+                </svg>
+                <h3 style="color: white; margin-top: 20px; font-size: 18px; font-weight: 600;">Welcome to E-learning</h3>
+                <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 10px;">Access thousands of courses<br>and start learning today</p>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="authpanel" class="container-fluid mt-3 es-auth-wrap">
-    <div class="alert alert-info mb-3 es-auth-note" role="alert">
-        Veuillez vous connecter ou vous inscrire pour effectuer votre achat.
-    </div>
+<script>
+function switchAuthTab(tab, sourceButton) {
+    // Hide all forms
+    document.getElementById('login').classList.remove('active');
+    document.getElementById('signup').classList.remove('active');
+    
+    // Remove active from all tabs
+    document.querySelectorAll('.es-auth-tab').forEach(t => t.classList.remove('active'));
+    
+    // Show selected form
+    document.getElementById(tab).classList.add('active');
 
-    <div class="es-auth-features mb-3">
-        <div class="es-auth-feature"><i class="fa fa-shield-alt" aria-hidden="true"></i> Paiement securise</div>
-        <div class="es-auth-feature"><i class="fa fa-bolt" aria-hidden="true"></i> Activation rapide</div>
-        <div class="es-auth-feature"><i class="fa fa-headset" aria-hidden="true"></i> Support disponible</div>
-    </div>
+    // Mark tab as active
+    if (sourceButton) {
+        sourceButton.classList.add('active');
+    } else {
+        var activeButton = tab === 'signup'
+            ? document.querySelector('.es-auth-tab:nth-child(2)')
+            : document.querySelector('.es-auth-tab:nth-child(1)');
+        if (activeButton) {
+            activeButton.classList.add('active');
+        }
+    }
+}
 
-    <div class="row g-3">
-        <div class="col-12 col-lg-6">
-            <div class="card h-100 es-auth-card">
-                <div class="card-body">
-                    <h4 class="mb-1 es-auth-title">
-                        <span class="es-auth-icon"><i class="fa fa-sign-in-alt" aria-hidden="true"></i></span>
-                        Se connecter
-                    </h4>
-                    <p class="text-muted es-auth-subtitle">Accedez a votre compte pour finaliser votre commande.</p>
-                    {{#hasloginerrors}}
-                    <div class="alert alert-danger" role="alert">
-                        {{#loginerrors}}
-                        <div>{{message}}</div>
-                        {{/loginerrors}}
-                    </div>
-                    {{/hasloginerrors}}
+{{#showsignuptab}}
+switchAuthTab('signup');
+{{/showsignuptab}}
 
-                    <form action="{{authurl}}" method="post" autocomplete="on" class="es-auth-form">
-                        <input type="hidden" name="sesskey" value="{{sesskey}}">
-                        <input type="hidden" name="return" value="{{returnurl}}">
-                        <input type="hidden" name="loginsubmit" value="1">
-                        <div class="mb-3">
-                            <label for="checkout-username" class="form-label">Identifiant ou e-mail</label>
-                            <input id="checkout-username" class="form-control" type="text" name="login_username" value="{{loginidentifier}}" placeholder="nom.utilisateur ou email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="checkout-password" class="form-label">Mot de passe</label>
-                            <input id="checkout-password" class="form-control" type="password" name="login_password" placeholder="Votre mot de passe" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary es-auth-submit">Se connecter</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+(function() {
+    var toast = document.getElementById('es-auth-toast');
+    if (!toast) {
+        return;
+    }
+    setTimeout(function() {
+        toast.style.display = 'none';
+    }, 6000);
+})();
+</script>
 
-        <div class="col-12 col-lg-6">
-            <div class="card h-100 es-auth-card">
-                <div class="card-body">
-                    <h4 class="mb-1 es-auth-title">
-                        <span class="es-auth-icon"><i class="fa fa-user-plus" aria-hidden="true"></i></span>
-                        S’inscrire
-                    </h4>
-                    <p class="text-muted es-auth-subtitle">Creez votre compte pour activer vos cours apres paiement.</p>
-                    {{#hasregistererrors}}
-                    <div class="alert alert-danger" role="alert">
-                        {{#registererrors}}
-                        <div>{{message}}</div>
-                        {{/registererrors}}
-                    </div>
-                    {{/hasregistererrors}}
-
-                    <form action="{{authurl}}" method="post" autocomplete="on" class="es-auth-form">
-                        <input type="hidden" name="sesskey" value="{{sesskey}}">
-                        <input type="hidden" name="return" value="{{returnurl}}">
-                        <input type="hidden" name="registersubmit" value="1">
-
-                        <div class="row">
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="reg-firstname" class="form-label">Prénom</label>
-                                <input id="reg-firstname" class="form-control" type="text" name="reg_firstname" value="{{registerfirstname}}" placeholder="Votre prenom" required>
-                            </div>
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="reg-lastname" class="form-label">Nom</label>
-                                <input id="reg-lastname" class="form-control" type="text" name="reg_lastname" value="{{registerlastname}}" placeholder="Votre nom" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="reg-username" class="form-label">Identifiant</label>
-                            <input id="reg-username" class="form-control" type="text" name="reg_username" value="{{registerusername}}" placeholder="Choisissez un identifiant" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="reg-email" class="form-label">Adresse e-mail</label>
-                            <input id="reg-email" class="form-control" type="email" name="reg_email" value="{{registeremail}}" placeholder="vous@exemple.com" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="reg-password" class="form-label">Mot de passe</label>
-                            <input id="reg-password" class="form-control" type="password" name="reg_password" placeholder="Creez un mot de passe" required>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="reg-city" class="form-label">Ville</label>
-                                <input id="reg-city" class="form-control" type="text" name="reg_city" value="{{registercity}}" placeholder="Votre ville">
-                            </div>
-                            <div class="col-12 col-md-6 mb-3">
-                                <label for="reg-country" class="form-label">Pays</label>
-                                <select id="reg-country" class="custom-select form-control" name="reg_country">
-                                    <option value="">Choisir...</option>
-                                    {{#countries}}
-                                    <option value="{{code}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                                    {{/countries}}
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary es-auth-submit">S’inscrire</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </div>

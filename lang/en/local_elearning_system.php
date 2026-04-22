@@ -23,3 +23,5 @@ $string['paypalsandbox'] = 'Use PayPal sandbox';
 $string['paypalsandbox_desc'] = 'Enable sandbox for testing payments without real money.';
 $string['paypalcurrency'] = 'PayPal currency';
 $string['paypalcurrency_desc'] = '3-letter ISO currency code used for checkout (for example usd, eur, mad).';
+
+$string['sendreminderexpirationtask'] = 'Send course expiration reminders';

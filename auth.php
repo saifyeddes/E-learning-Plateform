@@ -7,8 +7,6 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/auth.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Connexion');
-$PAGE->set_heading('Connexion');
 local_elearning_system_force_auth_login_url('/local/elearning_system/auth.php');
 
 global $DB;
@@ -24,9 +22,23 @@ $defaultreturn = '/local/elearning_system/checkout.php';
 if (empty($SESSION->local_elearning_system_cart)) {
     $defaultreturn = '/local/elearning_system/index.php';
 }
-$returnurl = optional_param('return', $defaultreturn, PARAM_LOCALURL);
+$returnparam = optional_param('return', '', PARAM_LOCALURL);
+$returnurl = $defaultreturn;
+if ($returnparam !== '') {
+    $returnurl = $returnparam;
+} else if (!empty($SESSION->wantsurl) && strpos($SESSION->wantsurl, $CFG->wwwroot) === 0) {
+    $candidate = substr($SESSION->wantsurl, strlen($CFG->wwwroot));
+    if (!empty($candidate) && $candidate[0] === '/') {
+        $returnurl = $candidate;
+    }
+}
 if ($returnurl === '' || $returnurl === '/') {
     $returnurl = $defaultreturn;
+}
+
+$oauthwantsurl = $returnurl;
+if ($oauthwantsurl === '/local/elearning_system/auth.php' || strpos($oauthwantsurl, '/local/elearning_system/auth.php?') === 0) {
+    $oauthwantsurl = '/my/';
 }
 
 if ($isloggedin) {
@@ -139,6 +151,28 @@ if (optional_param('registersubmit', 0, PARAM_BOOL) && confirm_sesskey()) {
     }
 }
 
+$oauthtoastmessage = '';
+$showsignuptab = false;
+if (!empty($SESSION->loginerrormsg)) {
+    $rawoautherror = trim(strip_tags((string)$SESSION->loginerrormsg));
+    $loweroautherror = core_text::strtolower($rawoautherror);
+    if (strpos($loweroautherror, 'cannot create') !== false
+        || strpos($loweroautherror, 'cannotcreateaccounts') !== false) {
+        $oauthtoastmessage = "Ce compte n'avait pas un login. Go signup.";
+        $showsignuptab = true;
+    } else if (strpos($loweroautherror, 'not linked yet') !== false
+        || strpos($loweroautherror, 'pending email confirmation') !== false
+        || strpos($loweroautherror, 'confirmationpending') !== false) {
+        $oauthtoastmessage = "Ce compte existe deja, mais la liaison Google est en attente. Veuillez reessayer ou contacter l'administrateur.";
+    } else {
+        $oauthtoastmessage = $rawoautherror;
+    }
+    unset($SESSION->loginerrormsg);
+}
+if (!empty($SESSION->logininfomsg)) {
+    unset($SESSION->logininfomsg);
+}
+
 $countrylist = [];
 foreach (get_string_manager()->get_list_of_countries() as $code => $name) {
     $countrylist[] = [
@@ -146,6 +180,40 @@ foreach (get_string_manager()->get_list_of_countries() as $code => $name) {
         'name' => $name,
         'selected' => ($registerdata['country'] === $code),
     ];
+}
+
+$googleloginurl = '';
+$oauthproviders = [];
+if (is_enabled_auth('oauth2')) {
+    $issuers = \core\oauth2\api::get_all_issuers(true);
+    foreach ($issuers as $issuer) {
+        if (!$issuer->is_available_for_login()) {
+            continue;
+        }
+
+        $providerurl = (new moodle_url('/auth/oauth2/login.php', [
+            'id' => $issuer->get('id'),
+            'wantsurl' => $oauthwantsurl,
+            'sesskey' => sesskey(),
+        ]))->out(false);
+
+        $providername = (string)$issuer->get_display_name();
+        $iconurl = (string)$issuer->get('image');
+
+        $oauthproviders[] = [
+            'url' => $providerurl,
+            'name' => $providername !== '' ? $providername : 'OAuth',
+            'iconurl' => $iconurl,
+        ];
+
+        if ($googleloginurl === '' && strpos(core_text::strtolower($providername), 'google') !== false) {
+            $googleloginurl = $providerurl;
+        }
+    }
+
+    if ($googleloginurl === '' && count($oauthproviders) === 1) {
+        $googleloginurl = $oauthproviders[0]['url'];
+    }
 }
 
 echo $OUTPUT->header();
@@ -166,6 +234,12 @@ echo $OUTPUT->render_from_template('local_elearning_system/auth', [
     'sesskey' => sesskey(),
     'returnurl' => $returnurl,
     'authurl' => (new moodle_url('/local/elearning_system/auth.php'))->out(false),
+    'googleloginurl' => $googleloginurl,
+    'oauthproviders' => $oauthproviders,
+    'hasoauthproviders' => !empty($oauthproviders),
+    'hasoauthtoast' => ($oauthtoastmessage !== ''),
+    'oauthtoastmessage' => s($oauthtoastmessage),
+    'showsignuptab' => $showsignuptab,
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
 ]);
 echo $OUTPUT->footer();

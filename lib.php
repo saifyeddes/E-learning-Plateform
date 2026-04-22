@@ -233,7 +233,11 @@ function local_elearning_system_get_email_template_definitions(): array {
     return [
         'purchase_product' => [
             'subject' => 'Purchase confirmed - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nYour purchase for {{productname}} has been confirmed.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\n\n{{sitefullname}}",
+            'body' => "Hello {{firstname}},\n\nYour purchase for {{productname}} has been confirmed.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\nInvoice: {{invoiceurl}}\n\n{{sitefullname}}",
+        ],
+        'purchase_for_child' => [
+            'subject' => 'Purchase confirmed for your child - {{productname}}',
+            'body' => "Hello {{parentfirstname}},\n\nYou purchased {{productname}} for your child {{childfullname}}.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\nInvoice: {{invoiceurl}}\n\n{{sitefullname}}",
         ],
         'new_account' => [
             'subject' => 'Welcome to {{sitefullname}}',
@@ -246,6 +250,10 @@ function local_elearning_system_get_email_template_definitions(): array {
         'renewal_account' => [
             'subject' => 'Your access has expired - {{productname}}',
             'body' => "Hello {{firstname}},\n\nYour access to {{productname}} has expired on {{expireslabel}}.\nTo continue, please renew your account.\n\n{{sitefullname}}",
+        ],
+        'expiration_reminder' => [
+            'subject' => 'Your course access expires soon - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nYour access to {{productname}} will expire in 5 days.\nExpiry date: {{expireslabel}}\n\nRenew now to keep your access: {{loginurl}}\n\n{{sitefullname}}",
         ],
         'payment_course' => [
             'subject' => 'Payment received - {{productname}}',
@@ -500,6 +508,80 @@ function local_elearning_system_send_order_email_with_template(stdClass $order, 
 }
 
 /**
+ * Send a parent-specific purchase confirmation for child purchases.
+ *
+ * @param stdClass $order
+ * @param int $parentuserid
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_send_parent_purchase_email(stdClass $order, int $parentuserid, moodle_database $DB): bool {
+    if ($parentuserid <= 0) {
+        return false;
+    }
+
+    $parent = core_user::get_user($parentuserid, '*', IGNORE_MISSING);
+    $child = core_user::get_user((int)$order->userid, '*', IGNORE_MISSING);
+    if (!$parent || empty($parent->email) || !validate_email((string)$parent->email) || !$child) {
+        return false;
+    }
+
+    $parent = local_elearning_system_prepare_mail_user($parent);
+    $child = local_elearning_system_prepare_mail_user($child);
+
+    $template = local_elearning_system_get_email_template('purchase_for_child');
+    if ($template['subject'] === '' || $template['body'] === '') {
+        return false;
+    }
+
+    $productname = 'Produit';
+    if (!empty($order->productid)) {
+        $product = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,name', IGNORE_MISSING);
+        if ($product && !empty($product->name)) {
+            $productname = format_string($product->name);
+        }
+    }
+
+    $months = max(1, (int)($order->durationmonths ?? 1));
+    $expiresat = (int)($order->expiresat ?? local_elearning_system_get_order_expiresat($order));
+    $expireslabel = userdate($expiresat);
+    $amount = number_format((float)($order->amount ?? 0), 2);
+    $sitefullname = format_string(get_site()->fullname);
+    $invoiceurl = (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)($order->id ?? 0), 'pdf' => 1]))->out(false);
+    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+
+    $variables = [
+        'firstname' => (string)$parent->firstname,
+        'lastname' => (string)$parent->lastname,
+        'fullname' => fullname($parent),
+        'email' => (string)$parent->email,
+        'parentfirstname' => (string)$parent->firstname,
+        'parentlastname' => (string)$parent->lastname,
+        'parentfullname' => fullname($parent),
+        'childfirstname' => (string)$child->firstname,
+        'childlastname' => (string)$child->lastname,
+        'childfullname' => fullname($child),
+        'productname' => $productname,
+        'coursename' => $productname,
+        'amount' => $amount,
+        'currency' => local_elearning_system_get_site_currency_code(),
+        'durationmonths' => (string)$months,
+        'expireslabel' => $expireslabel,
+        'orderid' => (string)(int)($order->id ?? 0),
+        'invoiceurl' => $invoiceurl,
+        'loginurl' => $loginurl,
+        'sitefullname' => $sitefullname,
+    ];
+
+    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
+    $body = local_elearning_system_render_template_string($template['body'], $variables);
+    $messagehtml = nl2br(s($body));
+
+    $fromuser = local_elearning_system_get_valid_from_user($parent);
+    return (bool)email_to_user($parent, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
  * Send a preview email for a configured template to a recipient.
  *
  * @param stdClass $recipient
@@ -540,6 +622,44 @@ function local_elearning_system_send_template_preview(stdClass $recipient, strin
     $fromuser = local_elearning_system_get_valid_from_user($recipient);
 
     return (bool)email_to_user($recipient, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
+ * Process and send expiration reminder emails for orders expiring in 5 days.
+ *
+ * @param moodle_database $DB
+ * @return void
+ */
+function local_elearning_system_process_expiration_reminders(moodle_database $DB): void {
+    if (!$DB->get_manager()->table_exists('elearning_orders')) {
+        return;
+    }
+
+    $ordercolumns = $DB->get_columns('elearning_orders');
+    if (!isset($ordercolumns['expiresat'])) {
+        return;
+    }
+
+    $fivedays = 5 * DAYSECS;
+    $now = time();
+    $fivedasayfrom = $now + $fivedays;
+    $fiveday_end = $fivedasayfrom + DAYSECS;
+
+    $orders = $DB->get_records_select(
+        'elearning_orders',
+        'expiresat > :now AND expiresat <= :fiveday_end',
+        ['now' => $now, 'fiveday_end' => $fiveday_end],
+        'id ASC',
+        'id, userid, productid, amount, durationmonths, expiresat, timecreated'
+    );
+
+    foreach ($orders as $order) {
+        if (!local_elearning_system_notification_already_sent((int)$order->id, 'expiration_reminder', $DB)) {
+            if (local_elearning_system_send_order_email_with_template($order, 'expiration_reminder', $DB)) {
+                local_elearning_system_mark_notification_sent((int)$order->id, (int)$order->userid, 'expiration_reminder', $DB);
+            }
+        }
+    }
 }
 
 /**
@@ -585,6 +705,132 @@ function local_elearning_system_force_auth_login_url(string $returnlocalurl): vo
     $CFG->alternateloginurl = (new moodle_url('/local/elearning_system/auth.php', [
         'return' => $returnlocalurl,
     ]))->out(false);
+}
+
+/**
+ * Build the fixed language switcher HTML shown on all pages.
+ *
+ * @return string
+ */
+function local_elearning_system_before_standard_top_of_body_html(): string {
+    global $SESSION;
+
+    $supported = [
+        'en' => ['flagclass' => 'es-flag-en', 'label' => 'English (America)'],
+        'fr' => ['flagclass' => 'es-flag-fr', 'label' => 'Français (France)'],
+        'ar' => ['flagclass' => 'es-flag-ar', 'label' => 'العربية (Saudi Arabia)'],
+    ];
+
+    $currentlang = core_text::strtolower(current_language());
+    $currentcode = substr($currentlang, 0, 2);
+    if (!isset($supported[$currentcode])) {
+        $currentcode = 'en';
+    }
+
+    $returnpath = $_SERVER['REQUEST_URI'] ?? '/';
+
+    $buildbutton = static function(string $langcode, array $langmeta, string $extra = '') use ($returnpath): string {
+        $targeturl = new moodle_url('/local/elearning_system/changelang.php', [
+            'lang' => $langcode,
+            'return' => $returnpath,
+        ]);
+
+        return html_writer::link(
+            $targeturl,
+            '<span class="es-lang-flag ' . s($langmeta['flagclass']) . '" aria-hidden="true"></span>',
+            [
+                'class' => 'es-lang-btn ' . trim($extra),
+                'title' => $langmeta['label'],
+                'aria-label' => $langmeta['label'],
+            ],
+        );
+    };
+
+    $html = html_writer::start_div('es-lang-switcher');
+    $html .= $buildbutton($currentcode, $supported[$currentcode], 'es-lang-btn-current');
+    $html .= html_writer::start_div('es-lang-options');
+    foreach ($supported as $langcode => $langmeta) {
+        if ($langcode === $currentcode) {
+            continue;
+        }
+        $html .= $buildbutton($langcode, $langmeta, 'es-lang-btn-option');
+    }
+    $html .= html_writer::end_div();
+    $html .= html_writer::end_div();
+
+    $html .= '<style>
+        .es-lang-switcher {
+            position: fixed;
+            left: 14px;
+            bottom: 14px;
+            z-index: 9999;
+            display: inline-flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #d9dee8;
+            border-radius: 24px;
+            padding: 8px;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+        }
+        .es-lang-options {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .es-lang-switcher:hover .es-lang-options,
+        .es-lang-switcher:focus-within .es-lang-options {
+            display: flex;
+        }
+        .es-lang-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: transform .15s ease, border-color .15s ease, background .15s ease;
+            background: transparent;
+        }
+        .es-lang-btn:hover {
+            transform: translateY(-1px);
+            border-color: #b8c5dd;
+            background: #eef4ff;
+            text-decoration: none;
+        }
+        .es-lang-btn-current {
+            border-color: #6b84ff;
+            background: #e9efff;
+        }
+        .es-lang-flag {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        }
+        .es-flag-en {
+            background:
+                linear-gradient(0deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
+                linear-gradient(90deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
+                linear-gradient(0deg, transparent 47%, #c8102e 47% 53%, transparent 53%),
+                linear-gradient(90deg, transparent 47%, #c8102e 47% 53%, transparent 53%),
+                #1f4aa8;
+        }
+        .es-flag-fr {
+            background: linear-gradient(90deg, #244aa5 0 33.33%, #ffffff 33.33% 66.66%, #e33b32 66.66% 100%);
+        }
+        .es-flag-ar {
+            background:
+                linear-gradient(0deg, #0a8f3f 0 34%, #ffffff 34% 67%, #111111 67% 100%);
+        }
+    </style>';
+
+    return $html;
 }
 
 /**
@@ -847,4 +1093,10 @@ function local_elearning_system_is_product_covered_by_active_purchase(int $useri
     }
 
     return false;
+}
+
+function local_elearning_system_send_custom_email($toemail, $toname, $subject, $htmlbody, $altbody = '') {
+    $mailer = new \local_elearning_system\mailer();
+
+    return $mailer::send_mail($toemail, $toname, $subject, $htmlbody, $altbody);
 }

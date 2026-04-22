@@ -24,7 +24,7 @@
     </div>
 
     {{#hasproducts}}
-    <div class="card mb-3">
+    <div class="card mb-3 es-home-filters">
         <div class="card-body">
             <div class="row g-2 align-items-end" id="homeFilters">
                 <div class="col-12 col-md-6">
@@ -47,19 +47,19 @@
     </div>
     {{/hasproducts}}
 
-    <div class="row" id="homeCourseList">
+    <div class="row g-3" id="homeCourseList">
         {{#products}}
         <div class="col-12 col-sm-6 col-lg-4 mb-3 home-course-item" data-type="{{#isfree}}free{{/isfree}}{{#ispaid}}paid{{/ispaid}}" data-name="{{name}}">
-            <div class="card h-100">
+            <div class="card h-100 es-store-card">
                 <div class="card-body d-flex flex-column">
-                    <div class="mb-3 text-center">
+                    <div class="mb-3 text-center es-store-image-wrap">
                         {{#hasimage}}
                         <a href="{{producturl}}">
-                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded" style="max-height: 160px; object-fit: cover;">
+                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded es-store-image">
                         </a>
                         {{/hasimage}}
                         {{^hasimage}}
-                        <a href="{{producturl}}" class="text-decoration-none">
+                        <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
                             <div class="text-muted"><i class="fa fa-image"></i> No image</div>
                         </a>
                         {{/hasimage}}
@@ -74,7 +74,7 @@
                         </span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 es-store-price">
                         {{#isfree}}
                         <strong>Price:</strong> Free
                         {{/isfree}}
@@ -86,14 +86,14 @@
                     </div>
 
                     {{#ispurchased}}
-                    <span class="btn btn-success mt-auto disabled" aria-disabled="true">Purchased</span>
+                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">Purchased</span>
                     {{/ispurchased}}
                     {{^ispurchased}}
                         {{#isincart}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto">In cart</a>
+                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">In cart</a>
                         {{/isincart}}
                         {{^isincart}}
-                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto">Add to Cart</a>
+                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">Add to Cart</a>
                         {{/isincart}}
                     {{/ispurchased}}
                 </div>
@@ -117,19 +117,19 @@
     </div>
 
     {{#hasbundles}}
-    <div class="row" id="homeBundleList">
+    <div class="row g-3" id="homeBundleList">
         {{#bundles}}
         <div class="col-12 col-sm-6 col-lg-4 mb-3">
-            <div class="card h-100">
+            <div class="card h-100 es-store-card">
                 <div class="card-body d-flex flex-column">
-                    <div class="mb-3 text-center">
+                    <div class="mb-3 text-center es-store-image-wrap">
                         {{#hasimage}}
                         <a href="{{producturl}}">
-                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded" style="max-height: 160px; object-fit: cover;">
+                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded es-store-image">
                         </a>
                         {{/hasimage}}
                         {{^hasimage}}
-                        <a href="{{producturl}}" class="text-decoration-none">
+                        <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
                             <div class="text-muted"><i class="fa fa-image"></i> No image</div>
                         </a>
                         {{/hasimage}}
@@ -145,7 +145,7 @@
                         </span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 es-store-price">
                         {{#isfree}}
                         <strong>Price:</strong> Free
                         {{/isfree}}
@@ -157,14 +157,14 @@
                     </div>
 
                     {{#ispurchased}}
-                    <span class="btn btn-success mt-auto disabled" aria-disabled="true">Purchased</span>
+                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">Purchased</span>
                     {{/ispurchased}}
                     {{^ispurchased}}
                         {{#isincart}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto">In cart</a>
+                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">In cart</a>
                         {{/isincart}}
                         {{^isincart}}
-                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto">Add to Cart</a>
+                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">Add to Cart</a>
                         {{/isincart}}
                     {{/ispurchased}}
                 </div>

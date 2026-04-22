@@ -103,11 +103,17 @@
 
 <div class="emailtemplate-drawer" id="emailTemplatesDrawer" style="display:none;">
     <div class="position-relative">
-        <button type="button" onclick="closeEmailTemplatesDrawer();" class="btn btn-sm btn-outline-secondary position-absolute" style="top:-10px; right:-10px;">✕</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+            <h5 class="mb-0">Configure Email Templates</h5>
+            <div class="d-flex gap-2">
+                <button type="button" onclick="saveEmailTemplatesFromTop();" class="btn btn-sm btn-success">💾 Save</button>
+                <button type="button" onclick="closeEmailTemplatesDrawer();" class="btn btn-sm btn-outline-secondary">✕</button>
+            </div>
+        </div>
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-light">
-                <h5 class="mb-0">Configure Email Templates</h5>
+                <small class="text-muted">Edit templates and click Save to apply changes</small>
             </div>
             <div class="card-body">
                 <div class="alert alert-info small">
@@ -144,6 +150,13 @@
 </div>
 
 <script>
+function saveEmailTemplatesFromTop() {
+    const form = document.querySelector('.emailtemplate-drawer form');
+    if (form) {
+        form.submit();
+    }
+}
+
 function clearEmailTemplatesDrawerQueryParams() {
     const url = new URL(window.location.href);
     url.searchParams.delete('open');
