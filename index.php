@@ -9,8 +9,32 @@ $PAGE->set_context($context);
 
 $PAGE->set_url('/local/elearning_system/index.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Courses');
-$PAGE->set_heading('Available Courses');
+
+$requestedlang = optional_param('lang', '', PARAM_LANG);
+$supportedlangs = ['en', 'fr', 'ar'];
+if (in_array($requestedlang, $supportedlangs, true)) {
+    $SESSION->lang = $requestedlang;
+    $SESSION->forcelang = $requestedlang;
+    $SESSION->local_elearning_system_lang = $requestedlang;
+    setcookie('local_elearning_system_lang', $requestedlang, time() + (60 * 60 * 24 * 365), '/');
+    if (isset($USER) && is_object($USER)) {
+        $USER->lang = $requestedlang;
+    }
+    if (isloggedin() && !isguestuser()) {
+        set_user_preference('lang', $requestedlang);
+    }
+    if (function_exists('force_current_language')) {
+        force_current_language($requestedlang);
+    }
+    if (function_exists('fix_current_language')) {
+        fix_current_language($requestedlang);
+    }
+}
+
+$frontendstrings = local_elearning_system_get_flat_language_strings();
+
+$PAGE->set_title($frontendstrings['allcourses'] ?? 'All Courses');
+$PAGE->set_heading($frontendstrings['allcourses'] ?? 'All Courses');
 local_elearning_system_force_auth_login_url('/local/elearning_system/index.php');
 
 global $DB, $CFG, $USER;
@@ -137,6 +161,42 @@ echo $OUTPUT->header();
 $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/index.php']))->out(false);
 
 echo $OUTPUT->render_from_template('local_elearning_system/home', [
+    'home_allcourses' => $frontendstrings['allcourses'] ?? 'All Courses',
+    'home_homeintro' => $frontendstrings['homeintro'] ?? '',
+    'home_homeslide1kicker' => $frontendstrings['homeslide1kicker'] ?? '',
+    'home_homeslide1title' => $frontendstrings['homeslide1title'] ?? '',
+    'home_homeslide1desc' => $frontendstrings['homeslide1desc'] ?? '',
+    'home_homeslide2kicker' => $frontendstrings['homeslide2kicker'] ?? '',
+    'home_homeslide2title' => $frontendstrings['homeslide2title'] ?? '',
+    'home_homeslide2desc' => $frontendstrings['homeslide2desc'] ?? '',
+    'home_homeslide3kicker' => $frontendstrings['homeslide3kicker'] ?? '',
+    'home_homeslide3title' => $frontendstrings['homeslide3title'] ?? '',
+    'home_homeslide3desc' => $frontendstrings['homeslide3desc'] ?? '',
+    'home_browsecourses' => $frontendstrings['browsecourses'] ?? '',
+    'home_mycourses' => $frontendstrings['mycourses'] ?? '',
+    'home_signin' => $frontendstrings['signin'] ?? '',
+    'home_cart' => $frontendstrings['cart'] ?? '',
+    'home_viewbundles' => $frontendstrings['viewbundles'] ?? '',
+    'home_opencart' => $frontendstrings['opencart'] ?? '',
+    'home_findacourse' => $frontendstrings['findacourse'] ?? '',
+    'home_checkout' => $frontendstrings['checkout'] ?? '',
+    'home_search' => $frontendstrings['search'] ?? '',
+    'home_searchbycoursename' => $frontendstrings['searchbycoursename'] ?? '',
+    'home_type' => $frontendstrings['type'] ?? '',
+    'home_alltypes' => $frontendstrings['alltypes'] ?? '',
+    'home_free' => $frontendstrings['free'] ?? '',
+    'home_paid' => $frontendstrings['paid'] ?? '',
+    'home_reset' => $frontendstrings['reset'] ?? '',
+    'home_pricelabel' => $frontendstrings['price'] ?? '',
+    'home_purchased' => $frontendstrings['purchased'] ?? '',
+    'home_incart' => $frontendstrings['incart'] ?? '',
+    'home_addtocart' => $frontendstrings['addtocart'] ?? '',
+    'home_nocoursesavailable' => $frontendstrings['nocoursesavailable'] ?? '',
+    'home_availablebundles' => $frontendstrings['availablebundles'] ?? '',
+    'home_bundlesdesc' => $frontendstrings['bundlesdesc'] ?? '',
+    'home_bundle' => $frontendstrings['bundle'] ?? '',
+    'home_nobundlesavailable' => $frontendstrings['nobundlesavailable'] ?? '',
+    'home_nocoursesmatch' => $frontendstrings['nocoursesmatch'] ?? '',
     'bundles' => $bundles,
     'hasbundles' => !empty($bundles),
     'products' => $products,

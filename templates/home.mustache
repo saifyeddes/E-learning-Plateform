@@ -5,17 +5,17 @@
         <div class="col-12">
             <div class="es-home-hero d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <h3 class="mb-1">All Courses</h3>
-                    <p class="text-muted mb-0">Browse available courses and enroll quickly.</p>
+                    <h3 class="mb-1">{{home_allcourses}}</h3>
+                    <p class="text-muted mb-0">{{home_homeintro}}</p>
                 </div>
                 <div class="es-top-actions">
-                    <a href="{{carturl}}" class="es-cart-icon-btn" title="Panier" aria-label="Panier">
+                    <a href="{{carturl}}" class="es-cart-icon-btn" title="{{home_cart}}" aria-label="{{home_cart}}">
                         <i class="fa fa-shopping-cart"></i>
                         <span class="es-cart-count">{{cartcount}}</span>
                     </a>
                     {{#isloggedin}}
                     <a href="{{mycoursesurl}}" class="btn btn-light btn-sm">
-                        My Courses
+                        {{home_mycourses}}
                     </a>
                     {{/isloggedin}}
                 </div>
@@ -27,16 +27,16 @@
         <div class="es-home-carousel-inner" id="esHomeCarousel">
             <article class="es-home-slide is-active">
                 <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">Learn Better</span>
-                    <h2>Build skills with curated courses</h2>
-                    <p>Explore free and premium lessons, discover clear learning paths, and start improving today.</p>
+                    <span class="es-home-slide-kicker">{{home_homeslide1kicker}}</span>
+                    <h2>{{home_homeslide1title}}</h2>
+                    <p>{{home_homeslide1desc}}</p>
                     <div class="es-home-slide-actions">
-                        <a href="#homeCourseList" class="btn btn-primary">Browse courses</a>
+                        <a href="#homeCourseList" class="btn btn-primary">{{home_browsecourses}}</a>
                         {{#isloggedin}}
-                        <a href="{{mycoursesurl}}" class="btn btn-outline-secondary">My courses</a>
+                        <a href="{{mycoursesurl}}" class="btn btn-outline-secondary">{{home_mycourses}}</a>
                         {{/isloggedin}}
                         {{^isloggedin}}
-                        <a href="{{loginurl}}" class="btn btn-outline-secondary">Sign in</a>
+                        <a href="{{loginurl}}" class="btn btn-outline-secondary">{{home_signin}}</a>
                         {{/isloggedin}}
                     </div>
                 </div>
@@ -47,12 +47,12 @@
 
             <article class="es-home-slide">
                 <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">Smart Bundles</span>
-                    <h2>Save time with ready-made packs</h2>
-                    <p>Choose bundles prepared by educators and access grouped content with one checkout flow.</p>
+                    <span class="es-home-slide-kicker">{{home_homeslide2kicker}}</span>
+                    <h2>{{home_homeslide2title}}</h2>
+                    <p>{{home_homeslide2desc}}</p>
                     <div class="es-home-slide-actions">
-                        <a href="#homeBundleList" class="btn btn-primary">View bundles</a>
-                        <a href="{{carturl}}" class="btn btn-outline-secondary">Open cart</a>
+                        <a href="#homeBundleList" class="btn btn-primary">{{home_viewbundles}}</a>
+                        <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_opencart}}</a>
                     </div>
                 </div>
                 <div class="es-home-slide-art" aria-hidden="true">
@@ -62,12 +62,12 @@
 
             <article class="es-home-slide">
                 <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">Fast Access</span>
-                    <h2>Enroll in minutes and start now</h2>
-                    <p>Use quick filters, secure checkout, and instant access to your content across devices.</p>
+                    <span class="es-home-slide-kicker">{{home_homeslide3kicker}}</span>
+                    <h2>{{home_homeslide3title}}</h2>
+                    <p>{{home_homeslide3desc}}</p>
                     <div class="es-home-slide-actions">
-                        <a href="#homeFilters" class="btn btn-primary">Find a course</a>
-                        <a href="{{carturl}}" class="btn btn-outline-secondary">Checkout</a>
+                        <a href="#homeFilters" class="btn btn-primary">{{home_findacourse}}</a>
+                        <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_checkout}}</a>
                     </div>
                 </div>
                 <div class="es-home-slide-art" aria-hidden="true">
@@ -92,19 +92,19 @@
         <div class="card-body">
             <div class="row g-2 align-items-end" id="homeFilters">
                 <div class="col-12 col-md-6">
-                    <label for="homeSearch" class="form-label mb-1">Search</label>
-                    <input type="text" id="homeSearch" class="form-control" placeholder="Search by course name">
+                    <label for="homeSearch" class="form-label mb-1">{{home_search}}</label>
+                    <input type="text" id="homeSearch" class="form-control" placeholder="{{home_searchbycoursename}}">
                 </div>
                 <div class="col-12 col-md-4">
-                    <label for="homeTypeFilter" class="form-label mb-1">Type</label>
+                    <label for="homeTypeFilter" class="form-label mb-1">{{home_type}}</label>
                     <select id="homeTypeFilter" class="custom-select form-control">
-                        <option value="all">All types</option>
-                        <option value="free">Free</option>
-                        <option value="paid">Paid</option>
+                        <option value="all">{{home_alltypes}}</option>
+                        <option value="free">{{home_free}}</option>
+                        <option value="paid">{{home_paid}}</option>
                     </select>
                 </div>
                 <div class="col-12 col-md-2">
-                    <button type="button" id="homeResetFilter" class="btn btn-secondary w-100">Reset</button>
+                    <button type="button" id="homeResetFilter" class="btn btn-secondary w-100">{{home_reset}}</button>
                 </div>
             </div>
         </div>
@@ -133,31 +133,31 @@
 
                     <div class="mb-2">
                         <span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">
-                            {{#isfree}}Free{{/isfree}}
-                            {{#ispaid}}Paid{{/ispaid}}
+                            {{#isfree}}{{home_free}}{{/isfree}}
+                            {{#ispaid}}{{home_paid}}{{/ispaid}}
                         </span>
                     </div>
 
                     <div class="mb-3 es-store-price">
                         {{#isfree}}
-                        <strong>Price:</strong> Free
+                        <strong>{{home_pricelabel}}:</strong> {{home_free}}
                         {{/isfree}}
                         {{#ispaid}}
-                        <strong>Price:</strong>
+                        <strong>{{home_pricelabel}}:</strong>
                         {{#saleprice}}{{saleprice}}{{/saleprice}}
                         {{^saleprice}}{{price}}{{/saleprice}}
                         {{/ispaid}}
                     </div>
 
                     {{#ispurchased}}
-                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">Purchased</span>
+                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">{{home_purchased}}</span>
                     {{/ispurchased}}
                     {{^ispurchased}}
                         {{#isincart}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">In cart</a>
+                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">{{home_incart}}</a>
                         {{/isincart}}
                         {{^isincart}}
-                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">Add to Cart</a>
+                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">{{home_addtocart}}</a>
                         {{/isincart}}
                     {{/ispurchased}}
                 </div>
@@ -168,15 +168,15 @@
 
     {{^products}}
     <div class="alert alert-info">
-        No courses available yet.
+        {{home_nocoursesavailable}}
     </div>
     {{/products}}
 
     <hr class="my-4">
     <div class="row mb-3">
         <div class="col-12">
-            <h3 class="mb-1">Available Bundles</h3>
-            <p class="text-muted mb-0">Buy bundled publications with the same checkout flow.</p>
+            <h3 class="mb-1">{{home_availablebundles}}</h3>
+            <p class="text-muted mb-0">{{home_bundlesdesc}}</p>
         </div>
     </div>
 
@@ -202,33 +202,33 @@
                     <h5 class="card-title mb-1"><a href="{{producturl}}">{{name}}</a></h5>
 
                     <div class="mb-2 d-flex align-items-center gap-2">
-                        <span class="badge bg-info text-dark">Bundle</span>
+                        <span class="badge bg-info text-dark">{{home_bundle}}</span>
                         <span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">
-                            {{#isfree}}Free{{/isfree}}
-                            {{#ispaid}}Paid{{/ispaid}}
+                            {{#isfree}}{{home_free}}{{/isfree}}
+                            {{#ispaid}}{{home_paid}}{{/ispaid}}
                         </span>
                     </div>
 
                     <div class="mb-3 es-store-price">
                         {{#isfree}}
-                        <strong>Price:</strong> Free
+                        <strong>{{home_pricelabel}}:</strong> {{home_free}}
                         {{/isfree}}
                         {{#ispaid}}
-                        <strong>Price:</strong>
+                        <strong>{{home_pricelabel}}:</strong>
                         {{#saleprice}}{{saleprice}}{{/saleprice}}
                         {{^saleprice}}{{price}}{{/saleprice}}
                         {{/ispaid}}
                     </div>
 
                     {{#ispurchased}}
-                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">Purchased</span>
+                    <span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">{{home_purchased}}</span>
                     {{/ispurchased}}
                     {{^ispurchased}}
                         {{#isincart}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">In cart</a>
+                        <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">{{home_incart}}</a>
                         {{/isincart}}
                         {{^isincart}}
-                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">Add to Cart</a>
+                        <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">{{home_addtocart}}</a>
                         {{/isincart}}
                     {{/ispurchased}}
                 </div>
@@ -240,12 +240,12 @@
 
     {{^hasbundles}}
     <div class="alert alert-info">
-        No bundles available yet.
+        {{home_nobundlesavailable}}
     </div>
     {{/hasbundles}}
 
     <div id="homeNoResults" class="alert alert-warning d-none mt-2">
-        No courses match your filter.
+        {{home_nocoursesmatch}}
     </div>
 </div>
 

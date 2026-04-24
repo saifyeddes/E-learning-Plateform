@@ -344,6 +344,13 @@
     gap: 1rem;
     align-items: center;
     padding: 1.2rem 1.35rem;
+    color: #102a43;
+}
+
+.es-client .es-home-slide-content {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
 }
 
 .es-client .es-home-slide.is-active {
@@ -372,12 +379,16 @@
     margin: 0 0 0.55rem;
     font-size: clamp(1.28rem, 1.8vw, 1.9rem);
     line-height: 1.18;
+    color: #102a43;
+    font-weight: 700;
 }
 
 .es-client .es-home-slide p {
     margin: 0;
-    color: #415670;
+    color: #415670; 
     max-width: 620px;
+    font-size: 1rem;
+    line-height: 1.55;
 }
 
 .es-client .es-home-slide-actions {
@@ -385,6 +396,23 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.58rem;
+}
+
+.es-client .es-home-slide-actions .btn {
+    font-weight: 600;
+}
+
+.es-client .es-home-slide-actions .btn-outline-secondary {
+    color: #0f6cbf;
+    border-color: rgba(15, 108, 191, 0.35);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.es-client .es-home-slide-actions .btn-outline-secondary:hover,
+.es-client .es-home-slide-actions .btn-outline-secondary:focus {
+    color: #fff;
+    background: #0f6cbf;
+    border-color: #0f6cbf;
 }
 
 .es-client .es-home-slide-art {

@@ -26,6 +26,114 @@ function local_elearning_system_pluginfile($course, $cm, $context, $filearea, $a
     send_stored_file($file, 0, 0, $forcedownload, $options);
 }
 
+/**
+ * Return the active language for the plugin frontend.
+ *
+ * Falls back to the first two letters of Moodle current language.
+ *
+ * @return string
+ */
+function local_elearning_system_get_active_language(): string {
+    global $SESSION, $USER;
+
+    $supported = ['en', 'fr', 'ar'];
+
+    $lang = '';
+    if (!empty($_GET['lang']) && is_string($_GET['lang'])) {
+        $lang = core_text::strtolower(substr(clean_param($_GET['lang'], PARAM_ALPHANUMEXT), 0, 2));
+    }
+
+    if ($lang === '' && !empty($_POST['lang']) && is_string($_POST['lang'])) {
+        $lang = core_text::strtolower(substr(clean_param($_POST['lang'], PARAM_ALPHANUMEXT), 0, 2));
+    }
+
+    if ($lang === '') {
+        if (!empty($SESSION->forcelang) && is_string($SESSION->forcelang)) {
+            $lang = core_text::strtolower(substr($SESSION->forcelang, 0, 2));
+        } else if (!empty($SESSION->local_elearning_system_lang) && is_string($SESSION->local_elearning_system_lang)) {
+            $lang = core_text::strtolower(substr($SESSION->local_elearning_system_lang, 0, 2));
+        } else if (!empty($_COOKIE['local_elearning_system_lang']) && is_string($_COOKIE['local_elearning_system_lang'])) {
+            $lang = core_text::strtolower(substr($_COOKIE['local_elearning_system_lang'], 0, 2));
+        } else if (!empty($USER->lang) && is_string($USER->lang)) {
+            $lang = core_text::strtolower(substr($USER->lang, 0, 2));
+        } else {
+            $lang = core_text::strtolower(substr(current_language(), 0, 2));
+        }
+    }
+
+    if (!in_array($lang, $supported, true)) {
+        $lang = 'en';
+    }
+
+    return $lang;
+}
+
+/**
+ * Load flat language strings for the plugin frontend.
+ *
+ * Files are stored as /lang/en.php, /lang/fr.php, /lang/ar.php.
+ * English is used as the fallback.
+ *
+ * @return array<string, string>
+ */
+function local_elearning_system_get_flat_language_strings(): array {
+    $lang = local_elearning_system_get_active_language();
+
+    $loadstrings = static function(string $code): array {
+        $filepath = __DIR__ . '/lang/' . $code . '.php';
+        if (!file_exists($filepath)) {
+            return [];
+        }
+
+        $strings = include($filepath);
+        return is_array($strings) ? $strings : [];
+    };
+
+    $base = $loadstrings('en');
+    if ($lang !== 'en') {
+        $base = array_merge($base, $loadstrings($lang));
+    }
+
+    return $base;
+}
+
+/**
+ * Decide whether the language switcher should be visible for the current user.
+ * It is shown only for student and parent interfaces.
+ *
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_should_show_language_switcher(moodle_database $DB): bool {
+    global $USER;
+
+    if (!isloggedin() || isguestuser()) {
+        return false;
+    }
+
+    $userid = (int)($USER->id ?? 0);
+    if ($userid <= 0) {
+        return false;
+    }
+
+    $usercontext = local_elearning_system_get_effective_user_context($userid, $DB);
+    if (!empty($usercontext['isparentaccount'])) {
+        return true;
+    }
+
+    $sql = "SELECT 1
+              FROM {role_assignments} ra
+              JOIN {role} r ON r.id = ra.roleid
+             WHERE ra.userid = :userid
+               AND r.shortname = :shortname";
+    $params = [
+        'userid' => $userid,
+        'shortname' => 'student',
+    ];
+
+    return $DB->record_exists_sql($sql, $params);
+}
+
 function local_elearning_system_extends_navigation(global_navigation $navigation) {
     // Show Store only for site admins; regular users only see Accueil.
     if (!isloggedin() || isguestuser() || !is_siteadmin()) {
@@ -713,7 +821,11 @@ function local_elearning_system_force_auth_login_url(string $returnlocalurl): vo
  * @return string
  */
 function local_elearning_system_before_standard_top_of_body_html(): string {
-    global $SESSION;
+    global $DB, $SESSION;
+
+    if (!local_elearning_system_should_show_language_switcher($DB)) {
+        return '';
+    }
 
     $supported = [
         'en' => ['flagclass' => 'es-flag-en', 'label' => 'English (America)'],
@@ -721,23 +833,26 @@ function local_elearning_system_before_standard_top_of_body_html(): string {
         'ar' => ['flagclass' => 'es-flag-ar', 'label' => 'العربية (Saudi Arabia)'],
     ];
 
-    $currentlang = core_text::strtolower(current_language());
-    $currentcode = substr($currentlang, 0, 2);
-    if (!isset($supported[$currentcode])) {
-        $currentcode = 'en';
-    }
+    $currentcode = local_elearning_system_get_active_language();
 
     $returnpath = $_SERVER['REQUEST_URI'] ?? '/';
+    if ($returnpath !== '' && strpos($returnpath, 'lang=') !== false) {
+        $returnpath = preg_replace('/([?&])lang=[^&]*(&)?/', '$1', $returnpath);
+        $returnpath = rtrim($returnpath, '?&');
+        if ($returnpath === '') {
+            $returnpath = '/';
+        }
+    }
 
     $buildbutton = static function(string $langcode, array $langmeta, string $extra = '') use ($returnpath): string {
-        $targeturl = new moodle_url('/local/elearning_system/changelang.php', [
+        $targeturl = new moodle_url($returnpath, [
             'lang' => $langcode,
-            'return' => $returnpath,
         ]);
 
         return html_writer::link(
             $targeturl,
-            '<span class="es-lang-flag ' . s($langmeta['flagclass']) . '" aria-hidden="true"></span>',
+            '<span class="es-lang-flag ' . s($langmeta['flagclass']) . '" aria-hidden="true"></span>'
+            . '<span class="es-lang-code">' . s(strtoupper($langcode)) . '</span>',
             [
                 'class' => 'es-lang-btn ' . trim($extra),
                 'title' => $langmeta['label'],
@@ -748,14 +863,12 @@ function local_elearning_system_before_standard_top_of_body_html(): string {
 
     $html = html_writer::start_div('es-lang-switcher');
     $html .= $buildbutton($currentcode, $supported[$currentcode], 'es-lang-btn-current');
-    $html .= html_writer::start_div('es-lang-options');
     foreach ($supported as $langcode => $langmeta) {
         if ($langcode === $currentcode) {
             continue;
         }
         $html .= $buildbutton($langcode, $langmeta, 'es-lang-btn-option');
     }
-    $html .= html_writer::end_div();
     $html .= html_writer::end_div();
 
     $html .= '<style>
@@ -765,35 +878,30 @@ function local_elearning_system_before_standard_top_of_body_html(): string {
             bottom: 14px;
             z-index: 9999;
             display: inline-flex;
-            flex-direction: column-reverse;
+            flex-direction: row;
             align-items: center;
             gap: 8px;
             background: rgba(255, 255, 255, 0.94);
             border: 1px solid #d9dee8;
-            border-radius: 24px;
+            border-radius: 999px;
             padding: 8px;
             box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
         }
-        .es-lang-options {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .es-lang-switcher:hover .es-lang-options,
-        .es-lang-switcher:focus-within .es-lang-options {
-            display: flex;
-        }
         .es-lang-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
+            min-width: 58px;
+            height: 44px;
+            border-radius: 999px;
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-decoration: none;
             border: 1px solid transparent;
             transition: transform .15s ease, border-color .15s ease, background .15s ease;
             background: transparent;
+            flex: 0 0 auto;
+            padding: 3px 8px;
+            line-height: 1;
         }
         .es-lang-btn:hover {
             transform: translateY(-1px);
@@ -805,13 +913,27 @@ function local_elearning_system_before_standard_top_of_body_html(): string {
             border-color: #6b84ff;
             background: #e9efff;
         }
+        .es-lang-btn-option {
+            opacity: 0.95;
+        }
+        .es-lang-btn-option:hover,
+        .es-lang-btn-option:focus {
+            opacity: 1;
+        }
         .es-lang-flag {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: inline-block;
             border: 1px solid rgba(0, 0, 0, 0.08);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        }
+        .es-lang-code {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #2f3b52;
         }
         .es-flag-en {
             background:
@@ -827,6 +949,25 @@ function local_elearning_system_before_standard_top_of_body_html(): string {
         .es-flag-ar {
             background:
                 linear-gradient(0deg, #0a8f3f 0 34%, #ffffff 34% 67%, #111111 67% 100%);
+        }
+        @media (max-width: 768px) {
+            .es-lang-switcher {
+                left: 10px;
+                bottom: 10px;
+                padding: 7px;
+                gap: 6px;
+            }
+            .es-lang-btn {
+                min-width: 52px;
+                height: 40px;
+            }
+            .es-lang-flag {
+                width: 22px;
+                height: 22px;
+            }
+            .es-lang-code {
+                font-size: 0.62rem;
+            }
         }
     </style>';
 
