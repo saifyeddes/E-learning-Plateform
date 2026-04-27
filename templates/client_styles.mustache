@@ -790,6 +790,7 @@
     border-radius: 10px;
     font-size: 0.9rem;
     line-height: 1.35;
+    white-space: pre-line;
 }
 
 .es-chatbot-msg-bot {
@@ -1047,6 +1048,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    const renderInvoiceButton = function(metaContainer, invoiceurl, label) {
+        if (!metaContainer || !invoiceurl) {
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.className = 'es-chatbot-suggestion-btn';
+        link.href = invoiceurl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = label || 'Telecharger facture';
+        metaContainer.appendChild(link);
+    };
+
     const renderRating = function(metaContainer) {
         if (!metaContainer) {
             return;
@@ -1116,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const meta = appendChatMeta();
             renderSuggestions(meta, data && data.suggestions ? data.suggestions : []);
+            renderInvoiceButton(meta, data ? data.invoiceurl : '', data ? data.invoicelabel : '');
             if (!data || data.showrating !== false) {
                 renderRating(meta);
             }

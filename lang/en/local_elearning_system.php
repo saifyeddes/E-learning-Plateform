@@ -61,3 +61,20 @@ $string['paypalcurrency'] = 'PayPal currency';
 $string['paypalcurrency_desc'] = '3-letter ISO currency code used for checkout (for example usd, eur, mad).';
 
 $string['sendreminderexpirationtask'] = 'Send course expiration reminders';
+
+$string['llmsettings'] = 'Chatbot AI Settings';
+$string['llmsettings_desc'] = 'Hybrid mode: AI parses free-text intent, while business actions remain rule-based.';
+$string['llmenabled'] = 'Enable AI intent parsing';
+$string['llmenabled_desc'] = 'If enabled, the chatbot calls an AI model to extract structured intent before applying business rules.';
+$string['llmprovider'] = 'AI provider';
+$string['llmprovider_desc'] = 'Provider used for intent parsing.';
+$string['llmmodel'] = 'AI model';
+$string['llmmodel_desc'] = 'Model name, for example gpt-4o-mini.';
+$string['llmendpoint'] = 'AI endpoint URL';
+$string['llmendpoint_desc'] = 'Chat completions endpoint URL.';
+$string['llmapikey'] = 'AI API key';
+$string['llmapikey_desc'] = 'Secret key used to call the AI provider.';
+$string['llmtimeout'] = 'AI request timeout (seconds)';
+$string['llmtimeout_desc'] = 'Maximum wait time for the AI response.';
+$string['llmconfidence'] = 'Minimum AI confidence';
+$string['llmconfidence_desc'] = 'If confidence is below this threshold, fallback to regex parsing.';
