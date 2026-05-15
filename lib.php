@@ -361,10 +361,14 @@ function local_elearning_system_get_email_template_definitions(): array {
     ];
 }
 
-function local_elearning_system_generate_invoice_pdf_file(stdClass $order, stdClass $product, stdClass $user): array {
+function local_elearning_system_generate_invoice_pdf_file(stdClass $order, stdClass $product, stdClass $user, ?string $lang = null): array {
     global $CFG;
 
     require_once($CFG->libdir . '/pdflib.php');
+
+    if ($lang === null || $lang === '') {
+        $lang = local_elearning_system_get_preferred_email_lang((int)$user->id);
+    }
 
     $tmpdir = make_request_directory();
     $filename = 'invoice-order-' . $order->id . '.pdf';
@@ -376,73 +380,211 @@ function local_elearning_system_generate_invoice_pdf_file(stdClass $order, stdCl
     $pdf->SetTitle('Invoice #' . $order->id);
     $pdf->AddPage();
 
-    $amount = number_format((float)$order->amount, 2);
+    // Police Unicode importante pour l’arabe.
+    $pdf->SetFont('dejavusans', '', 10);
+
     $currency = local_elearning_system_get_site_currency_code();
-    $expireslabel = !empty($order->expiresat) ? userdate((int)$order->expiresat) : 'Unlimited';
+    $amount = local_elearning_system_format_invoice_amount((float)$order->amount);
+    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
+    $durationlabel = local_elearning_system_format_email_duration($durationmonths, $lang);
 
-    $html = '
-        <h1>Invoice</h1>
-        <p><strong>Order number:</strong> #' . s($order->id) . '</p>
-        <p><strong>Student:</strong> ' . s(fullname($user)) . '</p>
-        <p><strong>Email:</strong> ' . s($user->email) . '</p>
-        <p><strong>Product:</strong> ' . s($product->name) . '</p>
-        <p><strong>Amount:</strong> ' . s($currency) . ' ' . s($amount) . '</p>
-        <p><strong>Access duration:</strong> ' . s($order->durationmonths ?? '') . ' month(s)</p>
-        <p><strong>Expiration date:</strong> ' . s($expireslabel) . '</p>
-        <p><strong>Date:</strong> ' . s(userdate(time())) . '</p>
-    ';
+    $purchasedate = local_elearning_system_format_email_datetime((int)($order->timecreated ?? time()), $lang);
+    $expirationdate = !empty($order->expiresat)
+        ? local_elearning_system_format_email_datetime((int)$order->expiresat, $lang)
+        : local_elearning_system_format_email_datetime(0, $lang);
 
-    $pdf->writeHTML($html);
+    $sitefullname = format_string(get_site()->fullname);
+    $productname = format_string($product->name);
+    $username = fullname($user);
+    $useremail = (string)$user->email;
+
+    if ($lang === 'fr') {
+        $html = '
+            <h1 style="text-align:center;">' . s($sitefullname) . '</h1>
+            <h2 style="text-align:center;">Facture</h2>
+
+            <p><strong>Facture n° :</strong> #' . s($order->id) . '</p>
+            <p><strong>Date d’achat :</strong> ' . s($purchasedate) . '</p>
+            <p><strong>Date d’expiration :</strong> ' . s($expirationdate) . '</p>
+
+            <p><strong>Client :</strong><br>' . s($username) . '<br>' . s($useremail) . '</p>
+
+            <table border="1" cellpadding="6" cellspacing="0" width="100%">
+                <thead>
+                    <tr style="background-color:#d9e8ff;">
+                        <th><strong>Produit / Service</strong></th>
+                        <th><strong>Durée</strong></th>
+                        <th><strong>Montant</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>' . s($productname) . '</td>
+                        <td>' . s($durationlabel) . '</td>
+                        <td>' . s($currency) . ' ' . s($amount) . '</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br><br>
+            <p style="text-align:right;"><strong>Total :</strong> ' . s($currency) . ' ' . s($amount) . '</p>
+        ';
+    } else if ($lang === 'ar') {
+        $html = '
+            <div dir="rtl" style="text-align:right;">
+                <h1 style="text-align:center;">' . s($sitefullname) . '</h1>
+                <h2 style="text-align:center;">فاتورة</h2>
+
+                <p><strong>رقم الفاتورة:</strong> #' . s($order->id) . '</p>
+                <p><strong>تاريخ الشراء:</strong> ' . s($purchasedate) . '</p>
+                <p><strong>تاريخ انتهاء الصلاحية:</strong> ' . s($expirationdate) . '</p>
+
+                <p><strong>العميل:</strong><br>' . s($username) . '<br>' . s($useremail) . '</p>
+
+                <table border="1" cellpadding="6" cellspacing="0" width="100%">
+                    <thead>
+                        <tr style="background-color:#d9e8ff;">
+                            <th><strong>المنتج / الخدمة</strong></th>
+                            <th><strong>المدة</strong></th>
+                            <th><strong>المبلغ</strong></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>' . s($productname) . '</td>
+                            <td>' . s($durationlabel) . '</td>
+                            <td>' . s($currency) . ' ' . s($amount) . '</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <br><br>
+                <p style="text-align:left;"><strong>الإجمالي:</strong> ' . s($currency) . ' ' . s($amount) . '</p>
+            </div>
+        ';
+    } else {
+        $html = '
+            <h1 style="text-align:center;">' . s($sitefullname) . '</h1>
+            <h2 style="text-align:center;">Invoice</h2>
+
+            <p><strong>Invoice #:</strong> #' . s($order->id) . '</p>
+            <p><strong>Purchase date:</strong> ' . s($purchasedate) . '</p>
+            <p><strong>Expiration date:</strong> ' . s($expirationdate) . '</p>
+
+            <p><strong>Client:</strong><br>' . s($username) . '<br>' . s($useremail) . '</p>
+
+            <table border="1" cellpadding="6" cellspacing="0" width="100%">
+                <thead>
+                    <tr style="background-color:#d9e8ff;">
+                        <th><strong>Product / Service</strong></th>
+                        <th><strong>Duration</strong></th>
+                        <th><strong>Amount</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>' . s($productname) . '</td>
+                        <td>' . s($durationlabel) . '</td>
+                        <td>' . s($currency) . ' ' . s($amount) . '</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br><br>
+            <p style="text-align:right;"><strong>Total:</strong> ' . s($currency) . ' ' . s($amount) . '</p>
+        ';
+    }
+
+    $pdf->writeHTML($html, true, false, true, false, '');
     $pdf->Output($filepath, 'F');
 
     return [$filepath, $filename];
 }
 
 function local_elearning_system_send_purchase_email_with_invoice(int $orderid): bool {
-    global $DB, $CFG;
+    global $DB;
 
     $order = $DB->get_record('elearning_orders', ['id' => $orderid], '*', MUST_EXIST);
     $product = $DB->get_record('elearning_products', ['id' => $order->productid], '*', MUST_EXIST);
-    $user = $DB->get_record('user', ['id' => $order->userid, 'deleted' => 0, 'suspended' => 0], '*', MUST_EXIST);
+    $user = $DB->get_record('user', [
+        'id' => $order->userid,
+        'deleted' => 0,
+        'suspended' => 0
+    ], '*', MUST_EXIST);
 
     $user = local_elearning_system_prepare_mail_user($user);
     $fromuser = local_elearning_system_get_valid_from_user($user);
 
-    $template = local_elearning_system_get_email_template('purchase_product');
+    $lang = local_elearning_system_get_preferred_email_lang((int)$user->id);
 
     $currency = local_elearning_system_get_site_currency_code();
     $amount = number_format((float)$order->amount, 2);
-    $expireslabel = !empty($order->expiresat) ? userdate((int)$order->expiresat) : 'Unlimited';
+    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
+    $durationlabel = local_elearning_system_format_email_duration($durationmonths, $lang);
 
-    $variables = [
-        'firstname' => (string)$user->firstname,
-        'lastname' => (string)$user->lastname,
-        'fullname' => fullname($user),
-        'email' => (string)$user->email,
-        'productname' => (string)$product->name,
-        'coursename' => (string)$product->name,
-        'amount' => $amount,
-        'currency' => $currency,
-        'durationmonths' => (string)($order->durationmonths ?? ''),
-        'expireslabel' => $expireslabel,
-        'orderid' => (string)$order->id,
-        'invoiceurl' => '',
-        'loginurl' => (new moodle_url('/local/elearning_system/auth.php'))->out(false),
-        'sitefullname' => format_string(get_site()->fullname),
-    ];
+    $purchasedate = local_elearning_system_format_email_datetime((int)($order->timecreated ?? time()), $lang);
+    $expirationdate = !empty($order->expiresat)
+        ? local_elearning_system_format_email_datetime((int)$order->expiresat, $lang)
+        : local_elearning_system_format_email_datetime(0, $lang);
 
-    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
-    $body = local_elearning_system_render_template_string($template['body'], $variables);
-    $html = nl2br(s($body));
+    $productname = format_string($product->name);
+    $sitename = format_string(get_site()->fullname);
+    $fullname = fullname($user);
 
-    [$invoicepath, $invoicename] = local_elearning_system_generate_invoice_pdf_file($order, $product, $user);
+    if ($lang === 'fr') {
+        $subject = 'Confirmation de votre achat - ' . $productname;
+
+        $body = "Bonjour " . $fullname . ",\n\n"
+            . "Votre achat du cours " . $productname . " a été confirmé avec succès.\n\n"
+            . "Numéro de commande : " . (int)$order->id . "\n"
+            . "Montant : " . $currency . " " . $amount . "\n"
+            . "Durée d’accès : " . $durationlabel . "\n"
+            . "Date d’achat : " . $purchasedate . "\n"
+            . "Date d’expiration : " . $expirationdate . "\n\n"
+            . "Votre facture est jointe à cet email.\n\n"
+            . "Merci d’apprendre avec " . $sitename . ".";
+
+        $messagehtml = nl2br(s($body));
+
+    } else if ($lang === 'ar') {
+        $subject = 'تأكيد عملية الشراء - ' . $productname;
+
+        $body = "مرحبًا " . $fullname . "،\n\n"
+            . "تم تأكيد شراء الدورة " . $productname . " بنجاح.\n\n"
+            . "رقم الطلب: " . (int)$order->id . "\n"
+            . "المبلغ: " . $currency . " " . $amount . "\n"
+            . "مدة الوصول: " . $durationlabel . "\n"
+            . "تاريخ الشراء: " . $purchasedate . "\n"
+            . "تاريخ انتهاء الصلاحية: " . $expirationdate . "\n\n"
+            . "الفاتورة مرفقة بهذا البريد الإلكتروني.\n\n"
+            . "شكرًا لتعلمك مع " . $sitename . ".";
+
+        $messagehtml = '<div dir="rtl" style="text-align:right;">' . nl2br(s($body)) . '</div>';
+
+    } else {
+        $subject = 'Your purchase has been confirmed - ' . $productname;
+
+        $body = "Hello " . $fullname . ",\n\n"
+            . "Your purchase of " . $productname . " has been confirmed.\n\n"
+            . "Order number: " . (int)$order->id . "\n"
+            . "Amount: " . $currency . " " . $amount . "\n"
+            . "Access duration: " . $durationlabel . "\n"
+            . "Purchase date: " . $purchasedate . "\n"
+            . "Expiration date: " . $expirationdate . "\n\n"
+            . "Your invoice is attached to this email.\n\n"
+            . "Thank you for learning with " . $sitename . ".";
+
+        $messagehtml = nl2br(s($body));
+    }
+
+    [$invoicepath, $invoicename] = local_elearning_system_generate_invoice_pdf_file($order, $product, $user, $lang);
 
     return (bool)email_to_user(
         $user,
         $fromuser,
         $subject,
         $body,
-        $html,
+        $messagehtml,
         $invoicepath,
         $invoicename
     );
@@ -681,10 +823,82 @@ function local_elearning_system_send_order_email_with_template(stdClass $order, 
         'sitefullname' => $sitefullname,
     ];
 
+    $lang = local_elearning_system_get_preferred_email_lang((int)$user->id);
+
+if (in_array($templatekey, ['purchase_product', 'purchase_confirmation'], true)) {
+    $emailcontent = local_elearning_system_build_email_content('purchase_confirmation', $lang, [
+        'coursename' => $productname,
+        'duration' => local_elearning_system_format_email_duration($months, $lang),
+        'invoiceurl' => $invoiceurl,
+    ]);
+
+    $subject = $emailcontent['subject'];
+
+    $purchasedate = local_elearning_system_format_email_datetime((int)($order->timecreated ?? time()), $lang);
+    $expirationdate = !empty($order->expiresat)
+        ? local_elearning_system_format_email_datetime((int)$order->expiresat, $lang)
+        : local_elearning_system_format_email_datetime(0, $lang);
+
+    if ($lang === 'fr') {
+        $messagehtml = '
+            <p>Bonjour ' . s(fullname($user)) . ',</p>
+            <p>Votre achat du cours <strong>' . s($productname) . '</strong> a été confirmé avec succès.</p>
+            <p><strong>Numéro de commande :</strong> ' . s((string)(int)($order->id ?? 0)) . '</p>
+            <p><strong>Montant :</strong> ' . s(local_elearning_system_get_site_currency_code()) . ' ' . s($amount) . '</p>
+            <p><strong>Durée d’accès :</strong> ' . s(local_elearning_system_format_email_duration($months, $lang)) . '</p>
+            <p><strong>Date d’achat :</strong> ' . s($purchasedate) . '</p>
+            <p><strong>Date d’expiration :</strong> ' . s($expirationdate) . '</p>
+            <p><a href="' . s($invoiceurl) . '">Télécharger la facture</a></p>
+            <p>Cordialement,<br>Équipe E-learning</p>
+        ';
+    } else if ($lang === 'ar') {
+        $messagehtml = '
+            <div dir="rtl" style="text-align:right;">
+                <p>مرحبًا ' . s(fullname($user)) . '،</p>
+                <p>تم تأكيد شراء الدورة <strong>' . s($productname) . '</strong> بنجاح.</p>
+                <p><strong>رقم الطلب:</strong> ' . s((string)(int)($order->id ?? 0)) . '</p>
+                <p><strong>المبلغ:</strong> ' . s(local_elearning_system_get_site_currency_code()) . ' ' . s($amount) . '</p>
+                <p><strong>مدة الوصول:</strong> ' . s(local_elearning_system_format_email_duration($months, $lang)) . '</p>
+                <p><strong>تاريخ الشراء:</strong> ' . s($purchasedate) . '</p>
+                <p><strong>تاريخ انتهاء الصلاحية:</strong> ' . s($expirationdate) . '</p>
+                <p><a href="' . s($invoiceurl) . '">تحميل الفاتورة</a></p>
+                <p>مع تحياتنا،<br>فريق التعلم الإلكتروني</p>
+            </div>
+        ';
+    } else {
+        $messagehtml = '
+            <p>Hello ' . s(fullname($user)) . ',</p>
+            <p>Your purchase of <strong>' . s($productname) . '</strong> has been confirmed.</p>
+            <p><strong>Order number:</strong> ' . s((string)(int)($order->id ?? 0)) . '</p>
+            <p><strong>Amount:</strong> ' . s(local_elearning_system_get_site_currency_code()) . ' ' . s($amount) . '</p>
+            <p><strong>Access duration:</strong> ' . s(local_elearning_system_format_email_duration($months, $lang)) . '</p>
+            <p><strong>Purchase date:</strong> ' . s($purchasedate) . '</p>
+            <p><strong>Expiration date:</strong> ' . s($expirationdate) . '</p>
+            <p><a href="' . s($invoiceurl) . '">Download invoice</a></p>
+            <p>Best regards,<br>E-learning Team</p>
+        ';
+    }
+
+    $body = html_to_text($messagehtml);
+
+} else if ($templatekey === 'expiration_reminder') {
+    $emailcontent = local_elearning_system_build_email_content('expiration_reminder', $lang, [
+        'coursename' => $variables['coursename'] ?? '',
+        'duration' => !empty($variables['durationmonths'])
+            ? local_elearning_system_format_email_duration((int)$variables['durationmonths'], $lang)
+            : '',
+        'checkouturl' => $variables['checkouturl'] ?? '',
+    ]);
+
+    $subject = $emailcontent['subject'];
+    $messagehtml = $emailcontent['html'];
+    $body = html_to_text($messagehtml);
+
+} else {
     $subject = local_elearning_system_render_template_string($template['subject'], $variables);
     $body = local_elearning_system_render_template_string($template['body'], $variables);
     $messagehtml = nl2br(s($body));
-
+}
     $fromuser = local_elearning_system_get_valid_from_user($user);
     return (bool)email_to_user($user, $fromuser, $subject, $body, $messagehtml);
 }
@@ -697,6 +911,211 @@ function local_elearning_system_send_order_email_with_template(stdClass $order, 
  * @param moodle_database $DB
  * @return bool
  */
+
+/**
+ * Get Moodle user's preferred language.
+ *
+ * @param int $userid
+ * @return string en|fr|ar
+ */
+function local_elearning_system_get_preferred_email_lang(int $userid): string {
+    global $DB;
+
+    $user = $DB->get_record('user', ['id' => $userid], 'id, lang', IGNORE_MISSING);
+
+    if (!$user || empty($user->lang)) {
+        return 'en';
+    }
+
+    $lang = strtolower((string)$user->lang);
+
+    if (strpos($lang, 'fr') === 0) {
+        return 'fr';
+    }
+
+    if (strpos($lang, 'ar') === 0) {
+        return 'ar';
+    }
+
+    return 'en';
+}
+
+function local_elearning_system_format_email_duration(int $months, string $lang): string {
+    $months = max(1, $months);
+
+    if ($lang === 'fr') {
+        return $months . ' mois';
+    }
+
+    if ($lang === 'ar') {
+        return $months . ' شهر';
+    }
+
+    return $months . ' month' . ($months > 1 ? 's' : '');
+}
+/**
+ * Build multilingual email content.
+ *
+ * @param string $type
+ * @param string $lang
+ * @param array $data
+ * @return array
+ */
+
+function local_elearning_system_format_email_datetime(int $timestamp, string $lang): string {
+    if ($timestamp <= 0) {
+        if ($lang === 'fr') {
+            return 'Illimité';
+        }
+
+        if ($lang === 'ar') {
+            return 'غير محدود';
+        }
+
+        return 'Unlimited';
+    }
+
+    // Format numérique stable pour éviter les caractères illisibles dans les PDF.
+    return userdate($timestamp, '%d/%m/%Y %H:%M');
+}
+
+function local_elearning_system_format_invoice_amount(float $amount): string {
+    return number_format($amount, 2);
+}
+function local_elearning_system_build_email_content(string $type, string $lang, array $data = []): array {
+    $coursename = $data['coursename'] ?? '';
+    $duration = $data['duration'] ?? '';
+    $studentname = $data['studentname'] ?? '';
+    $invoiceurl = $data['invoiceurl'] ?? '';
+    $checkouturl = $data['checkouturl'] ?? '';
+
+    if ($type === 'purchase_confirmation') {
+        if ($lang === 'fr') {
+            return [
+                'subject' => 'Confirmation de votre achat',
+                'html' => '
+                    <p>Bonjour,</p>
+                    <p>Votre achat du cours <strong>' . s($coursename) . '</strong> a été confirmé avec succès.</p>
+                    <p>Durée : <strong>' . s($duration) . '</strong></p>
+                    ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">Télécharger la facture</a></p>' : '') . '
+                    <p>Cordialement,<br>Équipe E-learning</p>
+                ',
+            ];
+        }
+
+        if ($lang === 'ar') {
+            return [
+                'subject' => 'تأكيد عملية الشراء',
+                'html' => '
+                    <div dir="rtl" style="text-align:right;">
+                        <p>مرحبًا،</p>
+                        <p>تم تأكيد شراء الدورة <strong>' . s($coursename) . '</strong> بنجاح.</p>
+                        <p>المدة: <strong>' . s($duration) . '</strong></p>
+                        ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">تحميل الفاتورة</a></p>' : '') . '
+                        <p>مع تحياتنا،<br>فريق التعلم الإلكتروني</p>
+                    </div>
+                ',
+            ];
+        }
+
+        return [
+            'subject' => 'Purchase confirmation',
+            'html' => '
+                <p>Hello,</p>
+                <p>Your purchase of the course <strong>' . s($coursename) . '</strong> has been successfully confirmed.</p>
+                <p>Duration: <strong>' . s($duration) . '</strong></p>
+                ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">Download invoice</a></p>' : '') . '
+                <p>Best regards,<br>E-learning Team</p>
+            ',
+        ];
+    }
+
+    if ($type === 'expiration_reminder') {
+        if ($lang === 'fr') {
+            return [
+                'subject' => 'Votre cours expire bientôt',
+                'html' => '
+                    <p>Bonjour,</p>
+                    <p>Votre accès au cours <strong>' . s($coursename) . '</strong> expirera dans 7 jours.</p>
+                    <p>Vous pouvez renouveler votre accès depuis votre espace étudiant.</p>
+                    ' . ($checkouturl ? '<p><a href="' . s($checkouturl) . '">Renouveler maintenant</a></p>' : '') . '
+                    <p>Cordialement,<br>Équipe E-learning</p>
+                ',
+            ];
+        }
+
+        if ($lang === 'ar') {
+            return [
+                'subject' => 'ستنتهي صلاحية دورتك قريبًا',
+                'html' => '
+                    <div dir="rtl" style="text-align:right;">
+                        <p>مرحبًا،</p>
+                        <p>سينتهي وصولك إلى الدورة <strong>' . s($coursename) . '</strong> خلال 7 أيام.</p>
+                        <p>يمكنك تجديد الوصول من فضاء الطالب.</p>
+                        ' . ($checkouturl ? '<p><a href="' . s($checkouturl) . '">التجديد الآن</a></p>' : '') . '
+                        <p>مع تحياتنا،<br>فريق التعلم الإلكتروني</p>
+                    </div>
+                ',
+            ];
+        }
+
+        return [
+            'subject' => 'Your course will expire soon',
+            'html' => '
+                <p>Hello,</p>
+                <p>Your access to the course <strong>' . s($coursename) . '</strong> will expire in 7 days.</p>
+                <p>You can renew your access from your student space.</p>
+                ' . ($checkouturl ? '<p><a href="' . s($checkouturl) . '">Renew now</a></p>' : '') . '
+                <p>Best regards,<br>E-learning Team</p>
+            ',
+        ];
+    }
+    if ($type === 'purchase_for_child') {
+    if ($lang === 'fr') {
+        return [
+            'subject' => 'Confirmation d’achat pour votre enfant',
+            'html' => '
+                <p>Bonjour,</p>
+                <p>L’achat du cours <strong>' . s($coursename) . '</strong> pour <strong>' . s($studentname) . '</strong> a été confirmé avec succès.</p>
+                <p>Durée : <strong>' . s($duration) . '</strong></p>
+                ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">Télécharger la facture</a></p>' : '') . '
+                <p>Cordialement,<br>Équipe E-learning</p>
+            ',
+        ];
+    }
+
+    if ($lang === 'ar') {
+        return [
+            'subject' => 'تأكيد شراء دورة لطفلك',
+            'html' => '
+                <div dir="rtl" style="text-align:right;">
+                    <p>مرحبًا،</p>
+                    <p>تم تأكيد شراء الدورة <strong>' . s($coursename) . '</strong> للطالب <strong>' . s($studentname) . '</strong> بنجاح.</p>
+                    <p>المدة: <strong>' . s($duration) . '</strong></p>
+                    ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">تحميل الفاتورة</a></p>' : '') . '
+                    <p>مع تحياتنا،<br>فريق التعلم الإلكتروني</p>
+                </div>
+            ',
+        ];
+    }
+
+    return [
+        'subject' => 'Purchase confirmation for your child',
+        'html' => '
+            <p>Hello,</p>
+            <p>The purchase of the course <strong>' . s($coursename) . '</strong> for <strong>' . s($studentname) . '</strong> has been successfully confirmed.</p>
+            <p>Duration: <strong>' . s($duration) . '</strong></p>
+            ' . ($invoiceurl ? '<p><a href="' . s($invoiceurl) . '">Download invoice</a></p>' : '') . '
+            <p>Best regards,<br>E-learning Team</p>
+        ',
+    ];
+}
+
+    return [
+        'subject' => 'E-learning notification',
+        'html' => '<p>Hello,</p><p>You have a new notification.</p>',
+    ];
+}
 function local_elearning_system_send_parent_purchase_email(stdClass $order, int $parentuserid, moodle_database $DB): bool {
     if ($parentuserid <= 0) {
         return false;
@@ -755,9 +1174,18 @@ function local_elearning_system_send_parent_purchase_email(stdClass $order, int 
         'sitefullname' => $sitefullname,
     ];
 
-    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
-    $body = local_elearning_system_render_template_string($template['body'], $variables);
-    $messagehtml = nl2br(s($body));
+ $lang = local_elearning_system_get_preferred_email_lang((int)$child->id);
+
+$emailcontent = local_elearning_system_build_email_content('purchase_for_child', $lang, [
+    'coursename' => $productname,
+    'duration' => local_elearning_system_format_email_duration($months, $lang),
+    'studentname' => fullname($child),
+    'invoiceurl' => $invoiceurl,
+]);
+
+$subject = $emailcontent['subject'];
+$messagehtml = $emailcontent['html'];
+$body = html_to_text($messagehtml);
 
     $fromuser = local_elearning_system_get_valid_from_user($parent);
     return (bool)email_to_user($parent, $fromuser, $subject, $body, $messagehtml);
@@ -1024,14 +1452,15 @@ function local_elearning_system_process_expiration_reminders(moodle_database $DB
         }
 
         $sent = local_elearning_system_send_user_email_with_template($user, 'expiration_reminder', [
-            'productname' => (string)$product->name,
-            'coursename' => (string)$product->name,
-            'expireslabel' => userdate((int)$order->expiresat),
-            'durationmonths' => (string)($order->durationmonths ?? ''),
-            'orderid' => (string)$order->id,
-            'amount' => number_format((float)$order->amount, 2),
-            'currency' => local_elearning_system_get_site_currency_code(),
-        ]);
+    'productname' => (string)$product->name,
+    'coursename' => (string)$product->name,
+    'expireslabel' => userdate((int)$order->expiresat),
+    'durationmonths' => (string)($order->durationmonths ?? ''),
+    'orderid' => (string)$order->id,
+    'amount' => number_format((float)$order->amount, 2),
+    'currency' => local_elearning_system_get_site_currency_code(),
+    'checkouturl' => (new moodle_url('/local/elearning_system/mycourses.php'))->out(false),
+]);
 
         if ($sent) {
             $record = new stdClass();
