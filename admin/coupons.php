@@ -1,8 +1,5 @@
 <?php
-
-use moodle_url;
-
-require('../../../config.php');
+require_once(__DIR__ . '/../../../config.php');
 require_login();
 
 $context = \context_system::instance();
@@ -10,7 +7,7 @@ require_capability('local/elearning_system:manage', \context_system::instance())
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/admin/coupons.php');
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Coupons');
 $PAGE->set_heading('Manage Coupons');
 

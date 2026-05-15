@@ -1,24 +1,4 @@
 <style>
-.es-chatbot-invoice-btn {
-    display: inline-block;
-    width: fit-content;
-    margin: 6px 4px 4px 0;
-    padding: 7px 12px;
-    border-radius: 999px;
-    background: #0f6fc5;
-    color: #ffffff !important;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none !important;
-    border: 1px solid #0f6fc5;
-    cursor: pointer;
-}
-
-.es-chatbot-invoice-btn:hover {
-    background: #0b5da8;
-    color: #ffffff !important;
-    text-decoration: none !important;
-}
 .es-client {
     --es-bg: var(--bs-body-bg, #f8f9fa);
     --es-paper: var(--bs-card-bg, #ffffff);
@@ -32,8 +12,10 @@
     font-family: "Sora", "Segoe UI", sans-serif;
     color: var(--es-ink);
     background: var(--es-bg);
-    border-radius: 1rem;
+    border-radius: 0;
     padding: 1.25rem;
+    width: 100%;
+    margin: 0;
 }
 
 .es-client .card {
@@ -981,6 +963,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    if (body.id === 'page-local-elearning_system-auth' || window.location.pathname === '/local/elearning_system/auth.php') {
+        return;
+    }
+
     const chatbotFab = document.createElement('button');
     chatbotFab.type = 'button';
     chatbotFab.id = 'esChatbotFab';
@@ -1069,23 +1055,18 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     const renderInvoiceButton = function(metaContainer, invoiceurl, label) {
-    if (!metaContainer || !invoiceurl) {
-        return;
-    }
+        if (!metaContainer || !invoiceurl) {
+            return;
+        }
 
-    const link = document.createElement('a');
-    link.className = 'es-chatbot-invoice-btn';
-    link.href = invoiceurl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = label || 'Télécharger la facture PDF';
-
-    link.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-
-    metaContainer.appendChild(link);
-};
+        const link = document.createElement('a');
+        link.className = 'es-chatbot-suggestion-btn';
+        link.href = invoiceurl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = label || 'Telecharger facture';
+        metaContainer.appendChild(link);
+    };
 
     const renderRating = function(metaContainer) {
         if (!metaContainer) {

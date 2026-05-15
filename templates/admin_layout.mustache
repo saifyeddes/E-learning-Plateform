@@ -1,7 +1,38 @@
 <style>
+/* ==================================================
+   ELEARNING SYSTEM - ADMIN COMPACT LAYOUT
+   Ne touche pas le header Moodle
+   ================================================== */
+/* Supprimer le titre Moodle automatique au-dessus du layout admin */
+body.path-local-elearning_system #page-header,
+body.path-local-elearning_system .page-header-headings,
+body.path-local-elearning_system .page-context-header,
+body.path-local-elearning_system .page-header-image,
+body.path-local-elearning_system .page-header-headings h1,
+body.path-local-elearning_system .page-header-headings h2 {
+    display: none !important;
+}
+
+/* Supprimer l’espace laissé par le header de contenu Moodle */
+body.path-local-elearning_system #page-content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+body.path-local-elearning_system #region-main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+body.path-local-elearning_system .main-inner {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+/* Variables */
 .elearn-admin-shell {
-    --sidebar-open-width: 280px;
-    --sidebar-closed-width: 86px;
+    --admin-top-offset: 66px;
+    --sidebar-open-width: 260px;
+    --sidebar-closed-width: 78px;
     --brand-1: #0f6cbf;
     --brand-2: #1d9a8a;
     --bg-soft: #edf3f9;
@@ -9,75 +40,174 @@
     --text-main: #12304f;
     --text-muted: #6c7f95;
     --line: #d5e0ec;
-    --shadow: 0 18px 45px rgba(12, 43, 79, 0.12);
-    font-family: "Poppins", "Segoe UI", sans-serif;
-    min-height: 100%;
-    background:
-        radial-gradient(circle at 12% 8%, rgba(15, 108, 191, 0.18), transparent 35%),
-        radial-gradient(circle at 87% 3%, rgba(29, 154, 138, 0.16), transparent 40%),
-        var(--bg-soft);
-    color: var(--text-main);
-    display: grid;
-    grid-template-columns: var(--sidebar-open-width) minmax(0, 1fr);
-    gap: 1rem;
-    padding: 1rem;
-    border-radius: 1rem;
+    --shadow: 0 14px 32px rgba(12, 43, 79, 0.10);
 }
 
+/* Ne pas toucher le header Moodle */
+body.path-local-elearning_system {
+    overflow-x: hidden !important;
+    background: #edf3f9 !important;
+}
+
+/* Largeur seulement, sans modifier la hauteur Moodle */
+body.path-local-elearning_system #page,
+body.path-local-elearning_system #page-wrapper,
+/* Force full screen admin layout */
+body.path-local-elearning_system #page.drawers,
+body.path-local-elearning_system #page.drawers .main-inner,
+body.path-local-elearning_system #page.drawers div[role="main"],
+body.path-local-elearning_system #page.drawers #region-main,
+body.path-local-elearning_system #page.drawers #region-main-box,
+body.path-local-elearning_system #page.drawers #page-content,
+body.path-local-elearning_system #page.drawers .container,
+body.path-local-elearning_system #page.drawers .container-fluid {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+body.path-local-elearning_system #region-main {
+    border: 0 !important;
+}
+
+body.path-local-elearning_system [role="main"] > h2,
+body.path-local-elearning_system [role="main"] > h3,
+body.path-local-elearning_system [role="main"] > .page-title,
+body.path-local-elearning_system [role="main"] > header {
+    display: none !important;
+}
+
+body.path-local-elearning_system .elearn-admin-shell {
+    width: 100vw !important;
+    max-width: 100vw !important;
+}
+body.path-local-elearning_system #page-content,
+body.path-local-elearning_system #region-main,
+body.path-local-elearning_system #region-main-box,
+body.path-local-elearning_system .main-inner,
+body.path-local-elearning_system .container,
+body.path-local-elearning_system .container-fluid,
+body.path-local-elearning_system [role="main"] {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    background: transparent !important;
+}
+
+/* Supprimer seulement les éléments secondaires Moodle */
+body.path-local-elearning_system .secondary-navigation,
+body.path-local-elearning_system .activity-header {
+    display: none !important;
+}
+
+/* Shell admin compact */
+.elearn-admin-shell {
+    position: relative !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+
+    margin: var(--admin-top-offset) 0 0 0 !important;
+
+    height: calc(100vh - var(--admin-top-offset)) !important;
+    min-height: calc(100vh - var(--admin-top-offset)) !important;
+    max-height: calc(100vh - var(--admin-top-offset)) !important;
+
+    display: grid !important;
+    grid-template-columns: var(--sidebar-open-width) minmax(0, 1fr) !important;
+    gap: 0 !important;
+
+    font-family: "Poppins", "Segoe UI", sans-serif;
+    color: var(--text-main);
+
+    background:
+        radial-gradient(circle at 12% 8%, rgba(15, 108, 191, 0.10), transparent 34%),
+        radial-gradient(circle at 88% 4%, rgba(29, 154, 138, 0.09), transparent 36%),
+        var(--bg-soft) !important;
+
+    overflow: hidden !important;
+    border-radius: 0 !important;
+}
+
+/* Sidebar */
 .elearn-sidebar {
-    position: sticky;
-    top: 1rem;
-    width: 100%;
-    max-height: calc(100vh - 2rem);
+    width: var(--sidebar-open-width) !important;
+    min-width: var(--sidebar-open-width) !important;
+
+    height: calc(100vh - var(--admin-top-offset)) !important;
+min-height: calc(100vh - var(--admin-top-offset)) !important;
+max-height: calc(100vh - var(--admin-top-offset)) !important;
+
+    position: relative !important;
+    top: auto !important;
+    z-index: 20;
+
     background: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%);
     border-right: 1px solid var(--line);
     box-shadow: var(--shadow);
-    z-index: 20;
-    transition: width 0.28s ease, transform 0.28s ease;
-    overflow: hidden;
+
+    overflow: hidden !important;
+    transition: width 0.25s ease, transform 0.25s ease;
 }
 
 .elearn-sidebar__inner {
-    height: 100%;
-    padding: 1rem 0.7rem 1rem;
-    overflow-y: auto;
+    height: 100% !important;
+    max-height: 100% !important;
+    padding: 0.7rem 0.75rem 1rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
+/* Brand */
 .elearn-brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.7rem 1rem;
+    gap: 0.7rem;
+    padding: 0.35rem 0.6rem 0.7rem !important;
+    margin-bottom: 0.2rem !important;
 }
 
 .elearn-brand__dot {
-    width: 34px;
-    height: 34px;
-    border-radius: 0.8rem;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 0.9rem !important;
     background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
-    box-shadow: 0 8px 18px rgba(15, 108, 191, 0.35);
+    box-shadow: 0 8px 18px rgba(15, 108, 191, 0.30);
 }
 
 .elearn-brand__title {
-    font-weight: 600;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
     color: var(--text-main);
     white-space: nowrap;
 }
 
+/* Menu */
 .elearn-nav {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.32rem !important;
 }
 
 .elearn-nav__item {
+    min-height: 41px !important;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    border-radius: 0.8rem;
+    gap: 0.65rem;
+
+    padding: 0.52rem 0.7rem !important;
+    border-radius: 0.85rem !important;
+
     color: var(--text-main);
     text-decoration: none;
-    padding: 0.72rem 0.85rem;
+    font-size: 0.92rem !important;
+    font-weight: 650;
+
     transition: background-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
 
@@ -85,103 +215,327 @@
     background: #e8f1fa;
     color: #0f4f8e;
     transform: translateX(2px);
+    text-decoration: none;
 }
 
 .elearn-nav__item.is-active {
     background: linear-gradient(135deg, var(--brand-1), #1b7bcf);
-    color: #fff;
-    box-shadow: 0 10px 24px rgba(15, 108, 191, 0.28);
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(15, 108, 191, 0.25);
 }
 
 .elearn-nav__icon {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    border-radius: 0.55rem;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: rgba(18, 48, 79, 0.08);
-}
 
-.elearn-nav__icon i {
-    font-size: 0.9rem;
+    border-radius: 0.75rem !important;
+    background: rgba(18, 48, 79, 0.08);
+    font-size: 0.85rem;
 }
 
 .elearn-nav__item.is-active .elearn-nav__icon {
     background: rgba(255, 255, 255, 0.26);
+    color: #ffffff;
 }
 
 .elearn-nav__label {
     white-space: nowrap;
-    font-weight: 500;
 }
 
+/* Main content */
 .elearn-main {
-    flex: 1;
-    margin-left: 0;
-    padding: 0.25rem 0.25rem 0.5rem;
-    transition: none;
-    min-width: 0;
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: calc(100vh - var(--admin-top-offset)) !important;
+    min-height: calc(100vh - var(--admin-top-offset)) !important;
+    max-height: calc(100vh - var(--admin-top-offset)) !important;
+
+    padding: 1rem 1.35rem 5rem !important;
+    display: block !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
-.elearn-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    padding: 0.6rem 0.25rem;
-}
+.elearn-main > div {
+    width: 100% !important;
+    min-height: 100% !important;
+    height: auto !important;
+    max-height: none !important;
 
-.elearn-toggle {
-    border: 0;
-    background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
-    color: #fff;
-    border-radius: 999px;
-    padding: 0.55rem 0.9rem;
-    font-weight: 600;
-    box-shadow: 0 8px 22px rgba(15, 108, 191, 0.28);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+    margin: 0 !important;
+    padding: 0 !important;
 
-.elearn-toggle:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(15, 108, 191, 0.34);
-}
-
-.elearn-main .card,
-.elearn-main .alert,
-.elearn-main .generalbox {
-    border-radius: 1rem;
-    border: 1px solid var(--line);
-    box-shadow: 0 10px 25px rgba(12, 43, 79, 0.08);
-}
-
-.elearn-main .table {
-    border-color: var(--line);
-}
-
-.elearn-main .table thead th {
-    background: #edf4fb;
-    border-bottom: 1px solid var(--line);
-}
-
-.elearn-main .form-control,
-.elearn-main .form-select {
-    border-radius: 0.75rem;
-    border-color: #c6d4e4;
-}
-
-.elearn-main .btn {
-    border-radius: 0.75rem;
+    display: block !important;
+    overflow: visible !important;
 }
 
 .elearn-reveal {
-    animation: elearnFadeIn 0.45s ease;
+    animation: elearnFadeIn 0.35s ease;
 }
 
+/* Titles */
+.elearn-main h1,
+.elearn-main h2,
+.elearn-main h3,
+.elearn-main h4,
+.elearn-main h5 {
+    color: #102a43 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.1 !important;
+}
+
+.elearn-main h1,
+.elearn-main h2 {
+    font-size: clamp(1.55rem, 2vw, 2.15rem) !important;
+    margin: 0 0 0.75rem !important;
+}
+
+.elearn-main h3 {
+    font-size: clamp(1.3rem, 1.7vw, 1.75rem) !important;
+    margin: 0 0 0.7rem !important;
+}
+
+/* Cards */
+.elearn-main .card,
+.elearn-main .alert,
+.elearn-main .generalbox {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: auto !important;
+
+    flex: initial !important;
+    overflow: visible !important;
+
+    margin-bottom: 0.7rem !important;
+    border-radius: 1.1rem !important;
+    border: 1px solid var(--line) !important;
+    background: #ffffff !important;
+    box-shadow: 0 10px 24px rgba(16, 42, 67, 0.07) !important;
+}
+
+.elearn-main .card-body {
+    padding: 0.9rem 1rem !important;
+}
+
+/* Bootstrap spacing */
+.elearn-main .mb-4 {
+    margin-bottom: 0.8rem !important;
+}
+
+.elearn-main .mb-3 {
+    margin-bottom: 0.55rem !important;
+}
+
+.elearn-main .row {
+    --bs-gutter-x: 0.9rem !important;
+    --bs-gutter-y: 0.65rem !important;
+}
+
+/* Stats */
+.elearn-main .display-6 {
+    font-size: 2rem !important;
+    line-height: 1.05 !important;
+    color: #102a43 !important;
+}
+
+.elearn-main .text-muted.small.text-uppercase {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    color: #627d98 !important;
+}
+
+/* Forms */
+.elearn-main label,
+.elearn-main .form-label {
+    margin-bottom: 0.28rem !important;
+    font-size: 0.86rem !important;
+}
+
+.elearn-main .form-control,
+.elearn-main .form-select,
+.elearn-main .custom-select {
+    height: 36px !important;
+    min-height: 36px !important;
+    border-radius: 0.72rem !important;
+    border-color: #c6d4e4 !important;
+    font-size: 0.9rem !important;
+}
+
+.elearn-main .form-control:focus,
+.elearn-main .form-select:focus,
+.elearn-main .custom-select:focus {
+    border-color: var(--brand-1) !important;
+    box-shadow: 0 0 0 0.16rem rgba(15, 108, 191, 0.13) !important;
+}
+
+.elearn-main textarea {
+    min-height: 78px !important;
+}
+
+/* Buttons */
+.elearn-main .btn {
+    min-height: 34px !important;
+    padding: 0.36rem 0.78rem !important;
+    border-radius: 0.72rem !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+}
+
+/* Tables */
+.elearn-main .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    border-radius: 0.95rem !important;
+}
+
+.elearn-main .table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    margin-bottom: 0 !important;
+    border-color: var(--line) !important;
+}
+.elearn-main .table .btn {
+    min-height: 28px !important;
+    padding: 0.28rem 0.45rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.15 !important;
+}
+
+.elearn-main .table th:nth-child(1),
+.elearn-main .table td:nth-child(1) {
+    width: 4%;
+}
+
+.elearn-main .table th:nth-child(2),
+.elearn-main .table td:nth-child(2) {
+    width: 10%;
+}
+
+.elearn-main .table th:nth-child(3),
+.elearn-main .table td:nth-child(3) {
+    width: 18%;
+}
+
+.elearn-main .table th:nth-child(4),
+.elearn-main .table td:nth-child(4) {
+    width: 12%;
+}
+
+.elearn-main .table th:nth-child(5),
+.elearn-main .table td:nth-child(5) {
+    width: 9%;
+}
+
+.elearn-main .table th:nth-child(6),
+.elearn-main .table td:nth-child(6) {
+    width: 8%;
+}
+
+.elearn-main .table th:nth-child(7),
+.elearn-main .table td:nth-child(7) {
+    width: 9%;
+}
+
+.elearn-main .table th:nth-child(8),
+.elearn-main .table td:nth-child(8) {
+    width: 11%;
+}
+
+.elearn-main .table th:nth-child(9),
+.elearn-main .table td:nth-child(9) {
+    width: 11%;
+}
+
+.elearn-main .table th:nth-child(10),
+.elearn-main .table td:nth-child(10) {
+    width: 8%;
+}
+.elearn-main .table thead th {
+    background: #edf4fb !important;
+    color: #12304f !important;
+    border-bottom: 1px solid var(--line) !important;
+    font-weight: 750 !important;
+}
+
+.elearn-main .table th,
+.elearn-main .table td {
+    padding: 0.38rem 0.42rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+}
+
+/* Sidebar collapsed desktop */
+.elearn-admin-shell.is-collapsed {
+    grid-template-columns: var(--sidebar-closed-width) minmax(0, 1fr) !important;
+}
+
+.elearn-admin-shell.is-collapsed .elearn-sidebar {
+    width: var(--sidebar-closed-width) !important;
+    min-width: var(--sidebar-closed-width) !important;
+}
+
+.elearn-admin-shell.is-collapsed .elearn-brand__title,
+.elearn-admin-shell.is-collapsed .elearn-nav__label {
+    display: none;
+}
+
+.elearn-admin-shell.is-collapsed .elearn-brand {
+    justify-content: center;
+}
+
+.elearn-admin-shell.is-collapsed .elearn-nav__item {
+    justify-content: center;
+    padding-left: 0.45rem !important;
+    padding-right: 0.45rem !important;
+}
+
+.elearn-admin-shell.is-collapsed .elearn-sidebar__inner {
+    padding-left: 0.32rem !important;
+    padding-right: 0.32rem !important;
+}
+
+.elearn-admin-shell.is-collapsed.is-hover-open {
+    grid-template-columns: var(--sidebar-open-width) minmax(0, 1fr) !important;
+}
+
+.elearn-admin-shell.is-collapsed.is-hover-open .elearn-sidebar {
+    width: var(--sidebar-open-width) !important;
+    min-width: var(--sidebar-open-width) !important;
+}
+
+.elearn-admin-shell.is-collapsed.is-hover-open .elearn-brand__title,
+.elearn-admin-shell.is-collapsed.is-hover-open .elearn-nav__label {
+    display: inline;
+}
+
+.elearn-admin-shell.is-collapsed.is-hover-open .elearn-brand {
+    justify-content: flex-start;
+}
+
+.elearn-admin-shell.is-collapsed.is-hover-open .elearn-nav__item {
+    justify-content: flex-start;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+/* Overlay */
 .elearn-sidebar-overlay {
     position: fixed;
     inset: 0;
@@ -198,190 +552,19 @@
     visibility: visible;
 }
 
-.elearn-admin-shell.is-collapsed .elearn-sidebar {
-    width: 100%;
-}
-
-.elearn-admin-shell.is-collapsed .elearn-main {
-    margin-left: 0;
-}
-
-.elearn-admin-shell.is-collapsed {
-    grid-template-columns: var(--sidebar-closed-width) minmax(0, 1fr);
-}
-
-.elearn-admin-shell.is-collapsed .elearn-brand__title,
-.elearn-admin-shell.is-collapsed .elearn-nav__label {
-    display: none;
-}
-
-.elearn-admin-shell.is-collapsed .elearn-brand {
-    justify-content: center;
-}
-
-.elearn-admin-shell.is-collapsed .elearn-nav__item {
-    justify-content: center;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-}
-
-.elearn-admin-shell.is-collapsed .elearn-nav__icon {
-    margin: 0;
-}
-
-.elearn-admin-shell.is-collapsed .elearn-sidebar__inner {
-    padding-left: 0.35rem;
-    padding-right: 0.35rem;
-}
-
-.elearn-admin-shell.is-collapsed.is-hover-open {
-    grid-template-columns: var(--sidebar-open-width) minmax(0, 1fr);
-}
-
-.elearn-admin-shell.is-collapsed.is-hover-open .elearn-brand__title,
-.elearn-admin-shell.is-collapsed.is-hover-open .elearn-nav__label {
-    display: inline;
-}
-
-.elearn-admin-shell.is-collapsed.is-hover-open .elearn-brand {
-    justify-content: flex-start;
-}
-
-.elearn-admin-shell.is-collapsed.is-hover-open .elearn-nav__item {
-    justify-content: flex-start;
-    padding-left: 0.85rem;
-    padding-right: 0.85rem;
-}
-
+/* Drawers */
 .product-drawer {
     position: fixed;
     top: 0;
     right: -750px;
-    width: 750px;
+    width: min(750px, 100vw);
     height: 100vh;
-    background: #fff;
+    background: #ffffff;
     box-shadow: -4px 0 20px rgba(0,0,0,0.15);
     padding: 25px;
     overflow-y: auto;
     transition: right 0.3s ease;
     z-index: 1055;
-}
-
-.ea-chatbot-fab {
-    position: fixed;
-    right: 22px;
-    bottom: 22px;
-    width: 56px;
-    height: 56px;
-    border: 0;
-    border-radius: 999px;
-    background: #0f6cbf;
-    color: #fff;
-    box-shadow: 0 10px 24px rgba(15, 108, 191, 0.35);
-    z-index: 2000;
-}
-
-.ea-chatbot-fab:hover,
-.ea-chatbot-fab:focus {
-    background: #0d5aa0;
-}
-
-.ea-chatbot-panel {
-    position: fixed;
-    right: 22px;
-    bottom: 88px;
-    width: min(420px, calc(100vw - 20px));
-    height: 500px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 16px 36px rgba(25, 35, 45, 0.22);
-    z-index: 2001;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.ea-chatbot-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.65rem 0.8rem;
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(135deg, rgba(15, 108, 191, 0.08), rgba(15, 108, 191, 0.02));
-}
-
-.ea-chatbot-close {
-    border: 0;
-    background: transparent;
-    color: #475467;
-    font-size: 1.35rem;
-    line-height: 1;
-}
-
-.ea-chatbot-messages {
-    flex: 1;
-    overflow: auto;
-    padding: 0.72rem;
-    background: #f8fafc;
-}
-
-.ea-chatbot-msg {
-    max-width: 90%;
-    margin-bottom: 0.5rem;
-    padding: 0.48rem 0.62rem;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    line-height: 1.35;
-}
-
-.ea-chatbot-msg-bot {
-    background: #ffffff;
-    border: 1px solid #d7e4f5;
-    color: #102a43;
-}
-
-.ea-chatbot-msg-user {
-    margin-left: auto;
-    background: #0f6cbf;
-    color: #fff;
-}
-
-.ea-chatbot-meta {
-    max-width: 90%;
-    margin-bottom: 0.6rem;
-}
-
-.ea-chatbot-suggestions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-}
-
-.ea-chatbot-suggestion-btn {
-    border: 1px solid #bfd7f3;
-    background: #eef5fd;
-    color: #0d4f8b;
-    border-radius: 999px;
-    padding: 0.22rem 0.55rem;
-    font-size: 0.78rem;
-    line-height: 1.2;
-}
-
-.ea-chatbot-invoice {
-    margin-top: 0.45rem;
-}
-
-.ea-chatbot-form {
-    display: flex;
-    gap: 0.45rem;
-    padding: 0.6rem;
-    border-top: 1px solid var(--line);
-    background: #fff;
-}
-
-.ea-chatbot-form .form-control {
-    min-height: 40px;
 }
 
 .product-drawer.open {
@@ -396,12 +579,13 @@
     z-index: 1050;
 }
 
+/* Delete toast */
 .elearn-delete-toast {
     position: fixed;
     top: 50%;
     left: 50%;
     width: min(560px, calc(100vw - 28px));
-    background: #fff;
+    background: #ffffff;
     border: 1px solid #c8d9ec;
     border-radius: 18px;
     box-shadow: 0 24px 60px rgba(16, 42, 67, 0.32);
@@ -457,40 +641,208 @@
     gap: 0.55rem;
 }
 
-@media (max-width: 575.98px) {
-    .elearn-delete-toast__content {
-        padding: 18px 16px 16px;
-    }
+/* Admin chatbot */
+.ea-chatbot-fab {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 52px;
+    height: 52px;
+    border: 0;
+    border-radius: 999px;
+    background: #0f6cbf;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 108, 191, 0.35);
+    z-index: 2000;
+}
+
+.ea-chatbot-fab:hover,
+.ea-chatbot-fab:focus {
+    background: #0d5aa0;
+}
+
+.ea-chatbot-panel {
+    position: fixed;
+    right: 18px;
+    bottom: 82px;
+    width: min(420px, calc(100vw - 20px));
+    height: 500px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(25, 35, 45, 0.22);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ea-chatbot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(135deg, rgba(15, 108, 191, 0.08), rgba(15, 108, 191, 0.02));
+}
+
+.ea-chatbot-close {
+    border: 0;
+    background: transparent;
+    color: #475467;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.ea-chatbot-messages {
+    flex: 1;
+    overflow: auto;
+    padding: 0.72rem;
+    background: #f8fafc;
+}
+
+.ea-chatbot-msg {
+    max-width: 90%;
+    margin-bottom: 0.5rem;
+    padding: 0.48rem 0.62rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.ea-chatbot-msg-bot {
+    background: #ffffff;
+    border: 1px solid #d7e4f5;
+    color: #102a43;
+}
+
+.ea-chatbot-msg-user {
+    margin-left: auto;
+    background: #0f6cbf;
+    color: #ffffff;
+}
+
+.ea-chatbot-meta {
+    max-width: 90%;
+    margin-bottom: 0.6rem;
+}
+
+.ea-chatbot-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.ea-chatbot-suggestion-btn {
+    border: 1px solid #bfd7f3;
+    background: #eef5fd;
+    color: #0d4f8b;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.ea-chatbot-invoice {
+    margin-top: 0.45rem;
+}
+
+.ea-chatbot-form {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.6rem;
+    border-top: 1px solid var(--line);
+    background: #ffffff;
+}
+
+.ea-chatbot-form .form-control {
+    min-height: 40px;
+}
+/* Mobile sidebar toggle */
+.elearn-sidebar-toggle {
+    display: none;
 }
 
 @media (max-width: 991.98px) {
+    .elearn-sidebar-toggle {
+        position: fixed;
+        top: calc(var(--admin-top-offset) + 10px);
+        left: 12px;
+        z-index: 1060;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+
+        min-height: 38px;
+        padding: 0.45rem 0.75rem;
+
+        border: 0;
+        border-radius: 999px;
+        background: #0f6cbf;
+        color: #ffffff;
+
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(15, 108, 191, 0.28);
+    }
+
+    .elearn-sidebar-toggle:hover,
+    .elearn-sidebar-toggle:focus {
+        background: #0d5aa0;
+        color: #ffffff;
+    }
+
+    .elearn-admin-shell.is-mobile-open .elearn-sidebar-toggle {
+        background: #102a43;
+    }
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
     .elearn-admin-shell {
-        display: block;
-        padding: 0.75rem;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        display: block !important;
+        overflow: visible !important;
     }
 
     .elearn-sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        width: min(84vw, 280px);
-        max-height: 100vh;
-        z-index: 1040;
-    }
+        position: fixed !important;
+        top: var(--admin-top-offset) !important;
+        left: 0 !important;
+        bottom: 0 !important;
 
-    .elearn-main,
-    .elearn-admin-shell.is-collapsed .elearn-main {
-        margin-left: 0;
+        width: min(84vw, 280px) !important;
+        min-width: 0 !important;
+
+        height: calc(100vh - var(--admin-top-offset)) !important;
+        max-height: calc(100vh - var(--admin-top-offset)) !important;
+
+        transform: translateX(-100%);
+        z-index: 1040;
     }
 
     .elearn-admin-shell.is-mobile-open .elearn-sidebar {
         transform: translateX(0);
     }
 
+    .elearn-sidebar-overlay {
+        top: var(--admin-top-offset);
+    }
+
+    .elearn-main,
+    .elearn-main > div {
+        height: auto !important;
+        max-height: none !important;
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+
     .elearn-main {
-        padding: 0.25rem;
+        padding: 4.2rem 1rem 1rem !important;
     }
 
     .ea-chatbot-fab {
@@ -508,20 +860,46 @@
         height: 62vh;
     }
 }
+@media (max-width: 575.98px) {
+    .elearn-main {
+        padding: 0.75rem !important;
+    }
 
+    .elearn-main .card-body {
+        padding: 0.85rem !important;
+    }
+
+    .elearn-main .display-6 {
+        font-size: 1.8rem !important;
+    }
+
+    .elearn-delete-toast__content {
+        padding: 18px 16px 16px;
+    }
+}
+
+/* Animation */
 @keyframes elearnFadeIn {
     0% {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
+
     100% {
         opacity: 1;
         transform: translateY(0);
     }
 }
 </style>
-
 <div class="elearn-admin-shell" id="elearnAdminShell">
+<button type="button"
+        class="elearn-sidebar-toggle"
+        id="elearnSidebarToggle"
+        aria-label="Open admin menu"
+        aria-expanded="false">
+    <i class="fa fa-bars"></i>
+    <span>Menu</span>
+</button>
     <aside class="elearn-sidebar" id="elearnSidebar" aria-label="Admin sidebar">
         <div class="elearn-sidebar__inner">
             <div class="elearn-brand">
@@ -532,7 +910,7 @@
             <nav class="elearn-nav">
                 <a href="{{dashboardurl}}" class="elearn-nav__item {{#isdashboard}}is-active{{/isdashboard}}">
                     <span class="elearn-nav__icon"><i class="fa fa-home"></i></span>
-                    <span class="elearn-nav__label">Dashboard</span>
+                                        <span class="elearn-nav__label">Dashboard</span>
                 </a>
                 <a href="{{productsurl}}" class="elearn-nav__item {{#isproducts}}is-active{{/isproducts}}">
                     <span class="elearn-nav__icon"><i class="fa fa-cube"></i></span>
@@ -552,7 +930,7 @@
                 </a>
                 <a href="{{payementurl}}" class="elearn-nav__item {{#ispayement}}is-active{{/ispayement}}">
                     <span class="elearn-nav__icon"><i class="fa fa-credit-card"></i></span>
-                    <span class="elearn-nav__label">Payement</span>
+                    <span class="elearn-nav__label">Payment</span>
                 </a>
                 <a href="{{emailtemplatesurl}}" class="elearn-nav__item {{#isemailtemplates}}is-active{{/isemailtemplates}}">
                     <span class="elearn-nav__icon"><i class="fa fa-envelope"></i></span>
@@ -581,19 +959,29 @@
                 <div class="card border-0 shadow-sm mb-3">
                     <div class="card-body">
                         <form method="get" action="{{filterurl}}" class="row g-3 align-items-end">
-                            <div class="col-lg-8">
-                                <label class="form-label">Search</label>
-                                <input type="search" name="search" class="form-control" value="{{searchquery}}" placeholder="Search by customer, email, product, amount or order ID">
-                            </div>
-
                             <div class="col-lg-4">
-                                <label class="form-label">Product</label>
-                                <select name="productid" class="form-select">
-                                    {{#productfilters}}
-                                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                                    {{/productfilters}}
-                                </select>
-                            </div>
+    <label class="form-label">Search</label>
+    <input type="search" name="search" class="form-control" value="{{searchquery}}" placeholder="Customer, email, product, amount or order ID">
+</div>
+
+<div class="col-lg-3">
+    <label class="form-label">Product</label>
+    <select name="productid" class="form-select">
+        {{#productfilters}}
+            <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+        {{/productfilters}}
+    </select>
+</div>
+
+<div class="col-lg-2">
+    <label class="form-label">Expiration from</label>
+    <input type="date" name="expirationfrom" class="form-control" value="{{expirationfrom}}">
+</div>
+
+<div class="col-lg-2">
+    <label class="form-label">Expiration to</label>
+    <input type="date" name="expirationto" class="form-control" value="{{expirationto}}">
+</div>
 
                             <div class="col-12 d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">Apply filters</button>
@@ -616,6 +1004,7 @@
                                     <th>Promo</th>
                                     <th>Amount</th>
                                     <th>Date</th>
+<th>Date d'expiration</th>
                                     <th>Facture</th>
                                 </tr>
                             </thead>
@@ -630,8 +1019,10 @@
                                     <td>{{promo}}</td>
                                     <td>${{amount}}</td>
                                     <td>{{timecreated}}</td>
+                                    <td>{{expirationdate}}</td>
+
                                     <td>
-                                        <a href="{{invoiceurl}}" class="btn btn-sm btn-outline-primary">Download Facture</a>
+                                        <a href="{{invoiceurl}}" class="btn btn-sm btn-outline-primary">Download</a>
                                     </td>
                                 </tr>
                                 {{/orders}}
@@ -931,6 +1322,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     overlay.addEventListener('click', closeMobile);
+    document.querySelectorAll('.elearn-nav__item').forEach(function(link) {
+    link.addEventListener('click', function() {
+        if (mq.matches) {
+            closeMobile();
+        }
+    });
+});
 
     window.addEventListener('resize', function() {
         if (mq.matches) {

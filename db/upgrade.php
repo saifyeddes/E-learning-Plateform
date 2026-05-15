@@ -12,6 +12,8 @@ function xmldb_local_elearning_system_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    
+
     if ($oldversion < 2026032701) {
 
         // Define table elearning_products.
@@ -201,6 +203,52 @@ function xmldb_local_elearning_system_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2026040800, 'local', 'elearning_system');
     }
+if ($oldversion < 2026040900) {
 
+    // Create notification log table.
+    $table = new xmldb_table('elearning_notification_log');
+
+    if (!$dbman->table_exists($table)) {
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('orderid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('notificationtype', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('order_type_idx', XMLDB_INDEX_NOTUNIQUE, ['orderid', 'notificationtype']);
+        $table->add_index('user_type_idx', XMLDB_INDEX_NOTUNIQUE, ['userid', 'notificationtype']);
+
+        $dbman->create_table($table);
+    }
+
+    // Default email templates. These values will appear in the admin Email Templates page.
+    $defaults = [
+        'purchase_product' => [
+            'subject' => 'Votre achat a été confirmé - {{productname}}',
+            'body' => "Bonjour {{firstname}},\n\nVotre achat du cours {{productname}} a été confirmé.\n\nDurée : {{durationmonths}} mois\nDate d’expiration : {{expireslabel}}\nMontant : {{currency}} {{amount}}\nFacture : {{invoiceurl}}\n\nMerci pour votre confiance.\n\n{{sitefullname}}",
+        ],
+        'inactive_no_purchase_2_months' => [
+            'subject' => 'Découvrez nos nouvelles formations',
+            'body' => "Bonjour {{firstname}},\n\nVous n’avez pas acheté de formation depuis 2 mois.\n\nNous vous invitons à découvrir les nouveaux cours disponibles sur la plateforme : {{loginurl}}\n\n{{sitefullname}}",
+        ],
+        'expiration_reminder' => [
+            'subject' => 'Votre accès au cours expire bientôt - {{productname}}',
+            'body' => "Bonjour {{firstname}},\n\nVotre accès au cours {{productname}} va bientôt expirer.\n\nDate d’expiration : {{expireslabel}}\n\nConnectez-vous pour renouveler votre accès : {{loginurl}}\n\n{{sitefullname}}",
+        ],
+    ];
+
+    foreach ($defaults as $key => $template) {
+        if (get_config('local_elearning_system', $key . '_subject') === false) {
+            set_config($key . '_subject', $template['subject'], 'local_elearning_system');
+        }
+
+        if (get_config('local_elearning_system', $key . '_body') === false) {
+            set_config($key . '_body', $template['body'], 'local_elearning_system');
+        }
+    }
+
+    upgrade_plugin_savepoint(true, 2026040900, 'local', 'elearning_system');
+}
     return true;
 }

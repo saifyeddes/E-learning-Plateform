@@ -1,164 +1,637 @@
 {{> local_elearning_system/client_styles }}
-<div class="es-client">
-<div class="container mt-4">
 
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2>{{pageheading}}</h2>
-                <div>
-                    <a href="{{mycoursesurl}}" class="btn btn-outline-secondary btn-sm">Mes cours</a>
-                    <a href="{{homeurl}}" class="btn btn-outline-primary btn-sm">Catalogue</a>
-                </div>
-            </div>
-        </div>
-    </div>
+<style>
+.es-orders-page {
+    --es-primary: #0f6fc5;
+    --es-primary-dark: #084f92;
+    --es-success: #2e7d32;
+    --es-success-light: #eaf7ec;
+    --es-info-light: #eef7ff;
+    --es-border: #d8e7f7;
+    --es-text: #1f2937;
+    --es-muted: #6b7280;
+    --es-radius: 22px;
 
-    {{#isparentaccount}}
-    <div class="alert alert-info">
-        Vous consultez les commandes de votre enfant: <strong>{{targetfullname}}</strong>
-    </div>
-    {{/isparentaccount}}
+    min-height: 100vh;
+    padding: 22px 0 44px;
+    background:
+        radial-gradient(circle at top left, rgba(15,111,197,.12), transparent 28%),
+        linear-gradient(180deg, #f7fbff 0%, #ffffff 45%, #f8fbff 100%);
+}
 
-    {{#hasorders}}
-    <div class="row">
-        {{#orders}}
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm border-0 cursor-pointer" style="cursor:pointer;" onclick="openOrderDrawer({{id}})">
-                {{#hasproductimage}}
-                <div class="position-relative overflow-hidden" style="height:180px;">
-                    <img src="{{productimage}}" alt="{{productname}}" class="w-100 h-100" style="object-fit:cover;">
-                </div>
-                {{/hasproductimage}}
-                {{^hasproductimage}}
-                <div class="bg-light w-100" style="height:180px; display:flex; align-items:center; justify-content:center;">
-                    <div class="text-muted text-center">
-                        <i class="fa fa-shopping-bag fa-2x"></i>
+.es-orders-page .es-orders-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--es-border);
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 24px;
+    background:
+        radial-gradient(circle at top right, rgba(15,111,197,.18), transparent 35%),
+        linear-gradient(135deg, #ffffff 0%, #eef7ff 100%);
+    box-shadow: 0 18px 45px rgba(15,111,197,.10);
+}
+
+.es-orders-page .es-orders-hero::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(15,111,197,.08);
+}
+
+.es-orders-page .es-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--es-border);
+    color: var(--es-primary);
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.es-orders-page .es-page-title {
+    margin: 0 0 8px;
+    font-size: 31px;
+    line-height: 1.15;
+    color: var(--es-text);
+    font-weight: 900;
+}
+
+.es-orders-page .es-page-subtitle {
+    max-width: 720px;
+    margin: 0;
+    color: var(--es-muted);
+    font-size: 15px;
+}
+
+.es-orders-page .es-top-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 2;
+}
+
+.es-orders-page .es-action-btn {
+    border-radius: 999px;
+    padding: 9px 15px;
+    font-weight: 800;
+    font-size: 13px;
+    box-shadow: 0 7px 18px rgba(15,111,197,.08);
+}
+
+.es-orders-page .es-parent-alert {
+    border: 1px solid #b9d7f5;
+    background: #f1f8ff;
+    color: #17446c;
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.es-orders-page .es-orders-grid {
+    row-gap: 24px;
+}
+
+.es-orders-page .es-order-card {
+    height: 100%;
+    border: 1px solid #dceaf8;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(31,41,55,.08);
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.es-orders-page .es-order-card:hover {
+    transform: translateY(-5px);
+    border-color: #b7d9fa;
+    box-shadow: 0 22px 48px rgba(15,111,197,.15);
+}
+
+.es-orders-page .es-order-image {
+    position: relative;
+    height: 205px;
+    overflow: hidden;
+    background: #f3f7fb;
+}
+
+.es-orders-page .es-order-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .25s ease;
+}
+
+.es-orders-page .es-order-card:hover .es-order-image img {
+    transform: scale(1.04);
+}
+
+.es-orders-page .es-image-placeholder {
+    height: 205px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f8fc, #edf4fb);
+    color: #8a9aae;
+}
+
+.es-orders-page .es-order-id {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.94);
+    color: var(--es-primary);
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
+
+.es-orders-page .es-status {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
+
+.es-orders-page .es-status-active {
+    background: rgba(234,247,236,.96);
+    color: var(--es-success);
+}
+
+.es-orders-page .es-status-expired {
+    background: rgba(243,244,246,.96);
+    color: #4b5563;
+}
+
+.es-orders-page .es-order-body {
+    padding: 18px;
+}
+
+.es-orders-page .es-order-title {
+    margin: 0 0 8px;
+    color: #102033;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.es-orders-page .es-order-course {
+    color: var(--es-muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.es-orders-page .es-order-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-end;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #eef2f7;
+}
+
+.es-orders-page .es-order-amount {
+    color: var(--es-success);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.es-orders-page .es-order-date {
+    color: var(--es-muted);
+    font-size: 12px;
+    text-align: right;
+    line-height: 1.35;
+}
+
+.es-orders-page .es-order-footer {
+    padding: 16px 18px 18px;
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.es-orders-page .es-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.es-orders-page .es-detail-btn,
+.es-orders-page .es-download-btn {
+    border: none;
+    border-radius: 15px;
+    padding: 11px 12px;
+    font-weight: 900;
+    font-size: 13px;
+    text-decoration: none !important;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.es-orders-page .es-detail-btn {
+    background: linear-gradient(135deg, #0f6fc5, #0097b2);
+    color: #ffffff !important;
+}
+
+.es-orders-page .es-download-btn {
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    color: #ffffff !important;
+}
+
+.es-orders-page .es-empty-state {
+    border: 1px dashed #bdd6ef;
+    border-radius: 22px;
+    padding: 38px 22px;
+    text-align: center;
+    background: #fbfdff;
+    color: var(--es-muted);
+    box-shadow: 0 12px 28px rgba(31,41,55,.05);
+}
+
+.es-orders-page .es-empty-state i {
+    display: block;
+    color: #8ebce8;
+    margin-bottom: 12px;
+}
+
+/* Drawer */
+.es-order-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.45);
+    display: none;
+    z-index: 1050;
+    backdrop-filter: blur(3px);
+}
+
+.es-order-drawer {
+    position: fixed;
+    top: 0;
+    right: -800px;
+    width: 800px;
+    max-width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -12px 0 35px rgba(15,23,42,.20);
+    overflow-y: auto;
+    transition: right .28s ease;
+    z-index: 1055;
+}
+
+.es-order-drawer-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(135deg, #ffffff, #eef7ff);
+    border-bottom: 1px solid #e5eef8;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.es-order-drawer-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--es-text);
+}
+
+.es-order-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid #cbdff3;
+    background: #ffffff;
+    color: #334155;
+    font-weight: 900;
+}
+
+.es-order-drawer-content {
+    padding: 22px;
+}
+
+.es-detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.es-detail-head h5 {
+    margin: 0;
+    font-weight: 900;
+    color: #102033;
+}
+
+.es-detail-image {
+    width: 100%;
+    max-height: 230px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid #e5eef8;
+}
+
+.es-detail-box {
+    border: 1px solid #e5eef8;
+    border-radius: 18px;
+    padding: 16px;
+    background: #fbfdff;
+}
+
+.es-detail-row {
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+.es-detail-label {
+    font-weight: 900;
+    color: #102033;
+}
+
+.es-bundle-item {
+    height: 100%;
+    border: 1px solid #e5eef8;
+    border-radius: 18px;
+    padding: 12px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(31,41,55,.06);
+}
+
+.es-bundle-item img {
+    height: 120px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+    margin-bottom: 10px;
+}
+
+.es-bundle-item h6 {
+    font-size: 14px;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .es-orders-page .es-page-title {
+        font-size: 25px;
+    }
+
+    .es-orders-page .es-top-actions {
+        justify-content: flex-start;
+    }
+
+    .es-orders-page .es-order-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .es-orders-page .es-order-date {
+        text-align: left;
+    }
+
+    .es-order-drawer {
+        width: 100vw;
+        right: -100vw;
+    }
+}
+</style>
+
+<div class="es-client es-orders-page">
+    <div class="container-fluid">
+
+        <div class="es-orders-hero">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-8">
+                    <div class="es-kicker">
+                        <i class="fa fa-receipt"></i>
+                        Espace commandes
                     </div>
+                    <h2 class="es-page-title">{{pageheading}}</h2>
+                    <p class="es-page-subtitle">
+                        Consultez vos achats, vérifiez le statut de vos accès et téléchargez vos factures PDF rapidement.
+                    </p>
                 </div>
-                {{/hasproductimage}}
-                
-                <div class="card-body">
-                    <h6 class="card-title">#{{id}} - {{productname}}</h6>
-                    {{#isactiveorder}}<span class="badge bg-success mb-2">Actif</span>{{/isactiveorder}}
-                    {{#isexpiredorder}}<span class="badge bg-secondary mb-2">Expiré</span>{{/isexpiredorder}}
-                    {{#hascourse}}
-                    <p class="small text-muted mb-2">{{coursename}}</p>
-                    {{/hascourse}}
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <span class="text-success fw-bold">${{amount}}</span>
-                        <small class="text-muted">{{timecreated}}</small>
-                    </div>
-                </div>
-                <div class="card-footer bg-light border-0">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-primary w-100" onclick="event.stopPropagation(); openOrderDrawer({{id}}); return false;">
-                            <i class="fa fa-eye"></i> Détails
-                        </button>
-                        <a href="{{pdfurl}}" class="btn btn-sm btn-success w-100" onclick="event.stopPropagation(); triggerInvoiceDownload(this.href); return false;">
-                            <i class="fa fa-download"></i> Download
+
+                <div class="col-12 col-lg-4">
+                    <div class="es-top-actions">
+                        <a href="{{mycoursesurl}}" class="btn btn-light es-action-btn">
+                            <i class="fa fa-play-circle"></i> Mes cours
+                        </a>
+                        <a href="{{homeurl}}" class="btn btn-outline-primary es-action-btn">
+                            <i class="fa fa-th-large"></i> Catalogue
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-        {{/orders}}
-    </div>
-    {{/hasorders}}
 
-    {{^hasorders}}
-    <div class="alert alert-info" role="alert">
-        <i class="fa fa-info-circle"></i> Vous n'avez pas encore de commandes.
-    </div>
-    {{/hasorders}}
-
-</div>
-
-<!-- DRAWER DETAIL TEMPLATES -->
-{{#orders}}
-<template id="orderDetailTemplate{{id}}">
-    <div class="order-detail-wrapper">
-        <div class="mb-3 d-flex align-items-center justify-content-between">
-            <h5 class="mb-0">Commande #{{id}}</h5>
-            <a href="{{pdfurl}}" class="btn btn-sm btn-success" onclick="triggerInvoiceDownload(this.href); return false;">
-                <i class="fa fa-download"></i> Download PDF
-            </a>
+        {{#isparentaccount}}
+        <div class="es-parent-alert">
+            <i class="fa fa-user-friends"></i>
+            Vous consultez les commandes de votre enfant : <strong>{{targetfullname}}</strong>
         </div>
+        {{/isparentaccount}}
 
-        <div class="row mb-4">
-            {{#hasproductimage}}
-            <div class="col-md-4">
-                <img src="{{productimage}}" alt="{{productname}}" class="img-fluid rounded" style="max-height:200px; object-fit:cover;">
-            </div>
-            <div class="col-md-8">
-            {{/hasproductimage}}
-            {{^hasproductimage}}
-            <div class="col-12">
-            {{/hasproductimage}}
-                <h6>{{productname}}</h6>
-                {{#hascourse}}
-                <p class="mb-2">
-                    <strong>Cours:</strong>
-                    <a href="{{courseurl}}" target="_blank">{{coursename}}</a>
-                </p>
-                {{/hascourse}}
-                <p class="mb-2">
-                    <strong>Date:</strong> {{timecreated}}
-                </p>
-                <p class="mb-2">
-                    <strong>Durée choisie:</strong> {{durationmonths}} mois
-                </p>
-                {{#isactiveorder}}<div class="badge bg-success mb-2">Accès actif</div>{{/isactiveorder}}
-                {{#isexpiredorder}}<div class="badge bg-secondary mb-2">Accès expiré</div>{{/isexpiredorder}}
-                <p class="mb-2">
-                    <strong>Prix produit:</strong> <span class="text-success fw-bold">${{productprice}}</span>
-                </p>
-                <p class="mb-2">
-                    <strong>Montant commande:</strong> ${{amount}}
-                </p>
-                {{#hasdescription}}
-                <div class="mt-3">
-                    <strong>Description:</strong>
-                    <div class="small text-muted mt-2">
-                        {{{description}}}
+        {{#hasorders}}
+        <div class="row es-orders-grid">
+            {{#orders}}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="es-order-card" onclick="openOrderDrawer({{id}})">
+                    {{#hasproductimage}}
+                    <div class="es-order-image">
+                        <img src="{{productimage}}" alt="{{productname}}">
+                        <span class="es-order-id">#{{id}}</span>
+                        {{#isactiveorder}}<span class="es-status es-status-active">Actif</span>{{/isactiveorder}}
+                        {{#isexpiredorder}}<span class="es-status es-status-expired">Expiré</span>{{/isexpiredorder}}
+                    </div>
+                    {{/hasproductimage}}
+
+                    {{^hasproductimage}}
+                    <div class="es-image-placeholder">
+                        <div class="text-center">
+                            <i class="fa fa-shopping-bag fa-2x"></i>
+                            <div class="mt-2">Aucune image</div>
+                        </div>
+                        <span class="es-order-id">#{{id}}</span>
+                    </div>
+                    {{/hasproductimage}}
+
+                    <div class="es-order-body">
+                        <h5 class="es-order-title">{{productname}}</h5>
+
+                        {{#hascourse}}
+                        <div class="es-order-course">
+                            <i class="fa fa-graduation-cap"></i> {{coursename}}
+                        </div>
+                        {{/hascourse}}
+
+                        <div class="es-order-meta">
+                            <div>
+                                <div class="small text-muted">Montant</div>
+                                <div class="es-order-amount">${{amount}}</div>
+                            </div>
+                            <div class="es-order-date">
+                                <i class="fa fa-calendar"></i>
+                                {{timecreated}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="es-order-footer">
+                        <div class="es-card-actions">
+                            <button class="es-detail-btn" onclick="event.stopPropagation(); openOrderDrawer({{id}}); return false;">
+                                <i class="fa fa-eye"></i> Détails
+                            </button>
+
+                            <a href="{{pdfurl}}" class="es-download-btn" onclick="event.stopPropagation(); triggerInvoiceDownload(this.href); return false;">
+                                <i class="fa fa-download"></i> Facture
+                            </a>
+                        </div>
                     </div>
                 </div>
-                {{/hasdescription}}
             </div>
+            {{/orders}}
         </div>
+        {{/hasorders}}
 
-        {{#hasbundleitems}}
-        <div class="border-top pt-3 mb-3">
-            <strong class="mb-3 d-block">Articles du pack:</strong>
-            <div class="row g-2">
-                {{#bundleitems}}
-                <div class="col-md-6">
-                    <div class="border rounded p-2" style="height:100%; display:flex; flex-direction:column;">
-                        {{#hasimage}}
-                        <img src="{{image}}" alt="{{name}}" class="img-fluid rounded mb-2" style="height:120px; object-fit:cover;">
-                        {{/hasimage}}
-                        <h6 class="small mb-1">{{name}}</h6>
-                        {{#course}}
-                        <a href="{{course.url}}" class="btn btn-xs btn-outline-primary" style="padding:2px 8px; font-size:11px;">Accéder</a>
-                        {{/course}}
+        {{^hasorders}}
+        <div class="es-empty-state">
+            <i class="fa fa-folder-open fa-3x"></i>
+            <h5>Aucune commande trouvée</h5>
+            <p class="mb-0">Vous n’avez pas encore effectué d’achat sur la plateforme.</p>
+        </div>
+        {{/hasorders}}
+
+    </div>
+
+    {{#orders}}
+    <template id="orderDetailTemplate{{id}}">
+        <div class="order-detail-wrapper">
+            <div class="es-detail-head">
+                <h5>Commande #{{id}}</h5>
+                <a href="{{pdfurl}}" class="es-download-btn" onclick="triggerInvoiceDownload(this.href); return false;">
+                    <i class="fa fa-download"></i> Télécharger PDF
+                </a>
+            </div>
+
+            <div class="row g-3 mb-4">
+                {{#hasproductimage}}
+                <div class="col-md-5">
+                    <img src="{{productimage}}" alt="{{productname}}" class="es-detail-image">
+                </div>
+                <div class="col-md-7">
+                {{/hasproductimage}}
+
+                {{^hasproductimage}}
+                <div class="col-12">
+                {{/hasproductimage}}
+
+                    <div class="es-detail-box">
+                        <h5 class="mb-3">{{productname}}</h5>
+
+                        {{#hascourse}}
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Cours :</span>
+                            <a href="{{courseurl}}" target="_blank">{{coursename}}</a>
+                        </div>
+                        {{/hascourse}}
+
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Date :</span> {{timecreated}}
+                        </div>
+
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Durée choisie :</span> {{durationmonths}} mois
+                        </div>
+
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Statut :</span>
+                            {{#isactiveorder}}<span class="badge bg-success">Accès actif</span>{{/isactiveorder}}
+                            {{#isexpiredorder}}<span class="badge bg-secondary">Accès expiré</span>{{/isexpiredorder}}
+                        </div>
+
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Prix produit :</span>
+                            <span class="text-success fw-bold">${{productprice}}</span>
+                        </div>
+
+                        <div class="es-detail-row">
+                            <span class="es-detail-label">Montant commande :</span>
+                            <span class="fw-bold">${{amount}}</span>
+                        </div>
+
+                        {{#hasdescription}}
+                        <div class="mt-3">
+                            <div class="es-detail-label mb-2">Description :</div>
+                            <div class="small text-muted">
+                                {{{description}}}
+                            </div>
+                        </div>
+                        {{/hasdescription}}
                     </div>
                 </div>
-                {{/bundleitems}}
             </div>
+
+            {{#hasbundleitems}}
+            <div class="border-top pt-4 mb-3">
+                <h6 class="mb-3 fw-bold">
+                    <i class="fa fa-layer-group"></i> Articles du pack
+                </h6>
+
+                <div class="row g-3">
+                    {{#bundleitems}}
+                    <div class="col-md-6">
+                        <div class="es-bundle-item">
+                            {{#hasimage}}
+                            <img src="{{image}}" alt="{{name}}">
+                            {{/hasimage}}
+
+                            <h6>{{name}}</h6>
+
+                            {{#course}}
+                            <a href="{{course.url}}" class="btn btn-sm btn-outline-primary">
+                                Accéder
+                            </a>
+                            {{/course}}
+                        </div>
+                    </div>
+                    {{/bundleitems}}
+                </div>
+            </div>
+            {{/hasbundleitems}}
         </div>
-        {{/hasbundleitems}}
+    </template>
+    {{/orders}}
 
-    </div>
-</template>
-{{/orders}}
+    <div id="orderDrawerOverlay" class="es-order-overlay"></div>
 
-<div id="orderDrawerOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.3); display:none; z-index:1050;"></div>
-<div id="orderDrawer" style="position:fixed; top:0; right:-760px; width:760px; max-width:100vw; height:100vh; background:#fff; box-shadow:-4px 0 20px rgba(0,0,0,0.15); padding:20px; overflow-y:auto; transition:right 0.3s ease; z-index:1055;">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="mb-0">Détails de la commande</h5>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeOrderDrawer()">✕</button>
+    <div id="orderDrawer" class="es-order-drawer">
+        <div class="es-order-drawer-header">
+            <h5 class="es-order-drawer-title">Détails de la commande</h5>
+            <button type="button" class="es-order-close" onclick="closeOrderDrawer()">✕</button>
+        </div>
+
+        <div id="orderDrawerContent" class="es-order-drawer-content"></div>
     </div>
-    <div id="orderDrawerContent"></div>
 </div>
 
 <script>
@@ -180,9 +653,11 @@ function openOrderDrawer(orderId) {
 function closeOrderDrawer() {
     var drawer = document.getElementById('orderDrawer');
     var overlay = document.getElementById('orderDrawerOverlay');
+
     if (drawer) {
-        drawer.style.right = '-760px';
+        drawer.style.right = window.innerWidth <= 768 ? '-100vw' : '-800px';
     }
+
     if (overlay) {
         overlay.style.display = 'none';
     }
@@ -193,6 +668,7 @@ function triggerInvoiceDownload(url) {
         var sep = url.indexOf('?') !== -1 ? '&' : '?';
         url = url + sep + 'pdf=1';
     }
+
     var separator = url.indexOf('?') !== -1 ? '&' : '?';
     window.location.href = url + separator + 'downloadts=' + Date.now();
 }
@@ -207,5 +683,3 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
-
-</div>

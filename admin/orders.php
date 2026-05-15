@@ -1,8 +1,6 @@
 <?php
-
-use moodle_url;
-
-require('../../../config.php');
+require_once(__DIR__ . '/../../../config.php');
+require_login();
 require_login();
 
 $context = context_system::instance();
@@ -10,7 +8,7 @@ require_capability('local/elearning_system:manage', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/admin/orders.php');
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Orders');
 $PAGE->set_heading('Orders');
 
@@ -18,9 +16,31 @@ global $DB;
 
 $searchquery = trim((string)optional_param('search', '', PARAM_TEXT));
 $selectedproductid = optional_param('productid', 0, PARAM_INT);
+$expirationfrom = trim((string)optional_param('expirationfrom', '', PARAM_RAW));
+$expirationto = trim((string)optional_param('expirationto', '', PARAM_RAW));
 $page = max(1, optional_param('page', 1, PARAM_INT));
 $perpage = 5;
+function local_elearning_system_parse_date_filter(string $date, bool $endofday = false): int {
+    $date = trim($date);
 
+    if ($date === '') {
+        return 0;
+    }
+
+    $dt = DateTime::createFromFormat('Y-m-d', $date);
+
+    if (!$dt) {
+        return 0;
+    }
+
+    if ($endofday) {
+        $dt->setTime(23, 59, 59);
+    } else {
+        $dt->setTime(0, 0, 0);
+    }
+
+    return $dt->getTimestamp();
+}
 $listparams = [];
 if ($searchquery !== '') {
     $listparams['search'] = $searchquery;
@@ -28,7 +48,37 @@ if ($searchquery !== '') {
 if ($selectedproductid !== 0) {
     $listparams['productid'] = $selectedproductid;
 }
+if ($expirationfrom !== '') {
+    $listparams['expirationfrom'] = $expirationfrom;
+}
+if ($expirationto !== '') {
+    $listparams['expirationto'] = $expirationto;
+}
 
+if ($expirationfrom !== '') {
+    $listparams['expirationfrom'] = $expirationfrom;
+}
+
+if ($expirationto !== '') {
+    $listparams['expirationto'] = $expirationto;
+}
+
+$expirationfromts = local_elearning_system_parse_date_filter($expirationfrom, false);
+$expirationtots = local_elearning_system_parse_date_filter($expirationto, true);
+
+if ($expirationfrom !== '') {
+    $expirationfromts = strtotime($expirationfrom . ' 00:00:00');
+    if ($expirationfromts === false) {
+        $expirationfromts = 0;
+    }
+}
+
+if ($expirationto !== '') {
+    $expirationtots = strtotime($expirationto . ' 23:59:59');
+    if ($expirationtots === false) {
+        $expirationtots = 0;
+    }
+}
 $orders = [];
 $pageitems = [];
 $productfilters = [[
@@ -74,7 +124,19 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         $email = (string)($r->email ?? '-');
         $promocode = trim((string)($r->promocode ?? ''));
         $durationmonths = max(1, (int)($r->durationmonths ?? 1));
+       $expirationtimestamp = strtotime('+' . $durationmonths . ' months', (int)$r->timecreated);
 
+if ($expirationtimestamp === false) {
+    $expirationtimestamp = (int)$r->timecreated;
+}
+
+if ($expirationfromts > 0 && $expirationtimestamp < $expirationfromts) {
+    continue;
+}
+
+if ($expirationtots > 0 && $expirationtimestamp > $expirationtots) {
+    continue;
+}
         if ($selectedproductid !== 0 && (int)$r->productid !== $selectedproductid) {
             continue;
         }
@@ -105,7 +167,8 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'durationmonths' => $durationmonths,
             'durationachetee' => $durationmonths . ' mois',
             'amount' => number_format((float)$r->amount, 2),
-            'timecreated' => userdate((int)$r->timecreated),
+            'timecreated' => userdate((int)$r->timecreated, '%d/%m/%Y %H:%M'),
+            'expirationdate' => userdate($expirationtimestamp, '%d/%m/%Y %H:%M'),
             'invoiceurl' => (new \moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),
         ];
     }
@@ -157,7 +220,7 @@ if ($totalpages > 1) {
     ];
 }
 
-$hasfilters = ($searchquery !== '' || $selectedproductid !== 0);
+$hasfilters = ($searchquery !== '' || $selectedproductid !== 0 || $expirationfrom !== '' || $expirationto !== '');
 
 $templatedata = [
     'orders' => $orders,
@@ -165,6 +228,8 @@ $templatedata = [
     'hasfilters' => $hasfilters,
     'noordersmessage' => $hasfilters ? 'No orders match your filters.' : 'No orders yet.',
     'searchquery' => $searchquery,
+    'expirationfrom' => $expirationfrom,
+'expirationto' => $expirationto,
     'productfilters' => $productfilters,
     'filterurl' => (new \moodle_url('/local/elearning_system/admin/orders.php'))->out(false),
     'pageitems' => $pageitems,

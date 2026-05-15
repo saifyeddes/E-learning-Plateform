@@ -255,6 +255,65 @@ if ($DB->get_manager()->table_exists('elearning_products')) {
 }
 
 echo $OUTPUT->header();
+$expiredcourses = [];
+
+if (isloggedin() && !isguestuser() && $DB->get_manager()->table_exists('elearning_orders')) {
+    $ordercolumns = $DB->get_columns('elearning_orders');
+
+    $durationselect = isset($ordercolumns['durationmonths'])
+        ? 'o.durationmonths AS durationmonths'
+        : '1 AS durationmonths';
+
+    $expiresatselect = isset($ordercolumns['expiresat'])
+        ? 'o.expiresat AS expiresat'
+        : '0 AS expiresat';
+
+    $sql = "SELECT o.id, o.userid, o.productid, o.timecreated,
+                   {$durationselect},
+                   {$expiresatselect},
+                   p.name AS productname
+              FROM {elearning_orders} o
+              JOIN {elearning_products} p ON p.id = o.productid
+             WHERE o.userid = :userid
+          ORDER BY o.id DESC";
+
+    $records = $DB->get_records_sql($sql, [
+        'userid' => (int)$USER->id,
+    ]);
+
+    $seenproducts = [];
+
+    foreach ($records as $record) {
+        $productid = (int)$record->productid;
+
+        if (isset($seenproducts[$productid])) {
+            continue;
+        }
+
+        $seenproducts[$productid] = true;
+
+        $durationmonths = max(1, (int)($record->durationmonths ?? 1));
+        $expiresat = !empty($record->expiresat)
+            ? (int)$record->expiresat
+            : strtotime('+' . $durationmonths . ' months', (int)$record->timecreated);
+
+        if ($expiresat !== false && $expiresat > 0 && $expiresat <= time()) {
+            $expiredcourses[] = [
+                'orderid' => (int)$record->id,
+                'productid' => $productid,
+                'coursename' => format_string($record->productname),
+                'durationmonths' => $durationmonths,
+                'durationlabel' => $durationmonths . ' mois',
+                'expirationdate' => userdate($expiresat),
+                'reactivateurl' => (new moodle_url('/local/elearning_system/reactivate.php', [
+                    'productid' => $productid,
+                    'orderid' => (int)$record->id,
+                    'sesskey' => sesskey(),
+                ]))->out(false),
+            ];
+        }
+    }
+}
 echo $OUTPUT->render_from_template('local_elearning_system/my_courses', [
     'courses' => $courses,
     'hascourses' => !empty($courses),
@@ -269,5 +328,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/my_courses', [
     'homeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'commandesurl' => (new moodle_url('/local/elearning_system/commandes.php'))->out(false),
+    'expiredcourses' => $expiredcourses,
+'hasexpiredcourses' => !empty($expiredcourses),
 ]);
 echo $OUTPUT->footer();

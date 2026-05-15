@@ -340,34 +340,112 @@ function local_elearning_system_get_site_currency_code(): string {
 function local_elearning_system_get_email_template_definitions(): array {
     return [
         'purchase_product' => [
-            'subject' => 'Purchase confirmed - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nYour purchase for {{productname}} has been confirmed.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\nInvoice: {{invoiceurl}}\n\n{{sitefullname}}",
+            'subject' => 'Your purchase has been confirmed - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nYour purchase of {{productname}} has been confirmed.\n\nOrder number: {{orderid}}\nAmount: {{currency}} {{amount}}\nAccess duration: {{durationmonths}} month(s)\nExpiration date: {{expireslabel}}\n\nYour invoice is attached to this email.\n\nThank you for learning with {{sitefullname}}.",
         ],
+
         'purchase_for_child' => [
             'subject' => 'Purchase confirmed for your child - {{productname}}',
-            'body' => "Hello {{parentfirstname}},\n\nYou purchased {{productname}} for your child {{childfullname}}.\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\nAmount: {{currency}} {{amount}}\nInvoice: {{invoiceurl}}\n\n{{sitefullname}}",
+            'body' => "Hello {{parentfirstname}},\n\nYour purchase of {{productname}} for {{childfullname}} has been confirmed.\n\nOrder number: {{orderid}}\nAmount: {{currency}} {{amount}}\nAccess duration: {{durationmonths}} month(s)\nExpiration date: {{expireslabel}}\n\nThe invoice is attached to this email.\n\nThank you for learning with {{sitefullname}}.",
         ],
-        'new_account' => [
-            'subject' => 'Welcome to {{sitefullname}}',
-            'body' => "Hello {{firstname}},\n\nYour account has been created successfully.\nLogin: {{loginurl}}\n\n{{sitefullname}}",
-        ],
-        'invoice' => [
-            'subject' => 'Invoice #{{orderid}} - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nPlease find your invoice for {{productname}}.\nInvoice number: {{orderid}}\nAmount: {{currency}} {{amount}}\nInvoice link: {{invoiceurl}}\n\n{{sitefullname}}",
-        ],
-        'renewal_account' => [
-            'subject' => 'Your access has expired - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nYour access to {{productname}} has expired on {{expireslabel}}.\nTo continue, please renew your account.\n\n{{sitefullname}}",
-        ],
+
         'expiration_reminder' => [
-            'subject' => 'Your course access expires soon - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nYour access to {{productname}} will expire in 5 days.\nExpiry date: {{expireslabel}}\n\nRenew now to keep your access: {{loginurl}}\n\n{{sitefullname}}",
+            'subject' => 'Your course access will expire in 7 days - {{productname}}',
+            'body' => "Hello {{firstname}},\n\nYour access to {{productname}} will expire in 7 days.\n\nExpiration date: {{expireslabel}}\n\nPlease renew your access if you want to continue learning without interruption.\n\n{{sitefullname}}",
         ],
-        'payment_course' => [
-            'subject' => 'Payment received - {{productname}}',
-            'body' => "Hello {{firstname}},\n\nWe received your payment for {{productname}}.\nAmount: {{currency}} {{amount}}\nDuration: {{durationmonths}} months\nExpiry date: {{expireslabel}}\n\n{{sitefullname}}",
+
+        'inactive_no_purchase_2_months' => [
+            'subject' => 'Discover our latest courses',
+            'body' => "Hello {{firstname}},\n\nYou have not purchased a course for 2 months.\n\nNew courses are available on the platform. Visit your learning space to discover them:\n{{loginurl}}\n\n{{sitefullname}}",
         ],
     ];
+}
+
+function local_elearning_system_generate_invoice_pdf_file(stdClass $order, stdClass $product, stdClass $user): array {
+    global $CFG;
+
+    require_once($CFG->libdir . '/pdflib.php');
+
+    $tmpdir = make_request_directory();
+    $filename = 'invoice-order-' . $order->id . '.pdf';
+    $filepath = $tmpdir . '/' . $filename;
+
+    $pdf = new pdf();
+    $pdf->SetCreator('Moodle');
+    $pdf->SetAuthor(format_string(get_site()->fullname));
+    $pdf->SetTitle('Invoice #' . $order->id);
+    $pdf->AddPage();
+
+    $amount = number_format((float)$order->amount, 2);
+    $currency = local_elearning_system_get_site_currency_code();
+    $expireslabel = !empty($order->expiresat) ? userdate((int)$order->expiresat) : 'Unlimited';
+
+    $html = '
+        <h1>Invoice</h1>
+        <p><strong>Order number:</strong> #' . s($order->id) . '</p>
+        <p><strong>Student:</strong> ' . s(fullname($user)) . '</p>
+        <p><strong>Email:</strong> ' . s($user->email) . '</p>
+        <p><strong>Product:</strong> ' . s($product->name) . '</p>
+        <p><strong>Amount:</strong> ' . s($currency) . ' ' . s($amount) . '</p>
+        <p><strong>Access duration:</strong> ' . s($order->durationmonths ?? '') . ' month(s)</p>
+        <p><strong>Expiration date:</strong> ' . s($expireslabel) . '</p>
+        <p><strong>Date:</strong> ' . s(userdate(time())) . '</p>
+    ';
+
+    $pdf->writeHTML($html);
+    $pdf->Output($filepath, 'F');
+
+    return [$filepath, $filename];
+}
+
+function local_elearning_system_send_purchase_email_with_invoice(int $orderid): bool {
+    global $DB, $CFG;
+
+    $order = $DB->get_record('elearning_orders', ['id' => $orderid], '*', MUST_EXIST);
+    $product = $DB->get_record('elearning_products', ['id' => $order->productid], '*', MUST_EXIST);
+    $user = $DB->get_record('user', ['id' => $order->userid, 'deleted' => 0, 'suspended' => 0], '*', MUST_EXIST);
+
+    $user = local_elearning_system_prepare_mail_user($user);
+    $fromuser = local_elearning_system_get_valid_from_user($user);
+
+    $template = local_elearning_system_get_email_template('purchase_product');
+
+    $currency = local_elearning_system_get_site_currency_code();
+    $amount = number_format((float)$order->amount, 2);
+    $expireslabel = !empty($order->expiresat) ? userdate((int)$order->expiresat) : 'Unlimited';
+
+    $variables = [
+        'firstname' => (string)$user->firstname,
+        'lastname' => (string)$user->lastname,
+        'fullname' => fullname($user),
+        'email' => (string)$user->email,
+        'productname' => (string)$product->name,
+        'coursename' => (string)$product->name,
+        'amount' => $amount,
+        'currency' => $currency,
+        'durationmonths' => (string)($order->durationmonths ?? ''),
+        'expireslabel' => $expireslabel,
+        'orderid' => (string)$order->id,
+        'invoiceurl' => '',
+        'loginurl' => (new moodle_url('/local/elearning_system/auth.php'))->out(false),
+        'sitefullname' => format_string(get_site()->fullname),
+    ];
+
+    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
+    $body = local_elearning_system_render_template_string($template['body'], $variables);
+    $html = nl2br(s($body));
+
+    [$invoicepath, $invoicename] = local_elearning_system_generate_invoice_pdf_file($order, $product, $user);
+
+    return (bool)email_to_user(
+        $user,
+        $fromuser,
+        $subject,
+        $body,
+        $html,
+        $invoicepath,
+        $invoicename
+    );
 }
 
 /**
@@ -465,38 +543,34 @@ function local_elearning_system_prepare_mail_user(stdClass $user): stdClass {
  * @return stdClass
  */
 function local_elearning_system_get_valid_from_user(stdClass $recipient): stdClass {
-    $admin = get_admin();
-    if ($admin && !empty($admin->email) && validate_email((string)$admin->email)) {
-        return local_elearning_system_prepare_mail_user($admin);
-    }
+    $noreply = trim((string)get_config('core', 'noreplyaddress'));
+    $smtpuser = trim((string)get_config('core', 'smtpuser'));
 
-    $support = core_user::get_support_user();
-    if ($support && !empty($support->email) && validate_email((string)$support->email)) {
-        return local_elearning_system_prepare_mail_user($support);
-    }
-
-    $recipientdomain = 'example.com';
-    if (!empty($recipient->email) && strpos((string)$recipient->email, '@') !== false) {
-        $parts = explode('@', (string)$recipient->email);
-        $domain = core_text::strtolower((string)end($parts));
-        if ($domain !== '') {
-            $recipientdomain = $domain;
+    $email = '';
+    if ($noreply !== '' && validate_email($noreply)) {
+        $email = $noreply;
+    } else if ($smtpuser !== '' && validate_email($smtpuser)) {
+        $email = $smtpuser;
+    } else {
+        $support = core_user::get_support_user();
+        if ($support && !empty($support->email) && validate_email((string)$support->email)) {
+            return local_elearning_system_prepare_mail_user($support);
         }
     }
 
-    $fallback = new stdClass();
-    $fallback->id = 0;
-    $fallback->username = 'local_elearning_system_notifier';
-    $fallback->firstname = 'E-learning';
-    $fallback->lastname = 'Notifier';
-    $fallback->email = 'no-reply@' . $recipientdomain;
-    $fallback->mailformat = 1;
-    $fallback->maildisplay = 1;
-    $fallback->maildigest = 0;
-    $fallback->lang = !empty($recipient->lang) ? $recipient->lang : current_language();
-    $fallback->timezone = !empty($recipient->timezone) ? $recipient->timezone : '99';
+    $from = new stdClass();
+    $from->id = -99;
+    $from->username = 'local_elearning_system_notifier';
+    $from->firstname = 'Dourouss';
+    $from->lastname = 'E-learning';
+    $from->email = $email;
+    $from->mailformat = 1;
+    $from->maildisplay = 1;
+    $from->maildigest = 0;
+    $from->lang = !empty($recipient->lang) ? $recipient->lang : current_language();
+    $from->timezone = !empty($recipient->timezone) ? $recipient->timezone : '99';
 
-    return local_elearning_system_prepare_mail_user($fallback);
+    return local_elearning_system_prepare_mail_user($from);
 }
 
 /**
@@ -588,7 +662,7 @@ function local_elearning_system_send_order_email_with_template(stdClass $order, 
     $amount = number_format((float)($order->amount ?? 0), 2);
     $sitefullname = format_string(get_site()->fullname);
     $invoiceurl = (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)($order->id ?? 0), 'pdf' => 1]))->out(false);
-    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+    $loginurl = (new moodle_url('/local/elearning_system/auth.php'))->out(false);
 
     $variables = [
         'firstname' => (string)$user->firstname,
@@ -656,7 +730,7 @@ function local_elearning_system_send_parent_purchase_email(stdClass $order, int 
     $amount = number_format((float)($order->amount ?? 0), 2);
     $sitefullname = format_string(get_site()->fullname);
     $invoiceurl = (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)($order->id ?? 0), 'pdf' => 1]))->out(false);
-    $loginurl = (new moodle_url('/login/index.php'))->out(false);
+    $loginurl = (new moodle_url('/local/elearning_system/auth.php'))->out(false);
 
     $variables = [
         'firstname' => (string)$parent->firstname,
@@ -720,7 +794,7 @@ function local_elearning_system_send_template_preview(stdClass $recipient, strin
         'expireslabel' => userdate(time() + DAYSECS),
         'orderid' => 'preview',
         'invoiceurl' => (new moodle_url('/local/elearning_system/admin/emailtemplates.php'))->out(false),
-        'loginurl' => (new moodle_url('/login/index.php'))->out(false),
+        'loginurl' => (new moodle_url('/local/elearning_system/auth.php'))->out(false),
         'sitefullname' => format_string(get_site()->fullname),
     ];
 
@@ -730,6 +804,175 @@ function local_elearning_system_send_template_preview(stdClass $recipient, strin
     $fromuser = local_elearning_system_get_valid_from_user($recipient);
 
     return (bool)email_to_user($recipient, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
+ * Check if a user-level notification was sent recently.
+ *
+ * @param int $userid
+ * @param string $notificationtype
+ * @param int $since
+ * @param moodle_database $DB
+ * @return bool
+ */
+function local_elearning_system_user_notification_sent_since(
+    int $userid,
+    string $notificationtype,
+    int $since,
+    moodle_database $DB
+): bool {
+    if (!local_elearning_system_has_notification_log_table($DB)) {
+        return false;
+    }
+
+    return $DB->record_exists_select(
+        'elearning_notification_log',
+        'userid = :userid AND notificationtype = :notificationtype AND timecreated >= :since',
+        [
+            'userid' => $userid,
+            'notificationtype' => $notificationtype,
+            'since' => $since,
+        ]
+    );
+}
+
+/**
+ * Mark a user-level notification as sent.
+ *
+ * @param int $userid
+ * @param string $notificationtype
+ * @param moodle_database $DB
+ * @return void
+ */
+function local_elearning_system_mark_user_notification_sent(
+    int $userid,
+    string $notificationtype,
+    moodle_database $DB
+): void {
+    if (!local_elearning_system_has_notification_log_table($DB)) {
+        return;
+    }
+
+    $record = new stdClass();
+    $record->orderid = 0;
+    $record->userid = $userid;
+    $record->notificationtype = $notificationtype;
+    $record->timecreated = time();
+
+    $DB->insert_record('elearning_notification_log', $record);
+}
+
+/**
+ * Send a generic template email to a user without an order.
+ *
+ * @param stdClass $user
+ * @param string $templatekey
+ * @param array $extra
+ * @return bool
+ */
+function local_elearning_system_send_user_email_with_template(
+    stdClass $user,
+    string $templatekey,
+    array $extra = []
+): bool {
+    if (empty($user->email) || !validate_email((string)$user->email)) {
+        return false;
+    }
+
+    $user = local_elearning_system_prepare_mail_user($user);
+    $template = local_elearning_system_get_email_template($templatekey);
+
+    if ($template['subject'] === '' || $template['body'] === '') {
+        return false;
+    }
+
+    $variables = [
+        'firstname' => (string)($user->firstname ?? ''),
+        'lastname' => (string)($user->lastname ?? ''),
+        'fullname' => fullname($user),
+        'email' => (string)$user->email,
+        'productname' => '',
+        'coursename' => '',
+        'amount' => '',
+        'currency' => local_elearning_system_get_site_currency_code(),
+        'durationmonths' => '',
+        'expireslabel' => '',
+        'orderid' => '',
+        'invoiceurl' => '',
+        'loginurl' => (new moodle_url('/local/elearning_system/auth.php'))->out(false),
+        'sitefullname' => format_string(get_site()->fullname),
+    ];
+
+    foreach ($extra as $key => $value) {
+        $variables[$key] = (string)$value;
+    }
+
+    $subject = local_elearning_system_render_template_string($template['subject'], $variables);
+    $body = local_elearning_system_render_template_string($template['body'], $variables);
+    $messagehtml = nl2br(s($body));
+
+    $fromuser = local_elearning_system_get_valid_from_user($user);
+
+    return (bool)email_to_user($user, $fromuser, $subject, $body, $messagehtml);
+}
+
+/**
+ * Process users who did not purchase anything for 2 months.
+ *
+ * @param moodle_database $DB
+ * @return void
+ */
+function local_elearning_system_process_inactive_purchase_reminders(moodle_database $DB): void {
+    if (!$DB->get_manager()->table_exists('elearning_orders')) {
+        return;
+    }
+
+    $now = time();
+    $twomonthsago = $now - (60 * DAYSECS);
+    $donotrepeatsince = $now - (30 * DAYSECS);
+    $templatekey = 'inactive_no_purchase_2_months';
+
+    $users = $DB->get_records_select(
+        'user',
+        'deleted = 0 AND suspended = 0 AND email <> :emptyemail',
+        ['emptyemail' => ''],
+        'id ASC',
+        'id,username,firstname,lastname,email,auth,confirmed,deleted,suspended,mailformat,maildisplay,maildigest,lang,timezone'
+    );
+
+    foreach ($users as $user) {
+        if (empty($user->email) || !validate_email((string)$user->email)) {
+            continue;
+        }
+
+        if ((int)($user->confirmed ?? 1) === 0) {
+            continue;
+        }
+
+        // Last purchase by this user.
+        $lastorder = $DB->get_record_sql(
+            "SELECT id, timecreated
+               FROM {elearning_orders}
+              WHERE userid = :userid
+           ORDER BY timecreated DESC, id DESC",
+            ['userid' => (int)$user->id],
+            IGNORE_MULTIPLE
+        );
+
+        // If the user purchased recently, skip.
+        if ($lastorder && (int)$lastorder->timecreated > $twomonthsago) {
+            continue;
+        }
+
+        // Avoid sending the same reminder every day.
+        if (local_elearning_system_user_notification_sent_since((int)$user->id, $templatekey, $donotrepeatsince, $DB)) {
+            continue;
+        }
+
+        if (local_elearning_system_send_user_email_with_template($user, $templatekey)) {
+            local_elearning_system_mark_user_notification_sent((int)$user->id, $templatekey, $DB);
+        }
+    }
 }
 
 /**
@@ -743,29 +986,61 @@ function local_elearning_system_process_expiration_reminders(moodle_database $DB
         return;
     }
 
-    $ordercolumns = $DB->get_columns('elearning_orders');
-    if (!isset($ordercolumns['expiresat'])) {
+    if (!$DB->get_manager()->table_exists('elearning_notification_log')) {
         return;
     }
 
-    $fivedays = 5 * DAYSECS;
     $now = time();
-    $fivedasayfrom = $now + $fivedays;
-    $fiveday_end = $fivedasayfrom + DAYSECS;
+    $sevenDays = 7 * DAYSECS;
+    $start = $now;
+    $end = $now + $sevenDays;
 
     $orders = $DB->get_records_select(
         'elearning_orders',
-        'expiresat > :now AND expiresat <= :fiveday_end',
-        ['now' => $now, 'fiveday_end' => $fiveday_end],
-        'id ASC',
-        'id, userid, productid, amount, durationmonths, expiresat, timecreated'
+        'expiresat IS NOT NULL AND expiresat > :starttime AND expiresat <= :endtime',
+        [
+            'starttime' => $start,
+            'endtime' => $end,
+        ],
+        'expiresat ASC'
     );
 
     foreach ($orders as $order) {
-        if (!local_elearning_system_notification_already_sent((int)$order->id, 'expiration_reminder', $DB)) {
-            if (local_elearning_system_send_order_email_with_template($order, 'expiration_reminder', $DB)) {
-                local_elearning_system_mark_notification_sent((int)$order->id, (int)$order->userid, 'expiration_reminder', $DB);
-            }
+        $alreadySent = $DB->record_exists('elearning_notification_log', [
+            'orderid' => (int)$order->id,
+            'userid' => (int)$order->userid,
+            'notificationtype' => 'expiration_reminder',
+        ]);
+
+        if ($alreadySent) {
+            continue;
+        }
+
+        $product = $DB->get_record('elearning_products', ['id' => $order->productid], '*', IGNORE_MISSING);
+        $user = $DB->get_record('user', ['id' => $order->userid, 'deleted' => 0, 'suspended' => 0], '*', IGNORE_MISSING);
+
+        if (!$product || !$user || empty($user->email) || !validate_email((string)$user->email)) {
+            continue;
+        }
+
+        $sent = local_elearning_system_send_user_email_with_template($user, 'expiration_reminder', [
+            'productname' => (string)$product->name,
+            'coursename' => (string)$product->name,
+            'expireslabel' => userdate((int)$order->expiresat),
+            'durationmonths' => (string)($order->durationmonths ?? ''),
+            'orderid' => (string)$order->id,
+            'amount' => number_format((float)$order->amount, 2),
+            'currency' => local_elearning_system_get_site_currency_code(),
+        ]);
+
+        if ($sent) {
+            $record = new stdClass();
+            $record->orderid = (int)$order->id;
+            $record->userid = (int)$order->userid;
+            $record->notificationtype = 'expiration_reminder';
+            $record->timecreated = time();
+
+            $DB->insert_record('elearning_notification_log', $record);
         }
     }
 }
@@ -1240,4 +1515,21 @@ function local_elearning_system_send_custom_email($toemail, $toname, $subject, $
     $mailer = new \local_elearning_system\mailer();
 
     return $mailer::send_mail($toemail, $toname, $subject, $htmlbody, $altbody);
+}
+function local_elearning_system_get_product_purchase_status(int $userid, int $productid, moodle_database $DB): string {
+    // Achat direct : l'étudiant a payé ce produit exactement.
+    if ($DB->record_exists('elearning_orders', [
+        'userid' => $userid,
+        'productid' => $productid,
+    ])) {
+        return 'direct';
+    }
+
+    // Achat indirect : le produit est accessible via un bundle déjà acheté.
+    if (function_exists('local_elearning_system_is_product_covered_by_purchase')
+        && local_elearning_system_is_product_covered_by_purchase($userid, $productid, $DB)) {
+        return 'bundle';
+    }
+
+    return 'none';
 }

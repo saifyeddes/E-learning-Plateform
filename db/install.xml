@@ -111,5 +111,26 @@
 
         </TABLE>
 
+        
+<TABLE NAME="elearning_notification_log" COMMENT="Email notification log for automatic reminders">
+
+    <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="orderid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Related order ID, 0 for user-level reminders"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User ID"/>
+        <FIELD NAME="notificationtype" TYPE="char" LENGTH="100" NOTNULL="true" COMMENT="Notification type/template key"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Sent timestamp"/>
+    </FIELDS>
+
+    <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key"/>
+    </KEYS>
+
+    <INDEXES>
+        <INDEX NAME="order_type_idx" UNIQUE="false" FIELDS="orderid,notificationtype"/>
+        <INDEX NAME="user_type_idx" UNIQUE="false" FIELDS="userid,notificationtype"/>
+    </INDEXES>
+
+</TABLE>
     </TABLES>
 </XMLDB>

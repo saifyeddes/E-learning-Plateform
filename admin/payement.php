@@ -8,7 +8,7 @@ require_capability('local/elearning_system:manage', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/admin/payement.php');
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Payement TVA');
 $PAGE->set_heading('Payement TVA');
 

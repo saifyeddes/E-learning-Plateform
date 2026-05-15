@@ -6,7 +6,10 @@ require_once(__DIR__ . '/lib.php');
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/auth.php');
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('login');
+$PAGE->add_body_class('es-auth-page');
+$PAGE->set_heading('Login');
+$PAGE->requires->css(new moodle_url('/local/elearning_system/styles/auth.css'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/auth.php');
 
 global $DB;
@@ -161,9 +164,9 @@ if (!empty($SESSION->loginerrormsg)) {
         $oauthtoastmessage = "Ce compte n'avait pas un login. Go signup.";
         $showsignuptab = true;
     } else if (strpos($loweroautherror, 'not linked yet') !== false
-        || strpos($loweroautherror, 'pending email confirmation') !== false
-        || strpos($loweroautherror, 'confirmationpending') !== false) {
-        $oauthtoastmessage = "Ce compte existe deja, mais la liaison Google est en attente. Veuillez reessayer ou contacter l'administrateur.";
+    || strpos($loweroautherror, 'pending email confirmation') !== false
+    || strpos($loweroautherror, 'confirmationpending') !== false) {
+    $oauthtoastmessage = "Ce compte existe déjà dans la plateforme. Connectez-vous une première fois avec votre email et mot de passe, puis associez votre compte Google depuis votre profil.";
     } else {
         $oauthtoastmessage = $rawoautherror;
     }
@@ -184,6 +187,8 @@ foreach (get_string_manager()->get_list_of_countries() as $code => $name) {
 
 $googleloginurl = '';
 $oauthproviders = [];
+$googleprovider = null;
+$otheroauthproviders = [];
 if (is_enabled_auth('oauth2')) {
     $issuers = \core\oauth2\api::get_all_issuers(true);
     foreach ($issuers as $issuer) {
@@ -200,11 +205,24 @@ if (is_enabled_auth('oauth2')) {
         $providername = (string)$issuer->get_display_name();
         $iconurl = (string)$issuer->get('image');
 
-        $oauthproviders[] = [
+        $provider = [
             'url' => $providerurl,
             'name' => $providername !== '' ? $providername : 'OAuth',
             'iconurl' => $iconurl,
         ];
+        $oauthproviders[] = $provider;
+
+        $isgoogleprovider = false;
+        $issuername = core_text::strtolower((string)$issuer->get('name'));
+        if (strpos(core_text::strtolower($providername), 'google') !== false || strpos($issuername, 'google') !== false) {
+            $isgoogleprovider = true;
+        }
+
+        if ($isgoogleprovider && $googleprovider === null) {
+            $googleprovider = $provider;
+        } else {
+            $otheroauthproviders[] = $provider;
+        }
 
         if ($googleloginurl === '' && strpos(core_text::strtolower($providername), 'google') !== false) {
             $googleloginurl = $providerurl;
@@ -214,10 +232,24 @@ if (is_enabled_auth('oauth2')) {
     if ($googleloginurl === '' && count($oauthproviders) === 1) {
         $googleloginurl = $oauthproviders[0]['url'];
     }
+
+    if ($googleprovider === null && $googleloginurl !== '') {
+        foreach ($oauthproviders as $provider) {
+            if ($provider['url'] === $googleloginurl) {
+                $googleprovider = $provider;
+                break;
+            }
+        }
+    }
+
+    if ($googleprovider === null) {
+        $otheroauthproviders = $oauthproviders;
+    }
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/auth', [
+    'forgotpasswordurl' => (new moodle_url('/login/forgot_password.php'))->out(false),
     'isloggedin' => false,
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'loginerrors' => $loginerrors,
@@ -237,6 +269,12 @@ echo $OUTPUT->render_from_template('local_elearning_system/auth', [
     'googleloginurl' => $googleloginurl,
     'oauthproviders' => $oauthproviders,
     'hasoauthproviders' => !empty($oauthproviders),
+    'hasgoogleprovider' => ($googleprovider !== null),
+    'googleproviderurl' => $googleprovider['url'] ?? '',
+    'googleprovidername' => $googleprovider['name'] ?? 'Google',
+    'googleprovidericonurl' => $googleprovider['iconurl'] ?? '',
+    'otheroauthproviders' => $otheroauthproviders,
+    'hasotheroauthproviders' => !empty($otheroauthproviders),
     'hasoauthtoast' => ($oauthtoastmessage !== ''),
     'oauthtoastmessage' => s($oauthtoastmessage),
     'showsignuptab' => $showsignuptab,

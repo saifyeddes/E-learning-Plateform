@@ -1,209 +1,291 @@
 {{> local_elearning_system/client_styles }}
 <div class="es-client">
-
 <style>
+/* ==================================================
+   AUTH PAGE FULL SCREEN - FIX MOODLE COMPRESSED LAYOUT
+   ================================================== */
+
+html,
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Forcer la page auth à ne pas dépendre du layout Moodle */
+body#page-local-elearning_system-auth {
+    overflow: hidden !important;
+    background: #eef4ff !important;
+}
+
+/* Neutraliser les conteneurs Moodle */
+body#page-local-elearning_system-auth #page-wrapper,
+body#page-local-elearning_system-auth #page,
+body#page-local-elearning_system-auth #page-content,
+body#page-local-elearning_system-auth #region-main-box,
+body#page-local-elearning_system-auth #region-main,
+body#page-local-elearning_system-auth [role="main"],
+body#page-local-elearning_system-auth .main-inner,
+body#page-local-elearning_system-auth .container,
+body#page-local-elearning_system-auth .container-fluid {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+/* Masquer les éléments Moodle inutiles */
+body#page-local-elearning_system-auth header,
+body#page-local-elearning_system-auth footer,
+body#page-local-elearning_system-auth .navbar,
+body#page-local-elearning_system-auth .secondary-navigation,
+body#page-local-elearning_system-auth .drawer-toggles,
+body#page-local-elearning_system-auth .activity-header,
+body#page-local-elearning_system-auth .breadcrumb,
+body#page-local-elearning_system-auth .es-chatbot-fab,
+body#page-local-elearning_system-auth .es-chatbot-panel {
+    display: none !important;
+}
+
+/* Important : annuler le padding global venant de client_styles */
+body#page-local-elearning_system-auth .es-client {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+    z-index: 9999;
+}
+
+/* Fond pleine page */
 .es-auth-container {
-    min-height: 100vh;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 24px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
-
-.es-auth-wrapper {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     overflow: hidden;
-    max-width: 900px;
-    width: 100%;
+    background:
+        radial-gradient(circle at 10% 15%, rgba(97, 184, 240, 0.22), transparent 34%),
+        radial-gradient(circle at 90% 85%, rgba(72, 181, 150, 0.16), transparent 30%),
+        linear-gradient(135deg, #f7fbff 0%, #edf5ff 48%, #ffffff 100%);
+}
+
+/* Carte principale */
+.es-auth-wrapper {
+    width: min(1120px, calc(100vw - 48px));
+    height: min(680px, calc(100vh - 48px));
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 440px 1fr;
+    background: #ffffff;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 28px 80px rgba(16, 42, 67, 0.18);
 }
 
-@media (max-width: 768px) {
-    .es-auth-wrapper {
-        grid-template-columns: 1fr;
-    }
-    .es-auth-illustration {
-        display: none !important;
-    }
-}
-
+/* Colonne formulaire */
 .es-auth-left {
-    padding: 50px 40px;
+    height: 100%;
+    min-width: 0;
+    padding: 34px 42px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: relative;
-    min-height: 500px;
+    background: #ffffff;
+    overflow: hidden;
 }
 
+/* Colonne visuelle */
 .es-auth-right {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    height: 100%;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    overflow: hidden;
+    color: #ffffff;
+    background:
+        radial-gradient(circle at 65% 35%, rgba(255, 255, 255, 0.16), transparent 28%),
+        linear-gradient(145deg, #102a43 0%, #006794 48%, #61b8f0 100%);
 }
 
-.es-auth-illustration {
-    text-align: center;
-    padding: 40px;
+.es-auth-right::before {
+    content: "";
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    right: -120px;
+    bottom: -120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.11);
 }
 
+.es-auth-right::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    left: 45px;
+    top: 45px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Onglets */
 .es-auth-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 30px;
-    background: #f0f0f0;
-    border-radius: 25px;
-    padding: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 5px;
+    margin: 0 0 20px;
+    background: #eef3f9;
+    border-radius: 999px;
 }
 
 .es-auth-tab {
-    flex: 1;
-    padding: 10px 20px;
-    border: none;
+    height: 42px;
+    border: 0;
+    border-radius: 999px;
     background: transparent;
-    cursor: pointer;
-    border-radius: 20px;
-    font-weight: 600;
+    color: #5e7087;
     font-size: 14px;
-    color: #666;
-    transition: all 0.3s ease;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .es-auth-tab.active {
-    background: white;
-    color: #667eea;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #ffffff;
+    color: #006794;
+    box-shadow: 0 5px 16px rgba(0, 103, 148, 0.14);
 }
 
-.es-auth-tab:hover {
-    color: #667eea;
-}
-
+/* Login / Signup */
 .es-auth-form-container {
     display: none !important;
-    position: absolute;
-    top: 80px;
-    left: 0;
-    right: 0;
     width: 100%;
 }
 
 .es-auth-form-container.active {
     display: block !important;
-    position: relative;
-    top: auto;
-    left: auto;
-    right: auto;
 }
 
+/* Titres */
 .es-auth-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 10px;
+    margin: 0 0 6px !important;
+    color: #102a43 !important;
+    font-size: 28px !important;
+    line-height: 1.1 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em;
 }
 
 .es-auth-subtitle {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 25px;
+    margin: 0 0 18px !important;
+    color: #627d98 !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
 }
 
+/* Champs */
 .es-auth-form-group {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .es-auth-form-group label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    color: #243b53;
+    font-size: 12.5px;
+    font-weight: 700;
 }
 
 .es-auth-form-group input,
 .es-auth-form-group select {
     width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    height: 41px;
+    padding: 9px 13px;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #102a43;
     font-size: 14px;
-    font-family: inherit;
-    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+    outline: none;
 }
 
 .es-auth-form-group input:focus,
 .es-auth-form-group select:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #006794;
+    box-shadow: 0 0 0 4px rgba(0, 103, 148, 0.12);
 }
 
+/* Champs en deux colonnes */
+.es-auth-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Bouton principal */
 .es-auth-submit {
     width: 100%;
-    padding: 12px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 15px;
+    height: 44px;
+    margin-top: 6px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #006794 0%, #0f6cbf 52%, #61b8f0 100%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
-    transition: background 0.3s ease;
-    margin-top: 10px;
 }
 
 .es-auth-submit:hover {
-    background: #5568d3;
+    filter: brightness(0.97);
 }
 
+/* Google */
 .es-auth-social-separator {
-    margin: 12px 0;
+    margin: 10px 0;
     text-align: center;
+    color: #829ab1;
     font-size: 12px;
-    color: #8b8b8b;
 }
 
 .es-auth-google {
+    width: 100%;
+    min-height: 41px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    width: 100%;
-    padding: 11px 12px;
-    border: 1px solid #dadce0;
-    border-radius: 8px;
-    background: #fff;
-    color: #1f1f1f;
-    font-size: 14px;
-    font-weight: 600;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #243b53;
+    font-size: 13.5px;
+    font-weight: 700;
     text-decoration: none;
+    box-sizing: border-box;
 }
 
 .es-auth-google:hover {
+    background: #f8fbff;
+    color: #243b53;
     text-decoration: none;
-    color: #1f1f1f;
-    border-color: #c8ccd1;
-    background: #f8f9fa;
-}
-
-.es-auth-google-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #db4437;
-    border: 1px solid #dadce0;
 }
 
 .es-auth-google-img {
@@ -212,57 +294,200 @@
     object-fit: contain;
 }
 
+.es-auth-google-icon {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #d9e2ec;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #db4437;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* Mot de passe oublié */
 .es-auth-forgot {
+    margin: 10px 0 0;
     text-align: right;
-    margin-bottom: 20px;
 }
 
 .es-auth-forgot a {
-    font-size: 13px;
-    color: #667eea;
+    color: #006794;
+    font-size: 12.5px;
+    font-weight: 600;
     text-decoration: none;
 }
 
-.es-auth-forgot a:hover {
-    text-decoration: underline;
-}
-
+/* Erreurs */
 .es-auth-errors {
-    background: #fee;
-    color: #c33;
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #ffc9c9;
+    border-radius: 12px;
+    background: #fff5f5;
+    color: #c92a2a;
     font-size: 13px;
 }
 
+/* Illustration droite */
+.es-auth-illustration {
+    position: relative;
+    z-index: 1;
+    width: min(380px, 82%);
+    padding: 30px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.es-auth-illustration svg {
+    width: 220px;
+    height: 220px;
+    max-width: 100%;
+}
+
+.es-auth-illustration h3 {
+    margin: 18px 0 8px !important;
+    color: #ffffff !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+}
+
+.es-auth-illustration p {
+    margin: 0 !important;
+    color: rgba(255, 255, 255, 0.86) !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* Toast */
 .es-auth-toast {
     position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 10050;
-    background: #fff4e5;
-    color: #8a4b00;
-    border: 1px solid #ffd59b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    top: 18px;
+    right: 18px;
+    z-index: 10000;
     max-width: 360px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #fff8e6;
+    border: 1px solid #ffe3a3;
+    color: #7c4a03;
+    box-shadow: 0 12px 30px rgba(16, 42, 67, 0.18);
     font-size: 13px;
 }
 
-.es-auth-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+/* Adapter quand la hauteur écran est petite */
+@media (max-height: 720px) {
+    .es-auth-container {
+        padding: 12px;
+    }
+
+    .es-auth-wrapper {
+        height: calc(100vh - 24px);
+    }
+
+    .es-auth-left {
+        padding: 22px 34px;
+    }
+
+    .es-auth-tabs {
+        margin-bottom: 13px;
+    }
+
+    .es-auth-title {
+        font-size: 24px !important;
+    }
+
+    .es-auth-subtitle {
+        margin-bottom: 12px !important;
+        font-size: 13px !important;
+    }
+
+    .es-auth-form-group {
+        margin-bottom: 8px;
+    }
+
+    .es-auth-form-group label {
+        margin-bottom: 4px;
+        font-size: 12px;
+    }
+
+    .es-auth-form-group input,
+    .es-auth-form-group select,
+    .es-auth-google,
+    .es-auth-submit {
+        height: 37px;
+    }
+
+    .es-auth-illustration svg {
+        width: 170px;
+        height: 170px;
+    }
+
+    .es-auth-illustration h3 {
+        font-size: 19px !important;
+    }
+
+    .es-auth-illustration p {
+        font-size: 13px !important;
+    }
 }
 
-@media (max-width: 500px) {
-    .es-auth-row {
+/* Tablette / mobile */
+@media (max-width: 900px) {
+    body#page-local-elearning_system-auth {
+        overflow: auto !important;
+    }
+
+    body#page-local-elearning_system-auth .es-client {
+        position: static !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    .es-auth-container {
+        position: static;
+        min-height: 100vh;
+        height: auto;
+        padding: 16px;
+        overflow: visible;
+    }
+
+    .es-auth-wrapper {
+        width: 100%;
+        height: auto;
+        min-height: auto;
         grid-template-columns: 1fr;
     }
+
+    .es-auth-right {
+        display: none;
+    }
+
     .es-auth-left {
-        padding: 40px 25px;
+        padding: 30px 24px;
+    }
+}
+
+@media (max-width: 520px) {
+    .es-auth-container {
+        padding: 0;
+    }
+
+    .es-auth-wrapper {
+        min-height: 100vh;
+        border-radius: 0;
+    }
+
+    .es-auth-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .es-auth-left {
+        padding: 26px 20px;
     }
 }
 </style>
@@ -321,8 +546,8 @@
                     {{/hasoauthproviders}}
 
                     <div class="es-auth-forgot">
-                        <a href="#">Forgot Password?</a>
-                    </div>
+    <a href="{{forgotpasswordurl}}">Forgot Password?</a>
+</div>
 
                     <button type="submit" class="es-auth-submit">Log In</button>
                 </form>
@@ -407,7 +632,10 @@
             <div class="es-auth-illustration">
                 <svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="140" cy="140" r="120" fill="rgba(255,255,255,0.1)"/>
-                    <text x="140" y="160" font-size="60" fill="white" text-anchor="middle" font-weight="bold">📚</text>
+                    <rect x="92" y="88" width="54" height="74" rx="9" fill="rgba(255,255,255,0.95)"/>
+<rect x="112" y="78" width="54" height="74" rx="9" fill="rgba(97,184,240,0.95)"/>
+<rect x="132" y="98" width="54" height="74" rx="9" fill="rgba(72,181,150,0.95)"/>
+<path d="M105 186H178" stroke="white" stroke-width="8" stroke-linecap="round"/>
                 </svg>
                 <h3 style="color: white; margin-top: 20px; font-size: 18px; font-weight: 600;">Welcome to E-learning</h3>
                 <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 10px;">Access thousands of courses<br>and start learning today</p>

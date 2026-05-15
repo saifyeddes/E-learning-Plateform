@@ -3,12 +3,18 @@
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-// ✅ CONTEXTE OBLIGATOIRE
-$context = context_system::instance();
-$PAGE->set_context($context);
+global $DB, $CFG, $USER, $PAGE, $OUTPUT, $SESSION;
 
-$PAGE->set_url('/local/elearning_system/index.php');
-$PAGE->set_pagelayout('standard');
+$context = context_system::instance();
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/local/elearning_system/index.php'));
+$PAGE->set_pagelayout('base');
+$PAGE->set_secondary_navigation(false);
+$PAGE->set_title('All Courses');
+$PAGE->set_heading('All Courses');
+
+// CRUCIAL: Initialize block_manager before any output or complex logic
 
 $requestedlang = optional_param('lang', '', PARAM_LANG);
 $supportedlangs = ['en', 'fr', 'ar'];
@@ -35,9 +41,7 @@ $frontendstrings = local_elearning_system_get_flat_language_strings();
 
 $PAGE->set_title($frontendstrings['allcourses'] ?? 'All Courses');
 $PAGE->set_heading($frontendstrings['allcourses'] ?? 'All Courses');
-local_elearning_system_force_auth_login_url('/local/elearning_system/index.php');
-
-global $DB, $CFG, $USER;
+// local_elearning_system_force_auth_login_url('/local/elearning_system/index.php');
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
     return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
@@ -146,7 +150,14 @@ foreach ($records as $r) {
     ];
 
     if ($isloggedin) {
-        $item['ispurchased'] = local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$r->id, $DB);
+        $purchasestatus = local_elearning_system_get_product_purchase_status($beneficiaryuserid, (int)$r->id, $DB);
+
+        $item['ispurchased'] = ($purchasestatus !== 'none');
+        $item['isdirectpurchase'] = ($purchasestatus === 'direct');
+        $item['isbundlepurchase'] = ($purchasestatus === 'bundle');
+        $item['purchaselabel'] = ($purchasestatus === 'direct')
+            ? 'Purchased'
+            : (($purchasestatus === 'bundle') ? 'Included in bundle' : '');
     }
 
     if (!empty($r->isbundle)) {
@@ -158,8 +169,13 @@ foreach ($records as $r) {
 
 echo $OUTPUT->header();
 
-$authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/index.php']))->out(false);
+$authurl = (new moodle_url('/local/elearning_system/auth.php', [
+    'return' => '/local/elearning_system/index.php'
+]))->out(false);
 
+$admindashboardurl = (new moodle_url('/local/elearning_system/admin/dashboard.php', [
+    'section' => 'dashboard'
+]))->out(false);
 echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'home_allcourses' => $frontendstrings['allcourses'] ?? 'All Courses',
     'home_homeintro' => $frontendstrings['homeintro'] ?? '',
@@ -206,6 +222,8 @@ echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
     'loginurl' => $authurl,
+    'issiteadmin' => is_siteadmin(),
+    'admindashboardurl' => $admindashboardurl,
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'chatbotendpoint' => (new moodle_url('/local/elearning_system/chatbot.php'))->out(false),
     'sesskey' => sesskey(),

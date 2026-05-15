@@ -1,8 +1,6 @@
 <?php
-
-use moodle_url;
-
-require('../../../config.php');
+require_once(__DIR__ . '/../../../config.php');
+require_login();
 require_once($CFG->dirroot . '/user/lib.php');
 require_once(__DIR__ . '/../lib.php');
 require_login();
@@ -12,7 +10,7 @@ require_capability('local/elearning_system:manage', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/admin/parents.php');
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Parents');
 $PAGE->set_heading('Parents');
 

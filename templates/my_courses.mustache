@@ -1,3 +1,78 @@
+<style>
+
+.es-expired-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(12, 31, 56, 0.42);
+    backdrop-filter: blur(3px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 1rem;
+}
+
+.es-expired-modal {
+    position: relative;
+    width: min(520px, 100%);
+    max-height: 85vh;
+    overflow-y: auto;
+
+    background: #ffffff;
+    border-radius: 22px;
+    border: 1px solid #d8e3ef;
+    box-shadow: 0 24px 70px rgba(12, 31, 56, 0.28);
+
+    padding: 2rem;
+    text-align: center;
+}
+
+.es-expired-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+    border-radius: 999px;
+    background: #eef4fb;
+    color: #12304f;
+
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.es-expired-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f6cbf, #1d9a8a);
+    color: #ffffff;
+    font-size: 1.8rem;
+}
+
+.es-expired-course {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f5f9fd;
+    border: 1px solid #dce8f5;
+}
+
+.es-expired-course + .es-expired-course {
+    margin-top: 0.8rem;
+}
+</style>
 {{> local_elearning_system/client_styles }}
 <div class="es-client">
 <div class="container-fluid">
@@ -125,3 +200,55 @@
 </div>
 
 </div>
+{{#hasexpiredcourses}}
+<div class="es-expired-modal-backdrop" id="esExpiredModalBackdrop">
+    <div class="es-expired-modal">
+        <button type="button" class="es-expired-modal-close" id="esExpiredModalClose" aria-label="Close">
+            &times;
+        </button>
+
+        <div class="es-expired-modal-icon">
+            <i class="fa fa-lock"></i>
+        </div>
+
+        <h3>Course access expired</h3>
+
+        {{#expiredcourses}}
+        <div class="es-expired-course">
+            <p>
+                Your course <strong>{{coursename}}</strong> is disabled now.
+            </p>
+            <p class="text-muted">
+                Last duration: {{durationlabel}}<br>
+                Expired on: {{expirationdate}}
+            </p>
+
+            <a href="{{reactivateurl}}" class="btn btn-primary">
+                Reactivate payment
+            </a>
+        </div>
+        {{/expiredcourses}}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var backdrop = document.getElementById('esExpiredModalBackdrop');
+    var closeBtn = document.getElementById('esExpiredModalClose');
+
+    if (!backdrop || !closeBtn) {
+        return;
+    }
+
+    closeBtn.addEventListener('click', function() {
+        backdrop.classList.add('d-none');
+    });
+
+    backdrop.addEventListener('click', function(e) {
+        if (e.target === backdrop) {
+            backdrop.classList.add('d-none');
+        }
+    });
+});
+</script>
+{{/hasexpiredcourses}}

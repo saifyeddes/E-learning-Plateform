@@ -39,25 +39,6 @@
     <button type="button" class="btn btn-primary" onclick="openEmailTemplatesDrawer();">Configure templates</button>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <label for="templateRecipientSearch" class="form-label"><strong>Students to send to</strong></label>
-        {{#hasstudents}}
-        <input type="search" id="templateRecipientSearch" class="form-control mb-2" placeholder="Search a student by name or email and click to add" autocomplete="off">
-        <div id="studentRecipientSuggestions" class="list-group mb-2" style="max-height: 220px; overflow-y: auto;"></div>
-        <input type="hidden" id="templateRecipientUserIds" value="">
-        
-        <div id="selectedRecipientsContainer" class="mb-2 p-2 bg-light border rounded" style="min-height: 36px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
-            <span class="text-muted small" id="noSelectionText">No students selected yet</span>
-        </div>
-        
-        <div class="form-text">Type to search, then click a suggestion to add the student. Use the <strong>✕</strong> button to remove students.</div>
-        {{/hasstudents}}
-        {{^hasstudents}}
-        <div class="alert alert-warning mb-0">No student with a valid email was found.</div>
-        {{/hasstudents}}
-    </div>
-</div>
 
 {{#hassuccessmessage}}
 <div class="alert alert-success">{{successmessage}}</div>
@@ -81,15 +62,10 @@
             <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
                 <strong>{{title}}</strong>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEmailTemplatesDrawer('{{key}}');">Edit</button>
-                    <form method="post" action="{{formurl}}" class="d-inline" id="send-template-form-{{key}}">
-                        <input type="hidden" name="sesskey" value="{{sesskey}}">
-                        <input type="hidden" name="action" value="sendtest">
-                        <input type="hidden" name="templatekey" value="{{key}}">
-                        <input type="hidden" name="recipientuserids" value="">
-                        <button type="button" class="btn btn-sm btn-success" onclick="sendTemplatePreview('{{key}}');">Envoyer</button>
-                    </form>
-                </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEmailTemplatesDrawer('{{key}}');">
+        Edit
+    </button>
+</div>
             </div>
             <div class="small text-muted mt-1"><strong>Subject:</strong> {{subject}}</div>
             <div class="small text-muted mt-1 text-truncate"><strong>Body:</strong> {{{body}}}</div>
@@ -197,150 +173,6 @@ function openEmailTemplatesDrawer(templateKey) {
         }, 150);
     }
 }
-
-window.localElearningSystemStudentMap = {
-    {{#students}}
-    "{{searchlabel}}": "{{id}}",
-    {{/students}}
-};
-
-window.localElearningSystemStudentsList = [
-    {{#students}}
-    {id: "{{id}}", fullname: "{{fullname}}", email: "{{email}}", searchlabel: "{{searchlabel}}"},
-    {{/students}}
-];
-
-let selectedRecipientIds = [];
-
-function getSelectedRecipientIds() {
-    return selectedRecipientIds.slice();
-}
-
-function syncSelectedRecipientIds() {
-    const hidden = document.getElementById('templateRecipientUserIds');
-    if (hidden) {
-        hidden.value = selectedRecipientIds.join(',');
-    }
-}
-
-function updateSelectedRecipientsDisplay() {
-    const selectedIds = getSelectedRecipientIds();
-    const container = document.getElementById('selectedRecipientsContainer');
-    const noText = document.getElementById('noSelectionText');
-    
-    if (!container) return;
-    
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
-    
-    if (selectedIds.length === 0) {
-        noText.style.display = 'inline';
-        container.appendChild(noText);
-        return;
-    }
-    
-    noText.style.display = 'none';
-    
-    selectedIds.forEach(function(studentId) {
-        const student = (window.localElearningSystemStudentsList || []).find(s => parseInt(s.id, 10) === studentId);
-        if (student) {
-            const badge = document.createElement('span');
-            badge.className = 'badge bg-primary d-flex align-items-center gap-2';
-            badge.innerHTML = student.fullname + ' <button type="button" class="btn-close btn-close-white" onclick="removeRecipient(' + studentId + '); return false;" style="font-size: 0.75em;"></button>';
-            container.appendChild(badge);
-        }
-    });
-}
-
-function renderStudentSuggestions(query) {
-    const suggestionsContainer = document.getElementById('studentRecipientSuggestions');
-    if (!suggestionsContainer) {
-        return;
-    }
-
-    suggestionsContainer.innerHTML = '';
-
-    const search = (query || '').trim().toLowerCase();
-    if (search.length < 2) {
-        return;
-    }
-
-    const selectedIds = getSelectedRecipientIds();
-    const matches = (window.localElearningSystemStudentsList || []).filter(function(student) {
-        if (selectedIds.includes(parseInt(student.id, 10))) {
-            return false;
-        }
-        return (student.searchlabel || '').toLowerCase().indexOf(search) !== -1;
-    }).slice(0, 8);
-
-    matches.forEach(function(student) {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'list-group-item list-group-item-action';
-        item.textContent = student.fullname + ' - ' + student.email;
-        item.addEventListener('click', function() {
-            addRecipient(parseInt(student.id, 10));
-            const searchInput = document.getElementById('templateRecipientSearch');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.focus();
-            }
-            renderStudentSuggestions('');
-        });
-        suggestionsContainer.appendChild(item);
-    });
-}
-
-function addRecipient(studentId) {
-    studentId = parseInt(studentId, 10);
-    if (!isNaN(studentId) && !selectedRecipientIds.includes(studentId)) {
-        selectedRecipientIds.push(studentId);
-        syncSelectedRecipientIds();
-        updateSelectedRecipientsDisplay();
-    }
-    
-    const search = document.getElementById('templateRecipientSearch');
-    if (search) {
-        search.value = '';
-    }
-
-    renderStudentSuggestions('');
-}
-
-function removeRecipient(studentId) {
-    studentId = parseInt(studentId, 10);
-    selectedRecipientIds = selectedRecipientIds.filter(id => id !== studentId);
-    syncSelectedRecipientIds();
-    updateSelectedRecipientsDisplay();
-}
-
-function sendTemplatePreview(templateKey) {
-    const recipientUserIds = document.getElementById('templateRecipientUserIds');
-    const selectedIds = getSelectedRecipientIds();
-    
-    if (!recipientUserIds || selectedIds.length === 0) {
-        alert('Please add at least one student before sending.');
-        document.getElementById('templateRecipientSearch')?.focus();
-        return;
-    }
-    
-    const form = document.getElementById('send-template-form-' + templateKey);
-    if (!form) {
-        return;
-    }
-
-    const recipientInput = form.querySelector('input[name="recipientuserids"]');
-    if (recipientInput) {
-        recipientInput.value = selectedIds.join(',');
-    }
-
-    form.submit();
-}
-
-document.getElementById('templateRecipientSearch')?.addEventListener('input', function() {
-    renderStudentSuggestions(this.value);
-});
 
 syncSelectedRecipientIds();
 

@@ -34,6 +34,113 @@ global $DB, $USER, $SESSION;
  * @param string $text
  * @return string
  */
+function local_elearning_system_call_llm_answer(
+    string $message,
+    array $catalog,
+    bool $isloggedin,
+    ?stdClass $user = null
+): ?string {
+    $config = get_config('local_elearning_system');
+
+    if (empty($config->llm_enabled) || empty($config->llm_api_key)) {
+        return null;
+    }
+
+    global $CFG;
+    require_once($CFG->libdir . '/filelib.php');
+
+    $model = !empty($config->llm_model) ? (string)$config->llm_model : 'gpt-4o-mini';
+    $endpoint = !empty($config->llm_endpoint)
+        ? (string)$config->llm_endpoint
+        : 'https://api.openai.com/v1/chat/completions';
+
+    $catalogtext = '';
+    foreach ($catalog as $item) {
+        $catalogtext .= '- ' . $item['name'];
+
+        if (!empty($item['isbundle'])) {
+            $catalogtext .= ' | Type: Bundle';
+        } else {
+            $catalogtext .= ' | Type: Course';
+        }
+
+        if (!empty($item['isfree'])) {
+            $catalogtext .= ' | Price: Free';
+        } else {
+            $catalogtext .= ' | Price per month: ' . number_format((float)$item['price'], 2);
+        }
+
+        $catalogtext .= "\n";
+    }
+
+    $userstatus = $isloggedin ? 'authenticated student' : 'visitor without login';
+
+    $systemprompt = "
+You are an intelligent assistant integrated into a Moodle e-learning platform.
+
+Your role:
+- Answer visitors and students clearly.
+- Explain courses, prices, registration, payment, invoice, access duration and platform usage.
+- Be helpful, professional and pedagogical.
+- If the user is not logged in, do not claim access to personal courses or invoices.
+- If the user asks for personal data, invoices, or purchased courses, ask them to log in.
+- Never invent a course that does not exist in the catalog.
+- If the question is about buying, payment, invoice or courses, guide the user with simple steps.
+- Answer in the same language as the user when possible.
+- Keep the answer short and clear.
+
+Current user status: {$userstatus}
+
+Available catalog:
+{$catalogtext}
+";
+
+    $payload = [
+        'model' => $model,
+        'temperature' => 0.3,
+        'messages' => [
+            [
+                'role' => 'system',
+                'content' => $systemprompt,
+            ],
+            [
+                'role' => 'user',
+                'content' => $message,
+            ],
+        ],
+    ];
+
+    $curl = new curl();
+
+    $response = $curl->post($endpoint, json_encode($payload), [
+        'CURLOPT_HTTPHEADER' => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $config->llm_api_key,
+        ],
+        'CURLOPT_TIMEOUT' => 10,
+    ]);
+
+    if (!is_string($response) || $response === '') {
+        return null;
+    }
+
+    $apiresponse = json_decode($response, true);
+
+    if (!is_array($apiresponse) || !empty($apiresponse['error'])) {
+        error_log('LLM answer error: ' . $response);
+        return null;
+    }
+
+    $content = $apiresponse['choices'][0]['message']['content'] ?? '';
+
+    if (!is_string($content) || trim($content) === '') {
+        return null;
+    }
+
+    return trim($content);
+}
+
+
 function local_elearning_system_chatbot_normalize(string $text): string {
     $text = core_text::strtolower(trim($text));
     $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text;
@@ -252,9 +359,13 @@ function local_elearning_system_chatbot_build_guide_response(string $normalized,
     }
 
     return [
-        'reply' => "Commandes acceptees:\n1. Demander le prix d un cours\n2. Acheter un cours\n3. Voir mes cours\n4. Demander ma facture\n5. Voir les bundles\n6. Passer au paiement",
-        'suggestions' => ['prix Physique', 'acheter Mathematique pour 3 mois', 'voir mes cours'],
-    ];
+    'reply' => "Bonjour 👋 Je suis votre assistant IA DOUROUSS E-Learning.\n\nJe peux vous aider à :\n1. Découvrir les cours disponibles\n2. Connaître les prix des formations\n3. Acheter un cours\n4. Accéder au paiement\n5. Retrouver vos cours achetés\n6. Récupérer votre facture\n\nVous pouvez aussi me poser une question normale sur la plateforme ou sur votre apprentissage.",
+    'suggestions' => [
+        'Quels cours sont disponibles ?',
+        'Comment acheter un cours ?',
+        'Je veux améliorer mon niveau en mathématiques',
+    ],
+];
 }
 
 /**
@@ -282,7 +393,7 @@ function local_elearning_system_call_llm_intent(string $message): ?array {
     $systemprompt = 'You are an intent classifier for a Moodle e-learning chatbot. '
         . 'Analyze the user sentence and return ONLY valid JSON with this exact shape: '
         . '{"intent":"...","confidence":0.0,"entities":{"course":null,"duration_months":null}}. '
-        . 'Allowed intents are strictly: invoice_request, my_courses, price_request, purchase_course, checkout, bundles, help, forbidden_action, unknown. '
+        . 'Allowed intents are strictly: invoice_request, my_courses, unpurchased_courses, course_list, price_request, purchase_course, checkout, bundles, help, forbidden_action, unknown.'        
         . 'Use entities.course for a requested course name when possible. '
         . 'Use entities.duration_months as an integer when a duration is provided. '
         . 'Examples: "how much is Science?" => price_request; "enroll me in Math for 5 months" => purchase_course; '
@@ -342,8 +453,7 @@ function local_elearning_system_call_llm_intent(string $message): ?array {
         return null;
     }
 
-    $allowed = ['invoice_request', 'my_courses', 'price_request', 'purchase_course', 'checkout', 'bundles', 'help', 'forbidden_action', 'unknown'];
-    $intent = strtolower(trim((string)($result['intent'] ?? 'unknown')));
+    $allowed = ['invoice_request', 'my_courses', 'unpurchased_courses', 'course_list', 'price_request', 'purchase_course', 'checkout', 'bundles', 'help', 'forbidden_action', 'unknown'];    $intent = strtolower(trim((string)($result['intent'] ?? 'unknown')));
     if (!in_array($intent, $allowed, true)) {
         $intent = 'unknown';
     }
@@ -383,9 +493,11 @@ function local_elearning_system_call_llm_intent(string $message): ?array {
 function local_elearning_system_chatbot_resolve_regex_intent(string $normalized): array {
     $patterns = [
         'forbidden_action' => '/\b(supprime|delete|autre utilisateur|another user|change mon prix|price to zero|ignore les regles|ignore the rules|donne acces|give access|give me another user invoice|set my price to zero)\b/',
+        'course_list' => '/\b(quels cours|cours disponibles|formations disponibles|liste des cours|catalogue|catalogue des cours|available courses|courses available|show courses|show me courses|what courses|which courses)\b/',
         'help' => '/\b(bonjour|salut|aide|que peux tu faire|what can you do|comment signin|help|comment|how to)\b/',
         'checkout' => '/\b(checkout|finaliser ma commande|finaliser|ouvrir le panier|panier|passer au paiement|payer maintenant|paiement|open cart|proceed to checkout)\b/',
         'bundles' => '/\b(voir les bundles|show bundles|available bundles|show me the packs|show me the bundles|montrer les packs|montre moi les packs|quels packs sont disponibles|quels bundles sont disponibles|bundle|bundles|pack|packs)\b/',
+        'unpurchased_courses' => '/(cours pas encore achet[eé]s|cours non achet[eé]s|formations pas encore achet[eé]es|formations non achet[eé]es|cours restants|cours disponibles que je n.?ai pas achet[eé]s|quels cours pas encore acheter|quelles sont les cours pas encore acheter|courses not purchased|courses i have not bought|available courses not bought)/iu', 
         'my_courses' => '/(mes cours|cours achet[eé]s|formations achet[eé]es|formations obtenues|formations acquises|formations suivies|formations que j.?ai suivies|apprentissages acquis|mes apprentissages|cours obtenus|cours suivis|formations que j.?ai obtenues|cours auxquels je suis inscrit|historique d.?apprentissage|parcours suivi|ce que j.?ai achet[eé]|what i bought|courses i bought|my courses|show my courses|show me my courses|my enrollments|display my courses)/iu',
         'invoice_request' => '/\b(facture|fature|facure|recu|reçu|justificatif|invoice|receipt|i need my invoice|payment proof|proof of payment|document de paiement|document paiement|donner moi facture|donne moi facture)\b/',
         'purchase_course' => '/\b(acheter|achete|buy|purchase|enroll|inscrire|m.?inscrire|inscris.?moi|inscription|s.?inscrire|inscrivez.?moi|i want to buy|buy me|enroll me in|sign me up for|dur[eé]e)\b/',
@@ -468,7 +580,155 @@ function local_elearning_system_chatbot_guess_course_from_text(string $normalize
 
     return null;
 }
+/**
+ * Build a smart catalog response.
+ *
+ * @param array $catalog
+ * @return array
+ */
+function local_elearning_system_chatbot_build_catalog_response(array $catalog): array {
+    $courses = [];
+    $bundles = [];
 
+    foreach ($catalog as $item) {
+        if (!empty($item['isbundle'])) {
+            $bundles[] = $item;
+        } else {
+            $courses[] = $item;
+        }
+    }
+
+    if (empty($courses) && empty($bundles)) {
+        return [
+            'reply' => "Aucun cours n'est disponible pour le moment.",
+            'suggestions' => [
+                'Comment créer un compte ?',
+                'Comment acheter un cours ?',
+                'voir les bundles',
+            ],
+        ];
+    }
+
+    $lines = [];
+
+    if (!empty($courses)) {
+        $lines[] = "Voici les cours disponibles sur la plateforme :";
+
+        $index = 1;
+        foreach ($courses as $course) {
+            $priceinfo = '';
+            if (!empty($course['isfree'])) {
+                $priceinfo = 'gratuit';
+            } else {
+                $priceinfo = number_format((float)$course['price'], 2) . ' / mois';
+            }
+
+            $lines[] = $index . '. ' . $course['name'] . ' — ' . $priceinfo;
+            $index++;
+
+            if ($index > 8) {
+                break;
+            }
+        }
+    }
+
+    if (!empty($bundles)) {
+        $lines[] = "";
+        $lines[] = "Des bundles sont aussi disponibles. Vous pouvez écrire : voir les bundles.";
+    }
+
+    $suggestions = [];
+
+    if (!empty($courses)) {
+        $firstcourse = $courses[0]['name'];
+        $suggestions[] = 'prix ' . $firstcourse;
+        $suggestions[] = 'acheter ' . $firstcourse . ' pour 1 mois';
+    }
+
+    $suggestions[] = 'voir les bundles';
+
+    return [
+        'reply' => implode("\n", $lines),
+        'suggestions' => array_slice(array_values(array_unique($suggestions)), 0, 3),
+    ];
+}
+function local_elearning_system_chatbot_build_unpurchased_courses_response(array $catalog, moodle_database $DB, stdClass $USER): array {
+    if (!isloggedin() || isguestuser()) {
+        return [
+            'reply' => "Connectez-vous pour voir les cours que vous n’avez pas encore achetés.",
+            'suggestions' => [
+                'se connecter',
+                'Quels cours sont disponibles ?',
+                'Comment acheter un cours ?',
+            ],
+        ];
+    }
+
+    $userctx = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $targetuserid = (int)($userctx['targetuserid'] ?? 0);
+
+    if ($targetuserid <= 0) {
+        return [
+            'reply' => "Je n’ai pas pu identifier votre compte étudiant.",
+            'suggestions' => [
+                'voir mes cours',
+                'Quels cours sont disponibles ?',
+                'checkout',
+            ],
+        ];
+    }
+
+    $available = [];
+
+    foreach ($catalog as $item) {
+        if (!empty($item['isbundle'])) {
+            continue;
+        }
+
+        $productid = (int)$item['id'];
+
+        if (!local_elearning_system_is_product_covered_by_active_purchase($targetuserid, $productid, $DB)) {
+            $available[] = $item;
+        }
+    }
+
+    if (empty($available)) {
+        return [
+            'reply' => "Vous avez déjà acheté tous les cours disponibles actuellement.",
+            'suggestions' => [
+                'voir mes cours',
+                'voir les bundles',
+                'donne moi ma facture',
+            ],
+        ];
+    }
+
+    $lines = [];
+    $lines[] = "Voici les cours que vous n’avez pas encore achetés :";
+
+    $index = 1;
+    foreach ($available as $course) {
+        if (!empty($course['isfree'])) {
+            $priceinfo = 'gratuit';
+        } else {
+            $priceinfo = number_format((float)$course['price'], 2) . ' / mois';
+        }
+
+        $lines[] = $index . '. ' . $course['name'] . ' — ' . $priceinfo;
+        $index++;
+    }
+
+    $firstcourse = $available[0]['name'];
+
+    return [
+        'reply' => implode("\n", $lines),
+        'suggestions' => [
+            'prix ' . $firstcourse,
+            'acheter ' . $firstcourse . ' pour 1 mois',
+            'voir mes cours',
+        ],
+    ];
+}
 $records = $DB->get_records('elearning_products', null, 'id DESC');
 $catalog = [];
 
@@ -549,8 +809,31 @@ $isviewintent = ($resolvedintent === 'my_courses');
 $isbundleintent = ($resolvedintent === 'bundles');
 $ischeckoutintent = ($resolvedintent === 'checkout');
 $isinvoiceintent = ($resolvedintent === 'invoice_request');
+$iscourselistintent = ($resolvedintent === 'course_list');
 
 switch ($resolvedintent) {
+    case 'unpurchased_courses':
+        $response = local_elearning_system_chatbot_build_unpurchased_courses_response($catalog, $DB, $USER);
+
+        echo json_encode([
+            'ok' => true,
+            'reply' => (string)$response['reply'],
+            'suggestions' => is_array($response['suggestions']) ? $response['suggestions'] : ['voir mes cours', 'voir les bundles', 'checkout'],
+            'showrating' => true,
+        ]);
+        exit;
+    case 'course_list':
+    $catalogresponse = local_elearning_system_chatbot_build_catalog_response($catalog);
+
+    echo json_encode([
+        'ok' => true,
+        'reply' => (string)$catalogresponse['reply'],
+        'suggestions' => is_array($catalogresponse['suggestions'])
+            ? $catalogresponse['suggestions']
+            : ['prix Arabic', 'acheter Arabic pour 1 mois', 'voir les bundles'],
+        'showrating' => true,
+    ]);
+    exit;
     case 'forbidden_action':
         echo json_encode([
             'ok' => true,
@@ -573,7 +856,8 @@ switch ($resolvedintent) {
             'showrating' => false,
         ]);
         exit;
-
+    
+    
     case 'checkout':
         echo json_encode([
             'ok' => true,
@@ -649,10 +933,16 @@ if (!$matched && $isbundleintent) {
     }
 }
 
-if (!$matched && !$isbundleintent && (bool)preg_match('/\b(cours|course)\b/', $normalized)) {
+if (
+    !$matched
+    && !$isbundleintent
+    && ($ispriceintent || $isbuyintent)
+    && (bool)preg_match('/\b(cours|course)\b/', $normalized)
+) {
     $coursecandidates = array_values(array_filter($catalog, function(array $item): bool {
         return empty($item['isbundle']);
     }));
+
     if (!empty($coursecandidates)) {
         usort($coursecandidates, function(array $a, array $b): int {
             return $a['price'] <=> $b['price'];
@@ -761,42 +1051,49 @@ if ($isinvoiceintent) {
     }
 
     if (!$usematchedinvoice) {
-        $recentorders = $DB->get_records_sql(
-            "SELECT o.id, o.timecreated, o.productid, p.name AS productname
-               FROM {elearning_orders} o
-          LEFT JOIN {elearning_products} p ON p.id = o.productid
-              WHERE o.userid = :userid
-           ORDER BY o.id DESC",
-            ['userid' => $targetuserid],
-            0,
-            10
-        );
+    $recentorders = $DB->get_records_sql(
+        "SELECT o.id, o.timecreated, o.productid, p.name AS productname, COALESCE(p.isbundle, 0) AS isbundle
+           FROM {elearning_orders} o
+      LEFT JOIN {elearning_products} p ON p.id = o.productid
+          WHERE o.userid = :userid
+       ORDER BY o.id DESC",
+        ['userid' => $targetuserid],
+        0,
+        10
+    );
 
-        if (count($recentorders) > 1) {
-            $suggestions = [];
-            foreach ($recentorders as $ro) {
-                $pname = !empty($ro->productname) ? format_string((string)$ro->productname) : '';
-                if ($pname !== '') {
-                    $suggestions[] = 'facture ' . $pname;
-                }
-                if (count($suggestions) >= 3) {
-                    break;
-                }
+    if (count($recentorders) > 0) {
+        $suggestions = [];
+        $lines = [];
+        $index = 1;
+
+        foreach ($recentorders as $ro) {
+            $pname = !empty($ro->productname) ? format_string((string)$ro->productname) : 'Produit';
+            $type = !empty($ro->isbundle) ? 'Bundle' : 'Cours';
+            $date = !empty($ro->timecreated) ? userdate((int)$ro->timecreated, '%d/%m/%Y') : '';
+
+            $line = $index . '. ' . $pname . ' — ' . $type;
+            if ($date !== '') {
+                $line .= ' — acheté le ' . $date;
             }
-            if (empty($suggestions)) {
-                $suggestions = ['voir mes cours', 'checkout'];
+            $lines[] = $line;
+
+            if (count($suggestions) < 3) {
+                $suggestions[] = 'facture ' . $pname;
             }
 
-            echo json_encode([
-                'ok' => true,
-                'reply' => 'Pour quel produit voulez-vous la facture ? Ecrivez par exemple: facture Physique.',
-                'suggestions' => $suggestions,
-                'showrating' => false,
-            ]);
-            exit;
+            $index++;
         }
-    }
 
+        echo json_encode([
+            'ok' => true,
+            'reply' => "Pour quel achat voulez-vous la facture ?\n\n" . implode("\n", $lines) . "\n\nÉcrivez par exemple : facture " . (!empty($suggestions[0]) ? str_replace('facture ', '', $suggestions[0]) : 'NomDuProduit') . ".",
+            'suggestions' => $suggestions,
+            'showrating' => false,
+        ]);
+        exit;
+    }
+}
     $params = ['userid' => $targetuserid];
     $sql = "SELECT o.id, o.timecreated, o.productid, p.name AS productname, COALESCE(p.isbundle, 0) AS isbundle
               FROM {elearning_orders} o
@@ -832,16 +1129,23 @@ if ($isinvoiceintent) {
         'pdf' => 1,
     ]))->out(false);
 
-    $invoicereply = 'Votre facture est prete.';
-    if ($usematchedinvoice) {
-        $invoicereply = 'Votre facture est prete pour ' . $productname . '.';
-    }
+    $orderdate = !empty($order->timecreated)
+    ? userdate((int)$order->timecreated, '%d/%m/%Y')
+    : '';
+
+$invoicereply = "Votre facture est prête pour : " . $productname . ".";
+
+if ($orderdate !== '') {
+    $invoicereply .= "\nDate d'achat : " . $orderdate . ".";
+}
+
+$invoicereply .= "\nCliquez sur le bouton ci-dessous pour télécharger la facture PDF.";
 
     echo json_encode([
         'ok' => true,
         'reply' => $invoicereply,
         'invoiceurl' => $invoiceurl,
-        'invoicelabel' => 'Telecharger facture',
+        'invoicelabel' => 'Télécharger la facture PDF',
         'suggestions' => [
             'voir mes cours',
             'prix ' . $productname,
@@ -853,10 +1157,31 @@ if ($isinvoiceintent) {
 }
 
 if (!$matched && !$ispriceintent && !$isbuyintent && !$isviewintent) {
+    $aifallback = local_elearning_system_call_llm_answer(
+        $message,
+        $catalog,
+        isloggedin() && !isguestuser(),
+        $USER
+    );
+
+    if ($aifallback !== null) {
+        echo json_encode([
+            'ok' => true,
+            'reply' => $aifallback,
+            'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
+            'showrating' => true,
+        ]);
+        exit;
+    }
+
     echo json_encode([
         'ok' => true,
-        'reply' => "Commandes acceptees:\n1. prix Physique\n2. acheter Math 5 mois\n3. voir mes cours\n4. donne moi ma facture\n5. buy Science 3\n6. checkout",
-        'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
+        'reply' => "Je peux vous aider à consulter les cours, connaître les prix, acheter une formation, accéder au paiement ou récupérer une facture.",
+        'suggestions' => [
+            'Quels cours sont disponibles ?',
+            'Comment acheter un cours ?',
+            'Comment récupérer ma facture ?',
+        ],
         'showrating' => true,
     ]);
     exit;
@@ -925,9 +1250,11 @@ if ($isbuyintent) {
     exit;
 }
 
+$catalogresponse = local_elearning_system_chatbot_build_catalog_response($catalog);
+
 echo json_encode([
     'ok' => true,
-    'reply' => 'Dites par exemple: prix Physique, ou acheter Physique pour 2 mois.',
-    'suggestions' => local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
+    'reply' => "Je peux vous aider à trouver une formation, connaître son prix ou l’ajouter au panier.\n\n" . $catalogresponse['reply'],
+    'suggestions' => is_array($catalogresponse['suggestions']) ? $catalogresponse['suggestions'] : local_elearning_system_chatbot_recommended_commands($catalog, null, $DB, $USER),
     'showrating' => true,
 ]);
