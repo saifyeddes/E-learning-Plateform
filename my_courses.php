@@ -181,7 +181,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'coursename' => $hascourse ? format_string($r->coursename) : '-',
             'hascourse' => $hascourse,
             'courseurl' => $hascourse ? (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
-            'amount' => number_format((float)$r->amount, 2),
+            'amount' => local_elearning_system_format_price((float)$r->amount),
             'timecreated' => userdate((int)$r->timecreated),
             'durationmonths' => max(1, (int)($r->durationmonths ?? 1)),
             'isexpired' => !$isactiveorder,
@@ -241,16 +241,20 @@ if ($DB->get_manager()->table_exists('elearning_products')) {
         );
 
         $availablecourses[] = [
-            'id' => $productid,
-            'productname' => format_string((string)$product->name),
-            'coursename' => $coursename,
-            'hascoursename' => $coursename !== '',
-            'price' => number_format($displayprice, 2),
-            'isfree' => $displayprice <= 0,
-            'productimage' => $productimage,
-            'hasproductimage' => $hasproductimage,
-            'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => $productid]))->out(false),
-        ];
+    'id' => $productid,
+    'productname' => format_string((string)$product->name),
+    'coursename' => $coursename,
+    'hascoursename' => $coursename !== '',
+    'price' => local_elearning_system_format_price($displayprice),
+    'displayprice' => local_elearning_system_format_price($displayprice),
+    'originalprice' => $hasdiscount ? local_elearning_system_format_price($originalprice) : '',
+    'saleprice' => $saleprice > 0 ? local_elearning_system_format_price($saleprice) : '',
+    'hasdiscount' => $hasdiscount,
+    'isfree' => $displayprice <= 0,
+    'productimage' => $productimage,
+    'hasproductimage' => $hasproductimage,
+    'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => $productid]))->out(false),
+];
     }
 }
 

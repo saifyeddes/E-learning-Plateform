@@ -65,8 +65,8 @@ if (!empty($cartids)) {
             'id' => (int)$r->id,
             'name' => format_string($r->name),
             'durationmonths' => $durationmonths,
-            'price' => number_format($displayprice, 2),
-            'lineprice' => number_format($line, 2),
+            'price' => local_elearning_system_format_price($displayprice),
+'lineprice' => local_elearning_system_format_price($line),
         ];
     }
 }
@@ -124,10 +124,10 @@ if (!empty($SESSION->local_elearning_system_coupon)) {
 
         if ($discounttype === 'fixed') {
             $discountamount = min($discountvalue, $total);
-            $discountdisplay = '$' . number_format($discountamount, 2);
+            $discountdisplay = local_elearning_system_format_price($discountamount);
         } else {
             $discountamount = ($total * $discountvalue) / 100;
-            $discountdisplay = number_format($discountvalue, 2) . '% (-$' . number_format($discountamount, 2) . ')';
+            $discountdisplay = number_format($discountvalue, 2) . '% (-' . local_elearning_system_format_price($discountamount) . ')';
         }
 
         if ($discountamount < 0) {
@@ -154,7 +154,7 @@ echo $OUTPUT->header();
 $templatedata = [
     'products' => $products,
     'hasproducts' => !empty($products),
-    'total' => number_format($grandtotal, 2),
+    'total' => local_elearning_system_format_price($grandtotal),
     'isloggedin' => $isloggedin,
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
     'sesskey' => sesskey(),
@@ -165,13 +165,12 @@ $templatedata = [
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'appliedcoupon' => $appliedcoupon,
     'discountdisplay' => $discountdisplay,
-    'newtotal' => number_format($newtotal, 2),
-    'subtotal' => number_format($total, 2),
-    'taxamount' => number_format($taxamount, 2),
-    'tvapercent' => number_format($tvapercent, 2),
-    'grandtotal' => number_format($grandtotal, 2),
-    'hasdiscount' => $discountamount > 0,
-    'discountamount' => number_format($discountamount, 2),
+    'newtotal' => local_elearning_system_format_price($newtotal),
+'subtotal' => local_elearning_system_format_price($total),
+'taxamount' => local_elearning_system_format_price($taxamount),
+'tvapercent' => number_format($tvapercent, 2),
+'grandtotal' => local_elearning_system_format_price($grandtotal),
+'discountamount' => local_elearning_system_format_price($discountamount),
     'couponerror' => $couponerror,
     'hascouponerror' => !empty($couponerror),
     'couponsuccess' => $couponsuccess,

@@ -122,11 +122,11 @@ if (!empty($cartids)) {
         $products[] = [
             'id' => (int)$r->id,
             'name' => format_string($r->name),
-            'price' => number_format($displayprice, 2),
-            'unitpriceraw' => number_format($displayprice, 2, '.', ''),
-            'durationmonths' => $durationmonths,
-            'lineprice' => number_format($line, 2),
-            'linepriceraw' => number_format($line, 2, '.', ''),
+            'price' => local_elearning_system_format_price($displayprice),
+'unitpriceraw' => number_format($displayprice, 2, '.', ''),
+'durationmonths' => $durationmonths,
+'lineprice' => local_elearning_system_format_price($line),
+'linepriceraw' => number_format($line, 2, '.', ''),
             'hasimage' => $hasimage,
             'image' => $image,
             'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => (int)$r->id]))->out(false),
@@ -143,7 +143,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/cart', array_merge([
     'products' => $products,
     'hasproducts' => !empty($products),
-    'total' => number_format($total, 2),
+    'total' => local_elearning_system_format_price($total),
     'checkouturl' => $checkouturl,
     'authurl' => $authurl,
     'isloggedin' => $isloggedin,
@@ -152,6 +152,7 @@ echo $OUTPUT->render_from_template('local_elearning_system/cart', array_merge([
     'loginurl' => (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/cart.php']))->out(false),
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'storeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
+    'currencycode' => local_elearning_system_get_site_currency_code(),
     'clearcarturl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'clear', 'sesskey' => sesskey()]))->out(false),
 ], local_elearning_system_get_client_strings()));
 echo $OUTPUT->footer();

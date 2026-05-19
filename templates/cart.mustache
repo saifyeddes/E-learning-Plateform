@@ -30,7 +30,7 @@
                         </div>
                         <div class="col-12 col-md-4">
                             <h5 class="mb-1"><a href="{{producturl}}">{{name}}</a></h5>
-                            <div class="text-muted small">{{t_unitprice}}: $<span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / {{t_permonth}}</div>
+                            <div class="text-muted small">{{t_unitprice}}: <span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / {{t_permonth}}</div>
                         </div>
                         <div class="col-12 col-md-3">
                             <label class="form-label mb-1">{{t_accessdurationmonths}}</label>
@@ -55,7 +55,7 @@
                         </div>
                         <div class="col-6 col-md-2">
                             <div class="small text-muted">{{t_total}}</div>
-                            <div class="fw-bold es-cart-line-price" data-linevalue="{{linepriceraw}}">${{lineprice}}</div>
+                            <div class="fw-bold es-cart-line-price" data-linevalue="{{linepriceraw}}">{{lineprice}}</div>
                         </div>
                         <div class="col-6 col-md-2 col-lg-1 d-flex align-items-center justify-content-end">
                             <a href="{{removeurl}}" class="btn btn-sm btn-outline-danger es-cart-remove-btn">{{t_remove}}</a>
@@ -71,7 +71,7 @@
         <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="es-cart-total-wrap">
                 <span class="text-muted d-block">{{t_grandtotal}}</span>
-                <strong class="es-cart-total-value" id="esCartTotal">${{total}}</strong>
+                <strong class="es-cart-total-value" id="esCartTotal">{{total}}</strong>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a href="{{clearcarturl}}" class="btn btn-outline-danger">{{t_clearcart}}</a>
@@ -96,6 +96,13 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    const cartCurrencyCode = '{{currencycode}}';
+
+function formatCartMoney(amount) {
+    const value = parseFloat(amount || 0);
+    return cartCurrencyCode + ' ' + value.toFixed(2);
+}
     const cartItems = Array.from(document.querySelectorAll('.es-cart-item'));
     const totalEl = document.getElementById('esCartTotal');
 
@@ -141,12 +148,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const months = clampMonths(input.value);
             input.value = months;
             const line = unit * months;
-            lineEl.setAttribute('data-linevalue', line.toFixed(2));
-            lineEl.textContent = '$' + line.toFixed(2);
+            lineEl.setAttribute('data-linevalue', formatCartMoney(total);
+            lineEl.textContent = formatCartMoney(line);
             grand += line;
         });
 
-        totalEl.textContent = '$' + grand.toFixed(2);
+        totalEl.textContent = formatCartMoney(total);
     };
 
     const scheduleSubmit = function(form) {

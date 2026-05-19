@@ -110,11 +110,11 @@ $hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $salepri
         'image' => $image,
         'hasimage' => !empty($image),
 
-        'price' => number_format($displayprice, 2),
-'displayprice' => number_format($displayprice, 2),
+        'price' => local_elearning_system_format_price($displayprice),
+'displayprice' => local_elearning_system_format_price($displayprice),
 
-'originalprice' => $hasdiscount ? number_format($originalprice, 2) : '',
-'saleprice' => $saleprice > 0 ? number_format($saleprice, 2) : '',
+'originalprice' => $hasdiscount ? local_elearning_system_format_price($originalprice) : '',
+'saleprice' => $saleprice > 0 ? local_elearning_system_format_price($saleprice) : '',
 'hasdiscount' => $hasdiscount,
         'type' => ucfirst($type),
         'isfree' => $type === 'free',

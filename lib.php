@@ -369,6 +369,9 @@ function local_elearning_system_get_site_currency_code(): string {
 
     return $code;
 }
+function local_elearning_system_format_price(float $amount): string {
+    return local_elearning_system_get_site_currency_code() . ' ' . number_format($amount, 2);
+}
 
 /**
  * Return built-in email template definitions.
