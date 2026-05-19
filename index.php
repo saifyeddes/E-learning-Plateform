@@ -11,31 +11,7 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/elearning_system/index.php'));
 $PAGE->set_pagelayout('base');
 $PAGE->set_secondary_navigation(false);
-$PAGE->set_title('All Courses');
-$PAGE->set_heading('All Courses');
-
-// CRUCIAL: Initialize block_manager before any output or complex logic
-
-$requestedlang = optional_param('lang', '', PARAM_LANG);
-$supportedlangs = ['en', 'fr', 'ar'];
-if (in_array($requestedlang, $supportedlangs, true)) {
-    $SESSION->lang = $requestedlang;
-    $SESSION->forcelang = $requestedlang;
-    $SESSION->local_elearning_system_lang = $requestedlang;
-    setcookie('local_elearning_system_lang', $requestedlang, time() + (60 * 60 * 24 * 365), '/');
-    if (isset($USER) && is_object($USER)) {
-        $USER->lang = $requestedlang;
-    }
-    if (isloggedin() && !isguestuser()) {
-        set_user_preference('lang', $requestedlang);
-    }
-    if (function_exists('force_current_language')) {
-        force_current_language($requestedlang);
-    }
-    if (function_exists('fix_current_language')) {
-        fix_current_language($requestedlang);
-    }
-}
+local_elearning_system_apply_requested_language();
 
 $frontendstrings = local_elearning_system_get_flat_language_strings();
 
@@ -92,9 +68,11 @@ $bundles = [];
 
 foreach ($records as $r) {
 
-    $price = !empty($r->price) ? (float)$r->price : 0.0;
-    $saleprice = !empty($r->saleprice) ? (float)$r->saleprice : 0.0;
-    $displayprice = $saleprice > 0 ? $saleprice : $price;
+    $originalprice = !empty($r->price) ? (float)$r->price : 0.0;
+$saleprice = !empty($r->saleprice) ? (float)$r->saleprice : 0.0;
+
+$displayprice = $saleprice > 0 ? $saleprice : $originalprice;
+$hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $saleprice;
     $status = strtolower(trim((string)($r->status ?? '')));
 
     $rawtype = strtolower(trim((string)($r->type ?? '')));
@@ -133,11 +111,11 @@ foreach ($records as $r) {
         'hasimage' => !empty($image),
 
         'price' => number_format($displayprice, 2),
+'displayprice' => number_format($displayprice, 2),
 
-        'saleprice' => ($saleprice > 0)
-            ? number_format($saleprice, 2)
-            : null,
-
+'originalprice' => $hasdiscount ? number_format($originalprice, 2) : '',
+'saleprice' => $saleprice > 0 ? number_format($saleprice, 2) : '',
+'hasdiscount' => $hasdiscount,
         'type' => ucfirst($type),
         'isfree' => $type === 'free',
         'ispaid' => $type === 'paid',
@@ -156,8 +134,8 @@ foreach ($records as $r) {
         $item['isdirectpurchase'] = ($purchasestatus === 'direct');
         $item['isbundlepurchase'] = ($purchasestatus === 'bundle');
         $item['purchaselabel'] = ($purchasestatus === 'direct')
-            ? 'Purchased'
-            : (($purchasestatus === 'bundle') ? 'Included in bundle' : '');
+            ? get_string('purchased', 'local_elearning_system')
+            : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
     }
 
     if (!empty($r->isbundle)) {
@@ -176,6 +154,7 @@ $authurl = (new moodle_url('/local/elearning_system/auth.php', [
 $admindashboardurl = (new moodle_url('/local/elearning_system/admin/dashboard.php', [
     'section' => 'dashboard'
 ]))->out(false);
+
 echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'home_allcourses' => $frontendstrings['allcourses'] ?? 'All Courses',
     'home_homeintro' => $frontendstrings['homeintro'] ?? '',
@@ -227,6 +206,16 @@ echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'chatbotendpoint' => (new moodle_url('/local/elearning_system/chatbot.php'))->out(false),
     'sesskey' => sesskey(),
+    'home_admindashboard' => get_string('admin_dashboard', 'local_elearning_system'),
+'home_sitepresentation' => get_string('sitepresentation', 'local_elearning_system'),
+'home_slide1alt' => get_string('slide1alt', 'local_elearning_system'),
+'home_slide2alt' => get_string('slide2alt', 'local_elearning_system'),
+'home_slide3alt' => get_string('slide3alt', 'local_elearning_system'),
+'home_carouselnavigation' => get_string('carouselnavigation', 'local_elearning_system'),
+'home_previousslide' => get_string('previousslide', 'local_elearning_system'),
+'home_nextslide' => get_string('nextslide', 'local_elearning_system'),
+'home_noimage' => get_string('noimage', 'local_elearning_system'),
+'home_gotoslide' => get_string('gotoslide', 'local_elearning_system'),
 ]);
 
 echo $OUTPUT->footer();

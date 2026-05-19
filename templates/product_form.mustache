@@ -104,25 +104,37 @@ DescriptionEditor exists: {{#descriptioneditor}}yes{{/descriptioneditor}}{{^desc
             </select>
         </div>
 
-        <!-- PRICE -->
-        <div id="priceSection" class="mb-3" style="display:none;">
-            <div class="row">
-                <div class="col-md-6">
-                    <input type="number" name="originalprice"
-                           value="{{#editproduct}}{{price}}{{/editproduct}}"
-                           class="form-control"
-                           placeholder="Original price">
-                </div>
-
-                <div class="col-md-6">
-                    <input type="number" name="saleprice"
-                           value="{{#editproduct}}{{saleprice}}{{/editproduct}}"
-                           class="form-control"
-                           placeholder="Sale price">
-                </div>
-            </div>
+<!-- PRICE -->
+<div id="priceSection" class="mb-3" style="display:none;">
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">
+                Original price <small class="text-muted">(optional)</small>
+            </label>
+            <input type="number"
+                   name="originalprice"
+                   value="{{#editproduct}}{{price}}{{/editproduct}}"
+                   class="form-control"
+                   placeholder="Original price"
+                   min="0"
+                   step="0.01">
         </div>
 
+        <div class="col-md-6">
+            <label class="form-label">
+                Sale price <span class="text-danger">*</span>
+            </label>
+            <input type="number"
+                   name="saleprice"
+                   value="{{#editproduct}}{{saleprice}}{{/editproduct}}"
+                   class="form-control"
+                   placeholder="Sale price"
+                   min="0"
+                   step="0.01"
+                   required>
+        </div>
+    </div>
+</div>
         <!-- SAVE -->
         <div class="d-grid">
             <button type="submit" class="btn btn-primary">

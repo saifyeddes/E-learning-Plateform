@@ -161,10 +161,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $record->categoryid = optional_param('categoryid',0,PARAM_INT);
     $record->courseid = optional_param('courseid',0,PARAM_INT);
     $record->description = optional_param('description','',PARAM_RAW);
-    $record->price = optional_param('originalprice',0,PARAM_FLOAT);
-    $record->saleprice = optional_param('saleprice',0,PARAM_FLOAT);
-    $type = strtolower(trim((string)optional_param('type','free',PARAM_TEXT)));
-    $record->type = ($type === 'paid') ? 'paid' : 'free';
+$originalprice = optional_param('originalprice', 0, PARAM_FLOAT);
+$saleprice = optional_param('saleprice', 0, PARAM_FLOAT);
+
+$type = strtolower(trim((string)optional_param('type', 'free', PARAM_TEXT)));
+$record->type = ($type === 'paid') ? 'paid' : 'free';
+
+$redirectparams = $listparams + ($productid ? ['edit' => $productid] : ['addnew' => 1]);
+
+if ($record->type === 'paid' && $saleprice <= 0) {
+    \core\notification::add('Sale price is required for paid products.', \core\output\notification::NOTIFY_ERROR);
+    redirect(new moodle_url('/local/elearning_system/admin/products.php', $redirectparams));
+}
+
+if ($record->type === 'paid' && $originalprice > 0 && $saleprice > 0 && $originalprice <= $saleprice) {
+    \core\notification::add(
+        'Original price must be greater than sale price. Example: Original price = 500, Sale price = 410.',
+        \core\output\notification::NOTIFY_ERROR
+    );
+
+    redirect(new moodle_url('/local/elearning_system/admin/products.php', $redirectparams));
+}
+
+$record->price = ($record->type === 'paid') ? $originalprice : 0;
+$record->saleprice = ($record->type === 'paid') ? $saleprice : 0;
     $record->status = optional_param('status','draft',PARAM_TEXT);
     $record->isbundle = 0;
     $record->bundleitems = '';
@@ -402,25 +422,39 @@ foreach ($records as $r) {
         continue;
     }
 
-    $isbundleitem = !empty($r->isbundle);
-    $products[] = [
-    'name'=>$r->name,
-    'image'=>$image,
-    'categoryname'=>$categoryname,
-    'coursename'=>$coursename,
-    'isbundle'=>$isbundleitem,
+$isbundleitem = !empty($r->isbundle);
 
-    'type'=>ucfirst($normalizedtype),
-    'isfree'=>$normalizedtype=='free',
-    'ispaid'=>$normalizedtype=='paid',
+$originalprice = !empty($r->price) ? (float)$r->price : 0.0;
+$saleprice = !empty($r->saleprice) ? (float)$r->saleprice : 0.0;
 
-    'status'=>ucfirst($r->status),
-    'isdraft'=>$r->status=='draft',
-    'ispublished'=>$r->status=='publish',
+$displayprice = $saleprice > 0 ? $saleprice : $originalprice;
+$hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $saleprice;
 
-    'price'=>$r->price,
-    'originalprice'=>$r->price,
-    'saleprice'=>$r->saleprice,
+$products[] = [
+    'name' => format_string($r->name),
+    'image' => $image,
+    'categoryname' => $categoryname,
+    'coursename' => $coursename,
+    'isbundle' => $isbundleitem,
+
+    'type' => ucfirst($normalizedtype),
+    'isfree' => $normalizedtype == 'free',
+    'ispaid' => $normalizedtype == 'paid',
+
+    'status' => ucfirst($r->status),
+    'isdraft' => $r->status == 'draft',
+    'ispublished' => $r->status == 'publish',
+
+    // Price = prix réellement utilisé.
+    'price' => $normalizedtype == 'paid' ? number_format($displayprice, 2) : '0.00',
+
+    // Original = prix barré optionnel.
+    'originalprice' => ($normalizedtype == 'paid' && $originalprice > 0) ? number_format($originalprice, 2) : '-',
+
+    // Sale = prix après remise / prix principal obligatoire.
+    'saleprice' => ($normalizedtype == 'paid' && $saleprice > 0) ? number_format($saleprice, 2) : '-',
+
+    'hasdiscount' => $hasdiscount,
     
     'editurl'=>(new moodle_url('/local/elearning_system/admin/products.php', $listparams + ($isbundleitem ? ['editbundle'=>$r->id] : ['edit'=>$r->id])))->out(false),
     'deleteurl'=>(new moodle_url('/local/elearning_system/admin/products.php', $listparams + ['id'=>$r->id, 'sesskey'=>sesskey()]))->out(false),

@@ -1,4 +1,19 @@
 <style>
+
+html[lang^="ar"] .es-client,
+html[lang^="ar"] .es-auth-page,
+html[lang^="ar"] .es-store-card,
+html[lang^="ar"] .es-cart-page,
+html[lang^="ar"] .es-product-page,
+html[lang^="ar"] .es-payment-page {
+    direction: rtl;
+    text-align: right;
+}
+
+html[lang^="ar"] .es-top-actions,
+html[lang^="ar"] .es-home-slide-actions {
+    flex-direction: row-reverse;
+}
 .es-chatbot-invoice-btn {
     display: inline-block;
     width: fit-content;
@@ -967,8 +982,23 @@
         height: 62vh;
     }
 }
-</style>
+.es-old-price {
+    color: #7a8797;
+    text-decoration: line-through;
+    margin-right: 8px;
+    font-weight: 600;
+}
 
+.es-sale-price {
+    color: #0f6cbf;
+    font-weight: 800;
+}
+
+html[lang^="ar"] .es-old-price {
+    margin-right: 0;
+    margin-left: 8px;
+}
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (window.localElearningSystemChatbotInit) {
@@ -1001,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<button type="button" id="esChatbotClose" class="es-chatbot-close" aria-label="Close chatbot">&times;</button>' +
         '</div>' +
         '<div id="esChatbotMessages" class="es-chatbot-messages">' +
-            '<div class="es-chatbot-msg es-chatbot-msg-bot">Exemples: prix phys, achete math 5 mois, buy science 2, voir mes cours, checkout.</div>' +
+            '<div class="es-chatbot-msg es-chatbot-msg-bot">Examples: price physics, buy math 5 months, buy science 2, my courses, checkout.</div>' +
         '</div>' +
         '<form id="esChatbotForm" class="es-chatbot-form">' +
             '<input id="esChatbotInput" type="text" class="form-control" placeholder="Ecrivez votre demande..." autocomplete="off">' +

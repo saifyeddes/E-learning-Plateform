@@ -69,6 +69,44 @@ function local_elearning_system_get_active_language(): string {
 }
 
 /**
+ * Apply a supported client language from the current request.
+ *
+ * @return string|null
+ */
+function local_elearning_system_apply_requested_language(): ?string {
+    global $SESSION, $USER;
+
+    $requestedlang = optional_param('lang', '', PARAM_LANG);
+    $supportedlangs = ['en', 'fr', 'ar'];
+
+    if (!in_array($requestedlang, $supportedlangs, true)) {
+        return null;
+    }
+
+    $SESSION->lang = $requestedlang;
+    $SESSION->forcelang = $requestedlang;
+    $SESSION->local_elearning_system_lang = $requestedlang;
+    setcookie('local_elearning_system_lang', $requestedlang, time() + (60 * 60 * 24 * 365), '/');
+
+    if (isset($USER) && is_object($USER)) {
+        $USER->lang = $requestedlang;
+    }
+
+    if (isloggedin() && !isguestuser()) {
+        set_user_preference('lang', $requestedlang);
+    }
+
+    if (function_exists('force_current_language')) {
+        force_current_language($requestedlang);
+    }
+    if (function_exists('fix_current_language')) {
+        fix_current_language($requestedlang);
+    }
+
+    return $requestedlang;
+}
+
+/**
  * Load flat language strings for the plugin frontend.
  *
  * Files are stored as /lang/en.php, /lang/fr.php, /lang/ar.php.
@@ -1525,157 +1563,7 @@ function local_elearning_system_force_auth_login_url(string $returnlocalurl): vo
  * @return string
  */
 function local_elearning_system_before_standard_top_of_body_html(): string {
-    global $DB, $SESSION;
-
-    if (!local_elearning_system_should_show_language_switcher($DB)) {
-        return '';
-    }
-
-    $supported = [
-        'en' => ['flagclass' => 'es-flag-en', 'label' => 'English (America)'],
-        'fr' => ['flagclass' => 'es-flag-fr', 'label' => 'Français (France)'],
-        'ar' => ['flagclass' => 'es-flag-ar', 'label' => 'العربية (Saudi Arabia)'],
-    ];
-
-    $currentcode = local_elearning_system_get_active_language();
-
-    $returnpath = $_SERVER['REQUEST_URI'] ?? '/';
-    if ($returnpath !== '' && strpos($returnpath, 'lang=') !== false) {
-        $returnpath = preg_replace('/([?&])lang=[^&]*(&)?/', '$1', $returnpath);
-        $returnpath = rtrim($returnpath, '?&');
-        if ($returnpath === '') {
-            $returnpath = '/';
-        }
-    }
-
-    $buildbutton = static function(string $langcode, array $langmeta, string $extra = '') use ($returnpath): string {
-        $targeturl = new moodle_url($returnpath, [
-            'lang' => $langcode,
-        ]);
-
-        return html_writer::link(
-            $targeturl,
-            '<span class="es-lang-flag ' . s($langmeta['flagclass']) . '" aria-hidden="true"></span>'
-            . '<span class="es-lang-code">' . s(strtoupper($langcode)) . '</span>',
-            [
-                'class' => 'es-lang-btn ' . trim($extra),
-                'title' => $langmeta['label'],
-                'aria-label' => $langmeta['label'],
-            ],
-        );
-    };
-
-    $html = html_writer::start_div('es-lang-switcher');
-    $html .= $buildbutton($currentcode, $supported[$currentcode], 'es-lang-btn-current');
-    foreach ($supported as $langcode => $langmeta) {
-        if ($langcode === $currentcode) {
-            continue;
-        }
-        $html .= $buildbutton($langcode, $langmeta, 'es-lang-btn-option');
-    }
-    $html .= html_writer::end_div();
-
-    $html .= '<style>
-        .es-lang-switcher {
-            position: fixed;
-            left: 14px;
-            bottom: 14px;
-            z-index: 9999;
-            display: inline-flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid #d9dee8;
-            border-radius: 999px;
-            padding: 8px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
-        }
-        .es-lang-btn {
-            min-width: 58px;
-            height: 44px;
-            border-radius: 999px;
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            border: 1px solid transparent;
-            transition: transform .15s ease, border-color .15s ease, background .15s ease;
-            background: transparent;
-            flex: 0 0 auto;
-            padding: 3px 8px;
-            line-height: 1;
-        }
-        .es-lang-btn:hover {
-            transform: translateY(-1px);
-            border-color: #b8c5dd;
-            background: #eef4ff;
-            text-decoration: none;
-        }
-        .es-lang-btn-current {
-            border-color: #6b84ff;
-            background: #e9efff;
-        }
-        .es-lang-btn-option {
-            opacity: 0.95;
-        }
-        .es-lang-btn-option:hover,
-        .es-lang-btn-option:focus {
-            opacity: 1;
-        }
-        .es-lang-flag {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-block;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-        }
-        .es-lang-code {
-            display: block;
-            margin-top: 2px;
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: #2f3b52;
-        }
-        .es-flag-en {
-            background:
-                linear-gradient(0deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
-                linear-gradient(90deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
-                linear-gradient(0deg, transparent 47%, #c8102e 47% 53%, transparent 53%),
-                linear-gradient(90deg, transparent 47%, #c8102e 47% 53%, transparent 53%),
-                #1f4aa8;
-        }
-        .es-flag-fr {
-            background: linear-gradient(90deg, #244aa5 0 33.33%, #ffffff 33.33% 66.66%, #e33b32 66.66% 100%);
-        }
-        .es-flag-ar {
-            background:
-                linear-gradient(0deg, #0a8f3f 0 34%, #ffffff 34% 67%, #111111 67% 100%);
-        }
-        @media (max-width: 768px) {
-            .es-lang-switcher {
-                left: 10px;
-                bottom: 10px;
-                padding: 7px;
-                gap: 6px;
-            }
-            .es-lang-btn {
-                min-width: 52px;
-                height: 40px;
-            }
-            .es-lang-flag {
-                width: 22px;
-                height: 22px;
-            }
-            .es-lang-code {
-                font-size: 0.62rem;
-            }
-        }
-    </style>';
-
-    return $html;
+    return '';
 }
 
 /**
@@ -1961,4 +1849,180 @@ function local_elearning_system_get_product_purchase_status(int $userid, int $pr
     }
 
     return 'none';
+}
+
+function local_elearning_system_get_client_strings(): array {
+    return [
+        't_home' => get_string('home', 'local_elearning_system'),
+        't_dashboard' => get_string('dashboard', 'local_elearning_system'),
+        't_mycourses' => get_string('mycourses', 'local_elearning_system'),
+        't_catalogue' => get_string('catalogue', 'local_elearning_system'),
+        't_cart' => get_string('cart', 'local_elearning_system'),
+        't_orders' => get_string('orders', 'local_elearning_system'),
+        't_payment' => get_string('payment', 'local_elearning_system'),
+
+        't_allcourses' => get_string('allcourses', 'local_elearning_system'),
+        't_search' => get_string('search', 'local_elearning_system'),
+        't_searchcourseplaceholder' => get_string('searchcourseplaceholder', 'local_elearning_system'),
+        't_type' => get_string('type', 'local_elearning_system'),
+        't_alltypes' => get_string('alltypes', 'local_elearning_system'),
+        't_reset' => get_string('reset', 'local_elearning_system'),
+
+        't_free' => get_string('free', 'local_elearning_system'),
+        't_paid' => get_string('paid', 'local_elearning_system'),
+        't_price' => get_string('price', 'local_elearning_system'),
+        't_addtocart' => get_string('addtocart', 'local_elearning_system'),
+        't_incart' => get_string('incart', 'local_elearning_system'),
+        't_purchased' => get_string('purchased', 'local_elearning_system'),
+        't_includedinbundle' => get_string('includedinbundle', 'local_elearning_system'),
+        't_noimage' => get_string('noimage', 'local_elearning_system'),
+
+        't_productdetails' => get_string('productdetails', 'local_elearning_system'),
+        't_description' => get_string('description', 'local_elearning_system'),
+        't_duration' => get_string('duration', 'local_elearning_system'),
+        't_selectduration' => get_string('selectduration', 'local_elearning_system'),
+        't_backtocatalogue' => get_string('backtocatalogue', 'local_elearning_system'),
+
+        't_yourcart' => get_string('yourcart', 'local_elearning_system'),
+        't_cartempty' => get_string('cartempty', 'local_elearning_system'),
+        't_continuebrowsing' => get_string('continuebrowsing', 'local_elearning_system'),
+        't_remove' => get_string('remove', 'local_elearning_system'),
+        't_clearcart' => get_string('clearcart', 'local_elearning_system'),
+        't_total' => get_string('total', 'local_elearning_system'),
+        't_proceedtopayment' => get_string('proceedtopayment', 'local_elearning_system'),
+        't_loginrequired' => get_string('loginrequired', 'local_elearning_system'),
+        't_unitprice' => get_string('unitprice', 'local_elearning_system'),
+        't_permonth' => get_string('permonth', 'local_elearning_system'),
+        't_months' => get_string('months', 'local_elearning_system'),
+        't_accessdurationmonths' => get_string('accessdurationmonths', 'local_elearning_system'),
+        't_decrease' => get_string('decrease', 'local_elearning_system'),
+        't_increase' => get_string('increase', 'local_elearning_system'),
+        't_autoupdate' => get_string('autoupdate', 'local_elearning_system'),
+        't_grandtotal' => get_string('grandtotal', 'local_elearning_system'),
+        't_backtocart' => get_string('backtocart', 'local_elearning_system'),
+        't_selectedproducts' => get_string('selectedproducts', 'local_elearning_system'),
+        't_couponcode' => get_string('couponcode', 'local_elearning_system'),
+        't_couponplaceholder' => get_string('couponplaceholder', 'local_elearning_system'),
+        't_apply' => get_string('apply', 'local_elearning_system'),
+        't_removecoupon' => get_string('removecoupon', 'local_elearning_system'),
+        't_subtotal' => get_string('subtotal', 'local_elearning_system'),
+        't_discount' => get_string('discount', 'local_elearning_system'),
+        't_linetotal' => get_string('linetotal', 'local_elearning_system'),
+        't_vat' => get_string('vat', 'local_elearning_system'),
+        't_code' => get_string('code', 'local_elearning_system'),
+        't_reduction' => get_string('reduction', 'local_elearning_system'),
+        't_newtotal' => get_string('newtotal', 'local_elearning_system'),
+        't_reviewcheckout' => get_string('reviewcheckout', 'local_elearning_system'),
+        't_couponsection' => get_string('couponsection', 'local_elearning_system'),
+
+        't_login' => get_string('login', 'local_elearning_system'),
+        't_signup' => get_string('signup', 'local_elearning_system'),
+        't_emailaddress' => get_string('emailaddress', 'local_elearning_system'),
+        't_password' => get_string('password', 'local_elearning_system'),
+        't_firstname' => get_string('firstname', 'local_elearning_system'),
+        't_lastname' => get_string('lastname', 'local_elearning_system'),
+        't_username' => get_string('username', 'local_elearning_system'),
+        't_city' => get_string('city', 'local_elearning_system'),
+        't_country' => get_string('country', 'local_elearning_system'),
+        't_selectcountry' => get_string('selectcountry', 'local_elearning_system'),
+        't_or' => get_string('or', 'local_elearning_system'),
+        't_continuewith' => get_string('continuewith', 'local_elearning_system'),
+        't_continuewithgoogle' => get_string('continuewithgoogle', 'local_elearning_system'),
+        't_forgotpassword' => get_string('forgotpassword', 'local_elearning_system'),
+        't_welcometoelearning' => get_string('welcometoelearning', 'local_elearning_system'),
+        't_authsubtitle' => get_string('authsubtitle', 'local_elearning_system'),
+        't_loginintro' => get_string('loginintro', 'local_elearning_system'),
+        't_signupintro' => get_string('signupintro', 'local_elearning_system'),
+        't_oauthmissinglogin' => get_string('oauthmissinglogin', 'local_elearning_system'),
+        't_oauthaccountlinked' => get_string('oauthaccountlinked', 'local_elearning_system'),
+
+        't_paymenttitle' => get_string('paymenttitle', 'local_elearning_system'),
+        't_paymentdetails' => get_string('paymentdetails', 'local_elearning_system'),
+        't_paynow' => get_string('paynow', 'local_elearning_system'),
+        't_amount' => get_string('amount', 'local_elearning_system'),
+        't_product' => get_string('product', 'local_elearning_system'),
+        't_quantity' => get_string('quantity', 'local_elearning_system'),
+
+        't_downloadinvoice' => get_string('downloadinvoice', 'local_elearning_system'),
+        't_date' => get_string('date', 'local_elearning_system'),
+        't_expirationdate' => get_string('expirationdate', 'local_elearning_system'),
+        't_category' => get_string('category', 'local_elearning_system'),
+        't_course' => get_string('course', 'local_elearning_system'),
+        't_bundleproducts' => get_string('bundleproducts', 'local_elearning_system'),
+        't_notpurchased' => get_string('notpurchased', 'local_elearning_system'),
+        't_noproductsassignedtobundle' => get_string('noproductsassignedtobundle', 'local_elearning_system'),
+        't_nodescriptionavailable' => get_string('nodescriptionavailable', 'local_elearning_system'),
+        't_viewcart' => get_string('viewcart', 'local_elearning_system'),
+        't_opencourse' => get_string('opencourse', 'local_elearning_system'),
+        't_buynow' => get_string('buynow', 'local_elearning_system'),
+        't_availablecourses' => get_string('availablecourses', 'local_elearning_system'),
+        't_availableproducts' => get_string('availableproducts', 'local_elearning_system'),
+        't_nocoursesavailable' => get_string('nocoursesavailable', 'local_elearning_system'),
+        't_noproductsavailable' => get_string('noproductsavailable', 'local_elearning_system'),
+        't_logintobuy' => get_string('logintobuy', 'local_elearning_system'),
+        't_backtostore' => get_string('backtostore', 'local_elearning_system'),
+        't_checkout' => get_string('checkout', 'local_elearning_system'),
+        't_checkoutsummary' => get_string('checkoutsummary', 'local_elearning_system'),
+        't_applycoupon' => get_string('applycoupon', 'local_elearning_system'),
+        't_couponcode' => get_string('couponcode', 'local_elearning_system'),
+        't_subtotal' => get_string('subtotal', 'local_elearning_system'),
+        't_discount' => get_string('discount', 'local_elearning_system'),
+        't_tax' => get_string('tax', 'local_elearning_system'),
+        't_grandtotal' => get_string('grandtotal', 'local_elearning_system'),
+        't_confirmandpay' => get_string('confirmandpay', 'local_elearning_system'),
+        't_backtocart' => get_string('backtocart', 'local_elearning_system'),
+        't_duration' => get_string('duration', 'local_elearning_system'),
+    ];
+}
+
+function local_elearning_system_get_language_switcher_data(): array {
+    global $PAGE;
+
+    $currentlang = current_language();
+    $currentlang = strtolower(substr((string)$currentlang, 0, 2));
+
+    if (!in_array($currentlang, ['fr', 'en', 'ar'], true)) {
+        $currentlang = 'en';
+    }
+
+    $currenturl = new moodle_url($PAGE->url);
+    $returnurl = $currenturl->out_as_local_url(false);
+
+    $frurl = new moodle_url('/local/elearning_system/changelang.php', [
+        'lang' => 'fr',
+        'return' => $returnurl,
+        'sesskey' => sesskey(),
+    ]);
+
+    $enurl = new moodle_url('/local/elearning_system/changelang.php', [
+        'lang' => 'en',
+        'return' => $returnurl,
+        'sesskey' => sesskey(),
+    ]);
+
+    $arurl = new moodle_url('/local/elearning_system/changelang.php', [
+        'lang' => 'ar',
+        'return' => $returnurl,
+        'sesskey' => sesskey(),
+    ]);
+
+    $labels = [
+        'fr' => ['flag' => '🇫🇷', 'label' => 'FR'],
+        'en' => ['flag' => '🇬🇧', 'label' => 'EN'],
+        'ar' => ['flag' => '🇹🇳', 'label' => 'AR'],
+    ];
+
+    return [
+        'currentlang' => $currentlang,
+        'currentlangflag' => $labels[$currentlang]['flag'],
+        'currentlanglabel' => $labels[$currentlang]['label'],
+
+        'showlang_fr' => $currentlang !== 'fr',
+        'showlang_en' => $currentlang !== 'en',
+        'showlang_ar' => $currentlang !== 'ar',
+
+        'langurl_fr' => $frurl->out(false),
+        'langurl_en' => $enurl->out(false),
+        'langurl_ar' => $arurl->out(false),
+    ];
 }

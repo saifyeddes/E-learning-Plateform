@@ -3,13 +3,17 @@
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+global $PAGE, $OUTPUT, $SESSION, $CFG, $USER, $DB;
+
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/auth.php');
 $PAGE->set_pagelayout('login');
 $PAGE->add_body_class('es-auth-page');
-$PAGE->set_heading('Login');
 $PAGE->requires->css(new moodle_url('/local/elearning_system/styles/auth.css'));
+local_elearning_system_apply_requested_language();
+$PAGE->set_title(get_string('login', 'local_elearning_system'));
+$PAGE->set_heading(get_string('login', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/auth.php');
 
 global $DB;
@@ -161,12 +165,12 @@ if (!empty($SESSION->loginerrormsg)) {
     $loweroautherror = core_text::strtolower($rawoautherror);
     if (strpos($loweroautherror, 'cannot create') !== false
         || strpos($loweroautherror, 'cannotcreateaccounts') !== false) {
-        $oauthtoastmessage = "Ce compte n'avait pas un login. Go signup.";
+        $oauthtoastmessage = get_string('oauthmissinglogin', 'local_elearning_system');
         $showsignuptab = true;
     } else if (strpos($loweroautherror, 'not linked yet') !== false
     || strpos($loweroautherror, 'pending email confirmation') !== false
     || strpos($loweroautherror, 'confirmationpending') !== false) {
-    $oauthtoastmessage = "Ce compte existe déjà dans la plateforme. Connectez-vous une première fois avec votre email et mot de passe, puis associez votre compte Google depuis votre profil.";
+    $oauthtoastmessage = get_string('oauthaccountlinked', 'local_elearning_system');
     } else {
         $oauthtoastmessage = $rawoautherror;
     }
@@ -248,7 +252,19 @@ if (is_enabled_auth('oauth2')) {
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_elearning_system/auth', [
+// Provide translated strings used by the client template as t_* variables.
+$flatlang = local_elearning_system_get_flat_language_strings();
+$needed = [
+    'login','signup','loginintro','emailaddress','password','or','continuewith',
+    'forgotpassword','firstname','lastname','username','city','country','selectcountry',
+    'welcometoelearning','authsubtitle','signupintro'
+];
+$tvars = [];
+foreach ($needed as $k) {
+    $tvars['t_' . $k] = $flatlang[$k] ?? get_string($k, 'local_elearning_system');
+}
+
+echo $OUTPUT->render_from_template('local_elearning_system/auth', array_merge([
     'forgotpasswordurl' => (new moodle_url('/login/forgot_password.php'))->out(false),
     'isloggedin' => false,
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
@@ -279,5 +295,6 @@ echo $OUTPUT->render_from_template('local_elearning_system/auth', [
     'oauthtoastmessage' => s($oauthtoastmessage),
     'showsignuptab' => $showsignuptab,
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
-]);
+    
+], $tvars));
 echo $OUTPUT->footer();

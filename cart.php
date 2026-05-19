@@ -7,8 +7,9 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/cart.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Cart');
-$PAGE->set_heading('Your Cart');
+local_elearning_system_apply_requested_language();
+$PAGE->set_title(get_string('cart', 'local_elearning_system'));
+$PAGE->set_heading(get_string('yourcart', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/cart.php');
 
 global $DB, $CFG;
@@ -139,7 +140,7 @@ $checkouturl = (new moodle_url('/local/elearning_system/checkout.php'))->out(fal
 $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/checkout.php']))->out(false);
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_elearning_system/cart', [
+echo $OUTPUT->render_from_template('local_elearning_system/cart', array_merge([
     'products' => $products,
     'hasproducts' => !empty($products),
     'total' => number_format($total, 2),
@@ -152,5 +153,5 @@ echo $OUTPUT->render_from_template('local_elearning_system/cart', [
     'accounturl' => (new moodle_url('/my/'))->out(false),
     'storeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
     'clearcarturl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'clear', 'sesskey' => sesskey()]))->out(false),
-]);
+], local_elearning_system_get_client_strings()));
 echo $OUTPUT->footer();

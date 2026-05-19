@@ -9,6 +9,7 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/product.php', ['id' => $productid]);
 $PAGE->set_pagelayout('standard');
+local_elearning_system_apply_requested_language();
 local_elearning_system_force_auth_login_url('/local/elearning_system/product.php?id=' . $productid);
 
 global $DB, $CFG;
@@ -33,9 +34,11 @@ $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/lo
 
 $productrecord = $DB->get_record('elearning_products', ['id' => $productid], '*', MUST_EXIST);
 
-$price = !empty($productrecord->price) ? (float)$productrecord->price : 0.0;
+$originalprice = !empty($productrecord->price) ? (float)$productrecord->price : 0.0;
 $saleprice = !empty($productrecord->saleprice) ? (float)$productrecord->saleprice : 0.0;
-$displayprice = $saleprice > 0 ? $saleprice : $price;
+
+$displayprice = $saleprice > 0 ? $saleprice : $originalprice;
+$hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $saleprice;
 $status = strtolower(trim((string)($productrecord->status ?? '')));
 $rawtype = strtolower(trim((string)($productrecord->type ?? '')));
 
@@ -90,11 +93,15 @@ $templatedata = [
     'hasdescription' => !empty(trim(strip_tags((string)($productrecord->description ?? '')))),
     'image' => $image,
     'hasimage' => !empty($image),
-    'type' => ucfirst($type),
+    'type' => $type === 'free' ? get_string('free', 'local_elearning_system') : get_string('paid', 'local_elearning_system'),
     'isfree' => $type === 'free',
     'ispaid' => $type === 'paid',
     'price' => number_format($displayprice, 2),
-    'saleprice' => $saleprice > 0 ? number_format($saleprice, 2) : null,
+'displayprice' => number_format($displayprice, 2),
+
+'originalprice' => $hasdiscount ? number_format($originalprice, 2) : '',
+'saleprice' => $saleprice > 0 ? number_format($saleprice, 2) : '',
+'hasdiscount' => $hasdiscount,
     'categoryname' => $categoryname,
     'coursename' => $coursename,
     'hascourse' => !empty($courseurl),
@@ -104,6 +111,7 @@ $templatedata = [
     'addtocarturl' => (new moodle_url('/local/elearning_system/add_to_cart.php', ['id' => $productid]))->out(false),
     'isincart' => array_key_exists((int)$productid, $SESSION->local_elearning_system_cart),
     'ispurchased' => false,
+    'purchaselabel' => get_string('purchased', 'local_elearning_system'),
     'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
     'checkouturl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false),
     'checkoutreturnurl' => (new moodle_url('/local/elearning_system/checkout.php'))->out(false),
@@ -181,5 +189,6 @@ if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
 }
 
 echo $OUTPUT->header();
+$templatedata = array_merge($templatedata, local_elearning_system_get_client_strings());
 echo $OUTPUT->render_from_template('local_elearning_system/product_details', $templatedata);
 echo $OUTPUT->footer();

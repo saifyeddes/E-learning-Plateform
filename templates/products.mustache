@@ -121,14 +121,31 @@
 </span>
 </td>
 
-<td>{{price}}</td>
-
 <td>
-{{#ispaid}}{{originalprice}}{{/ispaid}}
+    {{#ispaid}}
+        {{#hasdiscount}}
+            <span class="es-old-price">{{originalprice}}</span>
+            <strong class="es-sale-price">{{saleprice}}</strong>
+        {{/hasdiscount}}
+
+        {{^hasdiscount}}
+            <strong class="es-sale-price">{{price}}</strong>
+        {{/hasdiscount}}
+    {{/ispaid}}
+
+    {{#isfree}}
+        0.00
+    {{/isfree}}
 </td>
 
 <td>
-{{#ispaid}}{{saleprice}}{{/ispaid}}
+    {{#ispaid}}{{originalprice}}{{/ispaid}}
+    {{#isfree}}-{{/isfree}}
+</td>
+
+<td>
+    {{#ispaid}}{{saleprice}}{{/ispaid}}
+    {{#isfree}}-{{/isfree}}
 </td>
 
 <td>

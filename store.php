@@ -1,18 +1,18 @@
 <?php
 
 require('../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 // NO LOGIN REQUIRED - Public store page
+global $DB, $CFG, $USER, $PAGE, $OUTPUT;
 $context = context_system::instance();
 $PAGE->set_context($context);
-
 $PAGE->set_url('/local/elearning_system/store.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Store');
-$PAGE->set_heading('Store');
+local_elearning_system_apply_requested_language();
+$PAGE->set_title(get_string('availablecourses', 'local_elearning_system'));
+$PAGE->set_heading(get_string('availablecourses', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/store.php');
-
-global $DB, $CFG, $USER;
 
 // =============================
 // GET ITEMS
@@ -100,11 +100,16 @@ $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/lo
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_elearning_system/store', [
+    't_availablecourses' => get_string('availablecourses', 'local_elearning_system'),
+    't_availableproducts' => get_string('availableproducts', 'local_elearning_system'),
     'courses' => $courses,
     'hascourses' => !empty($courses),
     'products' => $products,
     'hasproducts' => !empty($products),
     'isloggedin' => $isloggedin,
     'loginurl' => $authurl,
+    't_nocoursesavailable' => get_string('nocoursesavailable', 'local_elearning_system'),
+    't_noproductsavailable' => get_string('noproductsavailable', 'local_elearning_system'),
+    't_logintobuy' => get_string('logintobuy', 'local_elearning_system'),
 ]);
 echo $OUTPUT->footer();

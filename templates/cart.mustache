@@ -4,10 +4,10 @@
     <div class="es-cart-hero mb-3">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-                <h3 class="mb-1">Your Cart</h3>
-                <p class="es-cart-subtitle mb-0">Ajustez la duree d acces. Le prix se met a jour automatiquement.</p>
+                <h3 class="mb-1">{{t_yourcart}}</h3>
+                <p class="es-cart-subtitle mb-0">{{t_accessdurationmonths}}. {{t_autoupdate}}.</p>
             </div>
-            <a href="{{storeurl}}" class="btn btn-outline-secondary btn-sm">Continue Shopping</a>
+            <a href="{{storeurl}}" class="btn btn-outline-secondary btn-sm">{{t_continuebrowsing}}</a>
         </div>
     </div>
 
@@ -30,13 +30,13 @@
                         </div>
                         <div class="col-12 col-md-4">
                             <h5 class="mb-1"><a href="{{producturl}}">{{name}}</a></h5>
-                            <div class="text-muted small">Unit price: $<span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / month</div>
+                            <div class="text-muted small">{{t_unitprice}}: $<span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / {{t_permonth}}</div>
                         </div>
                         <div class="col-12 col-md-3">
-                            <label class="form-label mb-1">Durée d'accès (mois)</label>
+                            <label class="form-label mb-1">{{t_accessdurationmonths}}</label>
                             <form method="post" action="{{setdurationurl}}" class="m-0 es-cart-duration-form" novalidate>
                                 <div class="es-cart-stepper">
-                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="-1" aria-label="Diminuer la duree">-</button>
+                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="-1" aria-label="{{t_decrease}}">-</button>
                                     <input
                                         type="number"
                                         name="durationmonths"
@@ -46,19 +46,19 @@
                                         step="1"
                                         value="{{durationmonths}}"
                                         data-unitprice="{{unitpriceraw}}"
-                                        aria-label="Duree en mois pour {{name}}"
+                                        aria-label="{{t_accessdurationmonths}} - {{name}}"
                                     >
-                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="1" aria-label="Augmenter la duree">+</button>
+                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="1" aria-label="{{t_increase}}">+</button>
                                 </div>
                             </form>
-                            <div class="small text-muted mt-1 es-cart-autosave">Auto update</div>
+                            <div class="small text-muted mt-1 es-cart-autosave">{{t_autoupdate}}</div>
                         </div>
                         <div class="col-6 col-md-2">
-                            <div class="small text-muted">Line Total</div>
+                            <div class="small text-muted">{{t_total}}</div>
                             <div class="fw-bold es-cart-line-price" data-linevalue="{{linepriceraw}}">${{lineprice}}</div>
                         </div>
                         <div class="col-6 col-md-2 col-lg-1 d-flex align-items-center justify-content-end">
-                            <a href="{{removeurl}}" class="btn btn-sm btn-outline-danger es-cart-remove-btn">Remove</a>
+                            <a href="{{removeurl}}" class="btn btn-sm btn-outline-danger es-cart-remove-btn">{{t_remove}}</a>
                         </div>
                     </div>
                 </div>
@@ -70,16 +70,16 @@
     <div class="card es-cart-summary-card">
         <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="es-cart-total-wrap">
-                <span class="text-muted d-block">Grand total</span>
+                <span class="text-muted d-block">{{t_grandtotal}}</span>
                 <strong class="es-cart-total-value" id="esCartTotal">${{total}}</strong>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="{{clearcarturl}}" class="btn btn-outline-danger">Clear Cart</a>
+                <a href="{{clearcarturl}}" class="btn btn-outline-danger">{{t_clearcart}}</a>
                 {{#isloggedin}}
-                <a href="{{checkouturl}}" class="btn btn-primary es-cart-cta">Proceed to Checkout</a>
+                <a href="{{checkouturl}}" class="btn btn-primary es-cart-cta">{{t_proceedtopayment}}</a>
                 {{/isloggedin}}
                 {{^isloggedin}}
-                <a href="{{authurl}}" class="btn btn-primary es-cart-cta">Proceed to Checkout</a>
+                <a href="{{authurl}}" class="btn btn-primary es-cart-cta">{{t_proceedtopayment}}</a>
                 {{/isloggedin}}
             </div>
         </div>
@@ -88,7 +88,7 @@
 
     {{^hasproducts}}
     <div class="alert alert-info">
-        Your cart is empty.
+        {{t_cartempty}}
     </div>
     {{/hasproducts}}
 </div>

@@ -8,8 +8,8 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/payment.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Payment');
-$PAGE->set_heading('Payment');
+$PAGE->set_title(get_string('paymenttitle', 'local_elearning_system'));
+$PAGE->set_heading(get_string('paymenttitle', 'local_elearning_system'));
 
 global $DB, $CFG, $USER;
 

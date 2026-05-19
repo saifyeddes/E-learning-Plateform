@@ -3,34 +3,34 @@
 <div class="container-fluid es-checkout-page">
     <div class="row mb-3 es-checkout-hero align-items-center">
         <div class="col-12 col-lg-8">
-            <h3 class="mb-1">Checkout</h3>
-            <p class="mb-0 text-muted es-checkout-subtitle">Revisez vos produits, appliquez un code promo et finalisez votre achat en toute confiance.</p>
+            <h3 class="mb-1">{{t_checkout}}</h3>
+            <p class="mb-0 text-muted es-checkout-subtitle">{{t_reviewcheckout}}</p>
         </div>
         <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
-            <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">Back to Cart</a>
+            <a href="{{carturl}}" class="btn btn-outline-secondary btn-sm">{{t_backtocart}}</a>
         </div>
     </div>
 
     {{#hasproducts}}
     <div class="card mb-3 es-checkout-card es-checkout-products">
         <div class="card-header">
-            <h5 class="mb-0">Produits selectionnes</h5>
+            <h5 class="mb-0">{{t_selectedproducts}}</h5>
         </div>
         <div class="table-responsive">
             <table class="table mb-0 es-checkout-table">
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>Durée</th>
-                        <th>Price</th>
-                        <th>Line Total</th>
+                        <th>{{t_product}}</th>
+                        <th>{{t_duration}}</th>
+                        <th>{{t_price}}</th>
+                        <th>{{t_linetotal}}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{#products}}
                     <tr>
                         <td>{{name}}</td>
-                        <td>{{durationmonths}} mois</td>
+                        <td>{{durationmonths}} {{t_months}}</td>
                         <td>${{price}}</td>
                         <td>${{lineprice}}</td>
                     </tr>
@@ -42,7 +42,7 @@
 
     <div class="card mb-3 es-checkout-card">
         <div class="card-header">
-            <h5 class="mb-0">Code de reduction</h5>
+            <h5 class="mb-0">{{t_couponsection}}</h5>
         </div>
         <div class="card-body es-coupon-body">
             {{#hascouponerror}}
@@ -55,14 +55,14 @@
 
             {{#appliedcoupon}}
             <div class="alert alert-info mb-3 es-applied-coupon">
-                <div><strong>Code:</strong> {{code}}</div>
-                <div><strong>Reduction:</strong> {{discountdisplay}}</div>
-                <div><strong>Nouveau total:</strong> ${{newtotal}}</div>
+                <div><strong>{{t_code}}:</strong> {{code}}</div>
+                <div><strong>{{t_reduction}}:</strong> {{discountdisplay}}</div>
+                <div><strong>{{t_newtotal}}:</strong> ${{newtotal}}</div>
             </div>
             <form method="post" action="{{checkouturl}}" class="d-inline">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <input type="hidden" name="removecoupon" value="1">
-                <button type="submit" class="btn btn-outline-danger btn-sm">Retirer le code</button>
+                <button type="submit" class="btn btn-outline-danger btn-sm">{{t_removecoupon}}</button>
             </form>
             {{/appliedcoupon}}
 
@@ -70,11 +70,11 @@
             <form method="post" action="{{checkouturl}}" class="row g-2 align-items-end es-coupon-form">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <div class="col-md-8">
-                    <label class="form-label">Entrer votre code promo</label>
-                    <input type="text" name="couponcode" class="form-control" placeholder="Ex: SAVE20" required>
+                    <label class="form-label">{{t_couponcode}}</label>
+                    <input type="text" name="couponcode" class="form-control" placeholder="{{t_couponplaceholder}}" required>
                 </div>
                 <div class="col-md-4">
-                    <button type="submit" name="applycoupon" value="1" class="btn btn-primary w-100">Appliquer</button>
+                    <button type="submit" name="applycoupon" value="1" class="btn btn-primary w-100">{{t_apply}}</button>
                 </div>
             </form>
             {{/appliedcoupon}}
@@ -84,17 +84,17 @@
     <div class="card es-checkout-card es-checkout-summary">
         <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="es-summary-lines">
-                <div class="es-summary-line"><span>Subtotal</span><strong>${{subtotal}}</strong></div>
-                {{#hasdiscount}}<div class="es-summary-line"><span>Discount</span><strong>-${{discountamount}}</strong></div>{{/hasdiscount}}
-                <div class="es-summary-line"><span>TVA ({{tvapercent}}%)</span><strong>${{taxamount}}</strong></div>
-                <div class="es-summary-line es-grand-total"><span>Total</span><strong>${{grandtotal}}</strong></div>
+                <div class="es-summary-line"><span>{{t_subtotal}}</span><strong>${{subtotal}}</strong></div>
+                {{#hasdiscount}}<div class="es-summary-line"><span>{{t_discount}}</span><strong>-${{discountamount}}</strong></div>{{/hasdiscount}}
+                <div class="es-summary-line"><span>{{t_vat}} ({{tvapercent}}%)</span><strong>${{taxamount}}</strong></div>
+                <div class="es-summary-line es-grand-total"><span>{{t_total}}</span><strong>${{grandtotal}}</strong></div>
             </div>
             <div>
                 {{#isloggedin}}
-                <a href="{{paymenturl}}" class="btn btn-success es-checkout-cta">Pay Now</a>
+                <a href="{{paymenturl}}" class="btn btn-success es-checkout-cta">{{t_paynow}}</a>
                 {{/isloggedin}}
                 {{^isloggedin}}
-                <a href="{{authurl}}" class="btn btn-primary es-checkout-cta">Proceed to Payment</a>
+                <a href="{{authurl}}" class="btn btn-primary es-checkout-cta">{{t_proceedtopayment}}</a>
                 {{/isloggedin}}
             </div>
         </div>

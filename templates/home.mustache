@@ -12,7 +12,7 @@
     {{#issiteadmin}}
     <a href="{{admindashboardurl}}" class="btn btn-primary btn-sm">
         <i class="fa fa-tachometer-alt mr-1"></i>
-        Admin Dashboard
+        {{home_admindashboard}}
     </a>
     {{/issiteadmin}}
 
@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <section class="es-home-carousel card mb-3" aria-label="Site presentation">
+    <section class="es-home-carousel card mb-3" aria-label="{{home_sitepresentation}}">
         <div class="es-home-carousel-inner" id="esHomeCarousel">
             <article class="es-home-slide is-active">
                 <div class="es-home-slide-content">
@@ -49,7 +49,7 @@
                     </div>
                 </div>
                 <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="Students learning in classroom" loading="eager">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="{{home_slide1alt}}" loading="eager">
                 </div>
             </article>
 
@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80" alt="Students collaborating around educational material" loading="lazy">
+                    <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80" alt="{{home_slide2alt}}" loading="lazy">
                 </div>
             </article>
 
@@ -79,17 +79,17 @@
                     </div>
                 </div>
                 <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="Student using laptop for online learning" loading="lazy">
+                    <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="{{home_slide3alt}}" loading="lazy">
                 </div>
             </article>
         </div>
 
-        <div class="es-home-carousel-nav" aria-label="Carousel navigation">
-            <button type="button" class="es-home-carousel-btn" id="esHomePrev" aria-label="Previous slide">
+        <div class="es-home-carousel-nav" aria-label="{{home_carouselnavigation}}">
+            <button type="button" class="es-home-carousel-btn" id="esHomePrev" aria-label="{{home_previousslide}}">
                 <i class="fa fa-chevron-left"></i>
             </button>
             <div class="es-home-carousel-dots" id="esHomeDots"></div>
-            <button type="button" class="es-home-carousel-btn" id="esHomeNext" aria-label="Next slide">
+            <button type="button" class="es-home-carousel-btn" id="esHomeNext" aria-label="{{home_nextslide}}">
                 <i class="fa fa-chevron-right"></i>
             </button>
         </div>
@@ -132,7 +132,7 @@
                         {{/hasimage}}
                         {{^hasimage}}
                         <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
-                            <div class="text-muted"><i class="fa fa-image"></i> No image</div>
+                            <div class="text-muted"><i class="fa fa-image"></i> {{home_noimage}}</div>
                         </a>
                         {{/hasimage}}
                     </div>
@@ -151,10 +151,18 @@
                         <strong>{{home_pricelabel}}:</strong> {{home_free}}
                         {{/isfree}}
                         {{#ispaid}}
-                        <strong>{{home_pricelabel}}:</strong>
-                        {{#saleprice}}{{saleprice}}{{/saleprice}}
-                        {{^saleprice}}{{price}}{{/saleprice}}
-                        {{/ispaid}}
+<strong>{{home_pricelabel}}:</strong>
+
+{{#hasdiscount}}
+<span class="es-old-price">{{originalprice}}</span>
+<span class="es-sale-price">{{saleprice}}</span>
+{{/hasdiscount}}
+
+{{^hasdiscount}}
+<span class="es-sale-price">{{displayprice}}</span>
+{{/hasdiscount}}
+
+{{/ispaid}}
                     </div>
 
                     {{#ispurchased}}
@@ -203,7 +211,7 @@
                         {{/hasimage}}
                         {{^hasimage}}
                         <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
-                            <div class="text-muted"><i class="fa fa-image"></i> No image</div>
+                            <div class="text-muted"><i class="fa fa-image"></i> {{home_noimage}}</div>
                         </a>
                         {{/hasimage}}
                     </div>
@@ -222,11 +230,19 @@
                         {{#isfree}}
                         <strong>{{home_pricelabel}}:</strong> {{home_free}}
                         {{/isfree}}
-                        {{#ispaid}}
-                        <strong>{{home_pricelabel}}:</strong>
-                        {{#saleprice}}{{saleprice}}{{/saleprice}}
-                        {{^saleprice}}{{price}}{{/saleprice}}
-                        {{/ispaid}}
+                       {{#ispaid}}
+<strong>{{home_pricelabel}}:</strong>
+
+{{#hasdiscount}}
+<span class="es-old-price">{{originalprice}}</span>
+<span class="es-sale-price">{{saleprice}}</span>
+{{/hasdiscount}}
+
+{{^hasdiscount}}
+<span class="es-sale-price">{{displayprice}}</span>
+{{/hasdiscount}}
+
+{{/ispaid}}
                     </div>
 
                     {{#ispurchased}}
@@ -279,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dot = document.createElement('button');
                 dot.type = 'button';
                 dot.className = 'es-home-dot';
-                dot.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
+                dot.setAttribute('aria-label', '{{home_gotoslide}} ' + (idx + 1));
                 dot.classList.toggle('is-active', idx === activeIndex);
                 dot.addEventListener('click', function() {
                     setActive(idx);

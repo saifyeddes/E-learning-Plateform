@@ -2,7 +2,7 @@
 <div class="es-client">
 <div class="container-fluid">
     <div class="mb-3">
-        <a href="{{backurl}}" class="btn btn-link p-0">Back to courses</a>
+        <a href="{{backurl}}" class="btn btn-link p-0">{{t_backtocatalogue}}</a>
     </div>
 
     <div class="card">
@@ -13,7 +13,7 @@
                     <img src="{{image}}" alt="{{name}}" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
                     {{/hasimage}}
                     {{^hasimage}}
-                    <div class="text-muted"><i class="fa fa-image"></i> No image</div>
+                    <div class="text-muted"><i class="fa fa-image"></i> {{t_noimage}}</div>
                     {{/hasimage}}
                 </div>
 
@@ -26,21 +26,29 @@
 
                     <p class="mb-2">
                         {{#isfree}}
-                        <strong>Price:</strong> Free
+                        <strong>{{t_price}}:</strong> {{t_free}}
                         {{/isfree}}
                         {{#ispaid}}
-                        <strong>Price:</strong>
-                        {{#saleprice}}{{saleprice}}{{/saleprice}}
-                        {{^saleprice}}{{price}}{{/saleprice}}
-                        {{/ispaid}}
+<strong>{{t_price}}:</strong>
+
+{{#hasdiscount}}
+<span class="es-old-price">{{originalprice}}</span>
+<span class="es-sale-price">{{saleprice}}</span>
+{{/hasdiscount}}
+
+{{^hasdiscount}}
+<span class="es-sale-price">{{displayprice}}</span>
+{{/hasdiscount}}
+
+{{/ispaid}}
                     </p>
 
-                    <p class="mb-2"><strong>Category:</strong> {{categoryname}}</p>
-                    <p class="mb-3"><strong>Course:</strong> {{coursename}}</p>
+                    <p class="mb-2"><strong>{{t_category}}:</strong> {{categoryname}}</p>
+                    <p class="mb-3"><strong>{{t_course}}:</strong> {{coursename}}</p>
 
                     {{#isbundle}}
                     <div class="mb-3">
-                        <h5 class="mb-2">Bundle products</h5>
+                        <h5 class="mb-2">{{t_bundleproducts}}</h5>
                         {{#hasbundleitems}}
                         <ul class="list-group">
                             {{#bundleitems}}
@@ -52,47 +60,47 @@
                                         {{^hascourse}}{{coursename}}{{/hascourse}}
                                     </div>
                                 </div>
-                                {{#ispurchased}}<span class="badge bg-success">Purchased</span>{{/ispurchased}}
-                                {{^ispurchased}}<span class="badge bg-secondary">Not purchased</span>{{/ispurchased}}
+                                {{#ispurchased}}<span class="badge bg-success">{{t_purchased}}</span>{{/ispurchased}}
+                                {{^ispurchased}}<span class="badge bg-secondary">{{t_notpurchased}}</span>{{/ispurchased}}
                             </li>
                             {{/bundleitems}}
                         </ul>
                         {{/hasbundleitems}}
                         {{^hasbundleitems}}
-                        <p class="text-muted mb-0">No products assigned to this bundle.</p>
+                        <p class="text-muted mb-0">{{t_noproductsassignedtobundle}}</p>
                         {{/hasbundleitems}}
                     </div>
                     {{/isbundle}}
 
                     <div class="mb-4">
-                        <h5>Description</h5>
+                        <h5>{{t_description}}</h5>
                         {{#hasdescription}}
                         <div>{{{description}}}</div>
                         {{/hasdescription}}
                         {{^hasdescription}}
-                        <p class="text-muted mb-0">No description available.</p>
+                        <p class="text-muted mb-0">{{t_nodescriptionavailable}}</p>
                         {{/hasdescription}}
                     </div>
 
                     <div class="d-flex flex-wrap gap-2">
                         {{#ispurchased}}
-                        <span class="btn btn-success disabled" aria-disabled="true">Purchased</span>
+                        <span class="btn btn-success disabled" aria-disabled="true">{{t_purchased}}</span>
                         {{/ispurchased}}
                         {{^ispurchased}}
                             {{#isincart}}
-                            <a href="{{carturl}}" class="btn btn-outline-primary">In cart</a>
+                            <a href="{{carturl}}" class="btn btn-outline-primary">{{t_incart}}</a>
                             {{/isincart}}
                             {{^isincart}}
-                            <a href="{{addtocarturl}}" class="btn btn-primary">Add to Cart</a>
+                            <a href="{{addtocarturl}}" class="btn btn-primary">{{t_addtocart}}</a>
                             {{/isincart}}
                         {{/ispurchased}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary">View Cart</a>
+                        <a href="{{carturl}}" class="btn btn-outline-primary">{{t_viewcart}}</a>
                         {{#hascourse}}
                         {{#isloggedin}}
-                        <a href="{{courseurl}}" class="btn btn-outline-secondary">Open Course</a>
+                        <a href="{{courseurl}}" class="btn btn-outline-secondary">{{t_opencourse}}</a>
                         {{/isloggedin}}
                         {{^isloggedin}}
-                        <a href="{{authurl}}" class="btn btn-success">Buy Now</a>
+                        <a href="{{authurl}}" class="btn btn-success">{{t_buynow}}</a>
                         {{/isloggedin}}
                         {{/hascourse}}
                     </div>

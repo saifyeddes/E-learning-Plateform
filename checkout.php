@@ -7,8 +7,9 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/checkout.php');
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Checkout');
-$PAGE->set_heading('Checkout');
+local_elearning_system_apply_requested_language();
+$PAGE->set_title(get_string('checkout', 'local_elearning_system'));
+$PAGE->set_heading(get_string('checkout', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/checkout.php');
 
 global $DB;
@@ -84,21 +85,21 @@ if ($tvapercent < 0 || $tvapercent > 100) {
 
 if (optional_param('removecoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
     unset($SESSION->local_elearning_system_coupon);
-    $couponsuccess = 'Coupon removed.';
+    $couponsuccess = get_string('couponremoved', 'local_elearning_system');
 }
 
 if (optional_param('applycoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
     $couponcode = strtoupper(trim((string)optional_param('couponcode', '', PARAM_TEXT)));
     if ($couponcode === '') {
-        $couponerror = 'Please enter a coupon code.';
+        $couponerror = get_string('couponcodeempty', 'local_elearning_system');
     } else {
         $coupon = $DB->get_record('elearning_coupons', ['code' => $couponcode], '*', IGNORE_MISSING);
         if (!$coupon) {
-            $couponerror = 'Coupon code not found.';
+            $couponerror = get_string('couponnotfound', 'local_elearning_system');
         } else if ((string)$coupon->status !== 'active') {
-            $couponerror = 'This coupon is inactive.';
+            $couponerror = get_string('couponinactive', 'local_elearning_system');
         } else if (!empty($coupon->expirydate) && (int)$coupon->expirydate < time()) {
-            $couponerror = 'This coupon has expired.';
+            $couponerror = get_string('couponexpired', 'local_elearning_system');
         } else {
             $SESSION->local_elearning_system_coupon = (object)[
                 'id' => (int)$coupon->id,
@@ -106,7 +107,7 @@ if (optional_param('applycoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
                 'discounttype' => (string)$coupon->discounttype,
                 'discountvalue' => (float)$coupon->discountvalue,
             ];
-            $couponsuccess = 'Coupon applied successfully.';
+            $couponsuccess = get_string('couponappliedsuccess', 'local_elearning_system');
         }
     }
 }
@@ -149,7 +150,8 @@ $grandtotal = $newtotal + $taxamount;
 $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/checkout.php']))->out(false);
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_elearning_system/checkout', [
+
+$templatedata = [
     'products' => $products,
     'hasproducts' => !empty($products),
     'total' => number_format($grandtotal, 2),
@@ -174,5 +176,10 @@ echo $OUTPUT->render_from_template('local_elearning_system/checkout', [
     'hascouponerror' => !empty($couponerror),
     'couponsuccess' => $couponsuccess,
     'hascouponsuccess' => !empty($couponsuccess),
-]);
+];
+
+$templatedata = array_merge($templatedata, local_elearning_system_get_client_strings());
+
+echo $OUTPUT->render_from_template('local_elearning_system/checkout', $templatedata);
+
 echo $OUTPUT->footer();
