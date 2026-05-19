@@ -2,7 +2,9 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 require_login();
+
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -12,6 +14,85 @@ $PAGE->set_title(get_string('paymenttitle', 'local_elearning_system'));
 $PAGE->set_heading(get_string('paymenttitle', 'local_elearning_system'));
 
 global $DB, $CFG, $USER;
+function local_elearning_system_plugin_payment_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_plugin_get_payment_products(array $ids): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+    if (empty($ids)) {
+        return [];
+    }
+
+    $db = local_elearning_system_plugin_payment_db();
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    $stmt = $db->prepare("SELECT * FROM el_products WHERE id IN ($placeholders)");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $products;
+}
+
+function local_elearning_system_plugin_insert_order(stdClass $order): int {
+    $db = local_elearning_system_plugin_payment_db();
+
+    $stmt = $db->prepare("
+        INSERT INTO el_orders
+        (userid, productid, amount, promocode, discountamount, durationmonths, expiresat, timecreated)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $userid = (int)$order->userid;
+    $productid = (int)$order->productid;
+    $amount = (float)$order->amount;
+    $promocode = !empty($order->promocode) ? (string)$order->promocode : null;
+    $discountamount = !empty($order->discountamount) ? (float)$order->discountamount : 0.0;
+    $durationmonths = !empty($order->durationmonths) ? (int)$order->durationmonths : 1;
+    $expiresat = !empty($order->expiresat) ? (int)$order->expiresat : 0;
+    $timecreated = !empty($order->timecreated) ? (int)$order->timecreated : time();
+
+    $stmt->bind_param(
+        'iidsdiii',
+        $userid,
+        $productid,
+        $amount,
+        $promocode,
+        $discountamount,
+        $durationmonths,
+        $expiresat,
+        $timecreated
+    );
+
+    if (!$stmt->execute()) {
+        throw new moodle_exception('Plugin DB insert order error: ' . $stmt->error);
+    }
+
+    $orderid = (int)$db->insert_id;
+    $stmt->close();
+
+    return $orderid;
+}
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
     return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
@@ -165,8 +246,17 @@ if ($action === 'start') {
     }
 
     $cartids = array_keys($SESSION->local_elearning_system_cart);
-    [$insql, $params] = $DB->get_in_or_equal($cartids, SQL_PARAMS_NAMED);
-    $records = $DB->get_records_select('elearning_products', 'id ' . $insql, $params, 'id DESC');
+    $records = local_elearning_system_plugin_get_payment_products($cartids);
+
+    foreach ($cartids as $cartid) {
+    if (!isset($records[(int)$cartid])) {
+        unset($SESSION->local_elearning_system_cart[(int)$cartid]);
+    }
+}
+
+if (empty($records)) {
+    redirect(new moodle_url('/local/elearning_system/cart.php'));
+}
 
     $pendingitems = [];
     $totalamount = 0.0;
@@ -310,7 +400,7 @@ if ($action === 'start') {
             }
             $ordertimecreated = time();
             $order->timecreated = $ordertimecreated;
-           $order->id = (int)$DB->insert_record('elearning_orders', $order);
+           $order->id = local_elearning_system_plugin_insert_order($order);
 local_elearning_system_enrol_user_for_product((int)$item['productid'], $beneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
 
 local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
@@ -337,51 +427,78 @@ if ($isparentaccount && (int)$USER->id !== $beneficiaryuserid) {
         ]));
     }
 
-    if ($stripesk === '') {
-        echo $OUTPUT->header();
-        echo html_writer::div('Stripe secret key is not configured. Please set it in plugin settings.', 'alert alert-danger');
-        echo html_writer::link(
-            new moodle_url('/admin/settings.php', ['section' => 'local_elearning_system_paymentsettings']),
-            'Open payment settings',
-            ['class' => 'btn btn-primary me-2']
-        );
-        echo html_writer::link(new moodle_url('/local/elearning_system/checkout.php'), 'Back to checkout', ['class' => 'btn btn-secondary']);
-        echo $OUTPUT->footer();
-        exit;
-    }
-
-    if (!function_exists('curl_init')) {
-        throw new moodle_exception('cURL is required for Stripe integration.');
-    }
-
-    $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($stripepostfields));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $stripesk,
-        'Content-Type: application/x-www-form-urlencoded',
-    ]);
-    $response = curl_exec($ch);
-    $httpcode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlerror = curl_error($ch);
-    curl_close($ch);
-
-    $result = json_decode((string)$response, true);
-    if ($httpcode >= 200 && $httpcode < 300 && !empty($result['url'])) {
-        redirect($result['url']);
-    }
-
+if ($stripesk === '') {
     echo $OUTPUT->header();
     echo html_writer::div('Achat failed', 'alert alert-danger');
-    if (!empty($curlerror)) {
-        echo html_writer::div('Stripe error: ' . s($curlerror), 'alert alert-warning');
-    }
-    echo html_writer::link(new moodle_url('/local/elearning_system/checkout.php'), 'Back to checkout', ['class' => 'btn btn-secondary']);
+    echo html_writer::div('Stripe secret key is not configured.', 'alert alert-warning');
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/checkout.php'),
+        'Back to checkout',
+        ['class' => 'btn btn-secondary']
+    );
     echo $OUTPUT->footer();
     exit;
 }
 
+if (!function_exists('curl_init')) {
+    echo $OUTPUT->header();
+    echo html_writer::div('Achat failed', 'alert alert-danger');
+    echo html_writer::div('cURL is not enabled in PHP.', 'alert alert-warning');
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/checkout.php'),
+        'Back to checkout',
+        ['class' => 'btn btn-secondary']
+    );
+    echo $OUTPUT->footer();
+    exit;
+}
+
+$ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($stripepostfields));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $stripesk,
+    'Content-Type: application/x-www-form-urlencoded',
+]);
+
+$response = curl_exec($ch);
+$httpcode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlerror = curl_error($ch);
+curl_close($ch);
+
+$result = json_decode((string)$response, true);
+
+if ($httpcode >= 200 && $httpcode < 300 && !empty($result['url'])) {
+    redirect($result['url']);
+}
+
+echo $OUTPUT->header();
+
+echo html_writer::div('Achat failed', 'alert alert-danger');
+echo html_writer::div('HTTP code: ' . s((string)$httpcode), 'alert alert-warning');
+
+if (!empty($curlerror)) {
+    echo html_writer::div('cURL error: ' . s($curlerror), 'alert alert-warning');
+}
+
+if (!empty($response)) {
+    echo html_writer::tag('pre', s((string)$response), [
+        'class' => 'alert alert-light',
+        'style' => 'white-space:pre-wrap; direction:ltr; text-align:left; max-height:350px; overflow:auto;'
+    ]);
+}
+
+echo html_writer::link(
+    new moodle_url('/local/elearning_system/checkout.php'),
+    'Back to checkout',
+    ['class' => 'btn btn-secondary']
+);
+
+echo $OUTPUT->footer();
+exit;
+
+}
 $paidsuccess = false;
 if ($action === 'result' && $status === 'success') {
     // Success URLs generated by free-checkout and simulation do not include a Stripe session.
@@ -447,11 +564,11 @@ if ($paidsuccess) {
                 }
                 $ordertimecreated = time();
                 $order->timecreated = $ordertimecreated;
-                $order->id = (int)$DB->insert_record('elearning_orders', $order);
+                $order->id = local_elearning_system_plugin_insert_order($order);
 local_elearning_system_enrol_user_for_product((int)$item['productid'], $pendingbeneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
 
 local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
-local_elearning_system_send_admin_purchase_notification($order, $DB);
+local_elearning_system_send_admin_purchase_notification((int)$order->id, $DB);
 
 if ($isparentaccount && (int)$USER->id !== $pendingbeneficiaryuserid) {
     local_elearning_system_send_parent_purchase_email($order, (int)$USER->id, $DB);

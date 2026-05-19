@@ -2,6 +2,7 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -13,6 +14,37 @@ $PAGE->set_heading(get_string('checkout', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/checkout.php');
 
 global $DB;
+function local_elearning_system_plugin_get_checkout_products(array $ids): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+    if (empty($ids)) {
+        return [];
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    $stmt = $db->prepare("SELECT * FROM el_products WHERE id IN ($placeholders)");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $products;
+}
 
 $isloggedin = isloggedin() && !isguestuser();
 
@@ -35,8 +67,13 @@ $total = 0.0;
 $linebyproduct = [];
 
 if (!empty($cartids)) {
-    [$insql, $params] = $DB->get_in_or_equal($cartids, SQL_PARAMS_NAMED);
-    $records = $DB->get_records_select('elearning_products', 'id ' . $insql, $params, 'id DESC');
+    $records = local_elearning_system_plugin_get_checkout_products($cartids);
+
+    foreach ($cartids as $cartid) {
+    if (!isset($records[(int)$cartid])) {
+        unset($SESSION->local_elearning_system_cart[(int)$cartid]);
+    }
+}
 
     foreach ($records as $r) {
         $price = !empty($r->price) ? (float)$r->price : 0.0;

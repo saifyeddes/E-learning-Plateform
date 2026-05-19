@@ -2,6 +2,7 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 
 $productid = required_param('id', PARAM_INT);
 $return = optional_param('return', 'cart', PARAM_ALPHA);
@@ -10,13 +11,38 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 
 global $DB;
+function local_elearning_system_plugin_get_product_for_cart(int $id): ?stdClass {
+    if ($id <= 0) {
+        return null;
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $stmt = $db->prepare("SELECT * FROM el_products WHERE id = ? LIMIT 1");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $product = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $product ?: null;
+}
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
     return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
 }
 
-$product = $DB->get_record('elearning_products', ['id' => $productid], 'id,type,status,price,saleprice,isbundle', MUST_EXIST);
+$product = local_elearning_system_plugin_get_product_for_cart($productid);
 
+if (!$product) {
+    throw new moodle_exception('invalidaccess');
+}
 $price = !empty($product->price) ? (float)$product->price : 0.0;
 $saleprice = !empty($product->saleprice) ? (float)$product->saleprice : 0.0;
 $displayprice = $saleprice > 0 ? $saleprice : $price;

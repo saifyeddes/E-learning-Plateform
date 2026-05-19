@@ -2,8 +2,26 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 
 global $DB, $CFG, $USER, $PAGE, $OUTPUT, $SESSION;
+function local_elearning_system_plugin_get_catalog_products(): array {
+    $db = \local_elearning_system\plugin_db::get();
+
+    $result = $db->query("SELECT * FROM el_products ORDER BY id DESC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $records = [];
+
+    while ($row = $result->fetch_object()) {
+        $records[(int)$row->id] = $row;
+    }
+
+    return $records;
+}
 
 $context = context_system::instance();
 
@@ -61,7 +79,7 @@ if ($isloggedin) {
 // GET PRODUCTS
 // Show all free products and only published paid products.
 // =============================
-$records = $DB->get_records('elearning_products', null, 'id DESC');
+$records = local_elearning_system_plugin_get_catalog_products();
 
 $products = [];
 $bundles = [];

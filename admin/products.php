@@ -13,6 +13,126 @@ $PAGE->set_title('Products');
 $PAGE->set_heading('Products');
 
 global $DB, $CFG;
+/**
+ * Independent plugin database helper.
+ */
+function local_elearning_system_plugin_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_plugin_sql_value($value): string {
+    $db = local_elearning_system_plugin_db();
+
+    if ($value === null) {
+        return 'NULL';
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return (string)$value;
+    }
+
+    return "'" . $db->real_escape_string((string)$value) . "'";
+}
+
+function local_elearning_system_plugin_get_product(int $id): ?stdClass {
+    if ($id <= 0) {
+        return null;
+    }
+
+    $db = local_elearning_system_plugin_db();
+    $id = (int)$id;
+
+    $result = $db->query("SELECT * FROM el_products WHERE id = {$id} LIMIT 1");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $record = $result->fetch_object();
+    return $record ?: null;
+}
+
+function local_elearning_system_plugin_get_products(): array {
+    $db = local_elearning_system_plugin_db();
+
+    $result = $db->query("SELECT * FROM el_products ORDER BY id DESC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $records = [];
+    while ($row = $result->fetch_object()) {
+        $records[(int)$row->id] = $row;
+    }
+
+    return $records;
+}
+
+function local_elearning_system_plugin_insert_product(stdClass $record): int {
+    $db = local_elearning_system_plugin_db();
+
+    $data = get_object_vars($record);
+    unset($data['id']);
+
+    $fields = [];
+    $values = [];
+
+    foreach ($data as $field => $value) {
+        $fields[] = '`' . $db->real_escape_string((string)$field) . '`';
+        $values[] = local_elearning_system_plugin_sql_value($value);
+    }
+
+    $sql = "INSERT INTO el_products (" . implode(',', $fields) . ")
+            VALUES (" . implode(',', $values) . ")";
+
+    if (!$db->query($sql)) {
+        throw new moodle_exception('Plugin DB insert error: ' . $db->error);
+    }
+
+    return (int)$db->insert_id;
+}
+
+function local_elearning_system_plugin_update_product(stdClass $record): bool {
+    if (empty($record->id)) {
+        return false;
+    }
+
+    $db = local_elearning_system_plugin_db();
+
+    $id = (int)$record->id;
+    $data = get_object_vars($record);
+    unset($data['id']);
+
+    $sets = [];
+
+    foreach ($data as $field => $value) {
+        $sets[] = '`' . $db->real_escape_string((string)$field) . '` = ' . local_elearning_system_plugin_sql_value($value);
+    }
+
+    $sql = "UPDATE el_products SET " . implode(',', $sets) . " WHERE id = {$id}";
+
+    if (!$db->query($sql)) {
+        throw new moodle_exception('Plugin DB update error: ' . $db->error);
+    }
+
+    return true;
+}
+
+function local_elearning_system_plugin_delete_product(int $id): bool {
+    if ($id <= 0) {
+        return false;
+    }
+
+    $db = local_elearning_system_plugin_db();
+    $id = (int)$id;
+
+    if (!$db->query("DELETE FROM el_products WHERE id = {$id}")) {
+        throw new moodle_exception('Plugin DB delete error: ' . $db->error);
+    }
+
+    return true;
+}
 
 // PARAMS
 $editid  = optional_param('edit', 0, PARAM_INT);
@@ -47,7 +167,7 @@ if ($selectedstatusfilter !== '') {
 
 // DELETE
 if ($deleteid && confirm_sesskey()) {
-    $DB->delete_records('elearning_products', ['id'=>$deleteid]);
+    local_elearning_system_plugin_delete_product($deleteid);
     redirect(new moodle_url('/local/elearning_system/admin/products.php', $listparams));
 }
 
@@ -135,20 +255,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $bundlerecord->timemodified = time();
         if ($bundleaction === 'updatebundle' && $bundleid > 0) {
-            $existingbundle = $DB->get_record('elearning_products', ['id' => $bundleid], '*', IGNORE_MISSING);
+            $existingbundle = local_elearning_system_plugin_get_product($bundleid);
             if ($existingbundle && !empty($existingbundle->isbundle)) {
                 $bundlerecord->id = $bundleid;
                 if (empty($bundlerecord->image) && !empty($existingbundle->image)) {
                     $bundlerecord->image = $existingbundle->image;
                 }
-                $DB->update_record('elearning_products', $bundlerecord);
+                local_elearning_system_plugin_update_product($bundlerecord);
                 \core\notification::add('Bundle updated successfully.', \core\output\notification::NOTIFY_SUCCESS);
             } else {
                 \core\notification::add('Bundle not found.', \core\output\notification::NOTIFY_ERROR);
             }
         } else {
             $bundlerecord->timecreated = time();
-            $DB->insert_record('elearning_products', $bundlerecord);
+            local_elearning_system_plugin_insert_product($bundlerecord);
             \core\notification::add('Bundle created successfully.', \core\output\notification::NOTIFY_SUCCESS);
         }
         redirect(new moodle_url('/local/elearning_system/admin/products.php', $listparams));
@@ -190,7 +310,7 @@ $record->saleprice = ($record->type === 'paid') ? $saleprice : 0;
     $record->bundleitems = '';
 
     if ($productid) {
-        $existingproduct = $DB->get_record('elearning_products', ['id' => $productid], 'id, isbundle, bundleitems', IGNORE_MISSING);
+        $existingproduct = local_elearning_system_plugin_get_product($productid);
         if ($existingproduct && !empty($existingproduct->isbundle)) {
             $record->isbundle = 1;
             $record->bundleitems = (string)$existingproduct->bundleitems;
@@ -198,7 +318,12 @@ $record->saleprice = ($record->type === 'paid') ? $saleprice : 0;
     }
 
     $redirectparams = $listparams + ($productid ? ['edit' => $productid] : ['addnew' => 1]);
-
+if ($productid) {
+    $oldproduct = local_elearning_system_plugin_get_product($productid);
+    if ($oldproduct && !empty($oldproduct->image)) {
+        $record->image = (string)$oldproduct->image;
+    }
+}
     // IMAGE UPLOAD
     if (!empty($_FILES['productimage']['name'])) {
         $uploadedfile = $_FILES['productimage'];
@@ -235,10 +360,10 @@ $record->saleprice = ($record->type === 'paid') ? $saleprice : 0;
 
     if ($productid) {
         $record->id = $productid;
-        $DB->update_record('elearning_products',$record);
+        local_elearning_system_plugin_update_product($record);
     } else {
         $record->timecreated = time();
-        $DB->insert_record('elearning_products',$record);
+        local_elearning_system_plugin_insert_product($record);
     }
 
     redirect(new moodle_url('/local/elearning_system/admin/products.php', $listparams));
@@ -331,12 +456,12 @@ $statusfilters = [
     ],
 ];
 
-$records = $DB->get_records('elearning_products', null, 'id DESC');
+$records = local_elearning_system_plugin_get_products();
 
 $bundleavailableproducts = [];
 $selectedbundleidsforedit = [];
 if ($editbundleid) {
-    $editingbundle = $DB->get_record('elearning_products', ['id' => $editbundleid], '*', IGNORE_MISSING);
+    $editingbundle = local_elearning_system_plugin_get_product($editbundleid);
     if ($editingbundle && !empty($editingbundle->isbundle) && !empty($editingbundle->bundleitems)) {
         $selectedbundleidsforedit = array_map('intval', array_filter(explode(',', (string)$editingbundle->bundleitems)));
     }
@@ -510,22 +635,30 @@ if ($totalpages > 1) {
 // EDIT
 $editproduct = null;
 if ($editid) {
-    $editproduct = $DB->get_record('elearning_products',['id'=>$editid]);
+    $editproduct = local_elearning_system_plugin_get_product($editid);
 
     if ($editproduct && !empty($editproduct->image)) {
-        $editproduct->imageurl = $CFG->wwwroot.$editproduct->image;
+        $editproduct->imageurl = (strpos((string)$editproduct->image, 'http') === 0)
+            ? (string)$editproduct->image
+            : $CFG->wwwroot . (string)$editproduct->image;
     }
 
     if ($editproduct) {
         $editproduct->type = ($editproduct->type === 'paid' || $editproduct->type === 'subscription') ? 'paid' : 'free';
-        $editproduct->selectedcategoryid = $editproduct->categoryid;
-        $editproduct->selectedcourseid = $editproduct->courseid;
+        $editproduct->selectedcategoryid = !empty($editproduct->categoryid) ? (int)$editproduct->categoryid : 0;
+        $editproduct->selectedcourseid = !empty($editproduct->courseid) ? (int)$editproduct->courseid : 0;
+
+        $editproduct->istypefree = ($editproduct->type !== 'paid');
+        $editproduct->istypepaid = ($editproduct->type === 'paid');
+
+        $editproduct->isstatusdraft = ((string)$editproduct->status === 'draft');
+        $editproduct->isstatuspublished = ((string)$editproduct->status === 'publish');
     }
 }
 
 $editbundle = null;
 if ($editbundleid) {
-    $editbundle = $DB->get_record('elearning_products', ['id' => $editbundleid], '*', IGNORE_MISSING);
+    $editbundle = local_elearning_system_plugin_get_product($editbundleid);
     if ($editbundle && !empty($editbundle->isbundle)) {
         $editbundle->selectedcategoryid = $editbundle->categoryid;
         $editbundle->selectedcourseid = $editbundle->courseid;

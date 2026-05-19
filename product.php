@@ -2,6 +2,7 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 
 $productid = required_param('id', PARAM_INT);
 
@@ -13,6 +14,60 @@ local_elearning_system_apply_requested_language();
 local_elearning_system_force_auth_login_url('/local/elearning_system/product.php?id=' . $productid);
 
 global $DB, $CFG;
+function local_elearning_system_plugin_get_product_client(int $id): ?stdClass {
+    if ($id <= 0) {
+        return null;
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $stmt = $db->prepare("SELECT * FROM el_products WHERE id = ? LIMIT 1");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $product = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $product ?: null;
+}
+
+function local_elearning_system_plugin_get_products_by_ids_client(array $ids): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+    if (empty($ids)) {
+        return [];
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    $stmt = $db->prepare("SELECT id, name, courseid FROM el_products WHERE id IN ($placeholders)");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $products;
+}
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
     return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
@@ -32,8 +87,11 @@ local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system
 
 $authurl = (new moodle_url('/local/elearning_system/auth.php', ['return' => '/local/elearning_system/product.php?id=' . $productid]))->out(false);
 
-$productrecord = $DB->get_record('elearning_products', ['id' => $productid], '*', MUST_EXIST);
+$productrecord = local_elearning_system_plugin_get_product_client($productid);
 
+if (!$productrecord) {
+    throw new moodle_exception('invalidaccess');
+}
 $originalprice = !empty($productrecord->price) ? (float)$productrecord->price : 0.0;
 $saleprice = !empty($productrecord->saleprice) ? (float)$productrecord->saleprice : 0.0;
 
@@ -96,11 +154,11 @@ $templatedata = [
     'type' => $type === 'free' ? get_string('free', 'local_elearning_system') : get_string('paid', 'local_elearning_system'),
     'isfree' => $type === 'free',
     'ispaid' => $type === 'paid',
-    'price' => number_format($displayprice, 2),
-'displayprice' => number_format($displayprice, 2),
+    'price' => local_elearning_system_format_price($displayprice),
+'displayprice' => local_elearning_system_format_price($displayprice),
 
-'originalprice' => $hasdiscount ? number_format($originalprice, 2) : '',
-'saleprice' => $saleprice > 0 ? number_format($saleprice, 2) : '',
+'originalprice' => $hasdiscount ? local_elearning_system_format_price($originalprice) : '',
+'saleprice' => $saleprice > 0 ? local_elearning_system_format_price($saleprice) : '',
 'hasdiscount' => $hasdiscount,
     'categoryname' => $categoryname,
     'coursename' => $coursename,

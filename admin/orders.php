@@ -1,5 +1,8 @@
 <?php
+
 require_once(__DIR__ . '/../../../config.php');
+require_once(__DIR__ . '/../classes/plugin_db.php');
+require_once(__DIR__ . '/../lib.php');
 require_login();
 require_login();
 
@@ -13,6 +16,50 @@ $PAGE->set_title('Orders');
 $PAGE->set_heading('Orders');
 
 global $DB;
+function local_elearning_system_plugin_orders_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_plugin_get_order_products_for_filter(): array {
+    $db = local_elearning_system_plugin_orders_db();
+
+    $result = $db->query("SELECT id, name FROM el_products ORDER BY name ASC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    return $products;
+}
+
+function local_elearning_system_plugin_get_admin_orders(): array {
+    $db = local_elearning_system_plugin_orders_db();
+
+    $sql = "SELECT o.id, o.userid, o.productid, o.amount, o.timecreated,
+                   o.promocode, o.durationmonths, o.expiresat,
+                   p.name AS productname
+              FROM el_orders o
+         LEFT JOIN el_products p ON p.id = o.productid
+          ORDER BY o.id DESC";
+
+    $result = $db->query($sql);
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $orders = [];
+    while ($row = $result->fetch_object()) {
+        $orders[(int)$row->id] = $row;
+    }
+
+    return $orders;
+}
 
 $searchquery = trim((string)optional_param('search', '', PARAM_TEXT));
 $selectedproductid = optional_param('productid', 0, PARAM_INT);
@@ -87,91 +134,85 @@ $productfilters = [[
     'selected' => $selectedproductid === 0,
 ]];
 
-if ($DB->get_manager()->table_exists('elearning_products')) {
-    $productrecords = $DB->get_records('elearning_products', null, 'name ASC', 'id, name');
-    foreach ($productrecords as $productrecord) {
-        $productfilters[] = [
-            'value' => (int)$productrecord->id,
-            'label' => format_string($productrecord->name),
-            'selected' => $selectedproductid === (int)$productrecord->id,
-        ];
+$productrecords = local_elearning_system_plugin_get_order_products_for_filter();
+
+foreach ($productrecords as $productrecord) {
+    $productfilters[] = [
+        'value' => (int)$productrecord->id,
+        'label' => format_string($productrecord->name),
+        'selected' => $selectedproductid === (int)$productrecord->id,
+    ];
+}
+$records = local_elearning_system_plugin_get_admin_orders();
+
+foreach ($records as $r) {
+    $user = $DB->get_record('user', ['id' => (int)$r->userid], 'id, firstname, lastname, email', IGNORE_MISSING);
+
+    $firstname = $user ? (string)$user->firstname : '';
+    $lastname = $user ? (string)$user->lastname : '';
+    $email = $user ? (string)$user->email : '-';
+
+    $fullname = trim($firstname . ' ' . $lastname);
+    if ($fullname === '') {
+        $fullname = '-';
     }
-}
 
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    $ordercolumns = $DB->get_columns('elearning_orders');
-    $promoselect = isset($ordercolumns['promocode']) ? 'o.promocode AS promocode' : "'' AS promocode";
-    $durationselect = isset($ordercolumns['durationmonths']) ? 'o.durationmonths AS durationmonths' : '1 AS durationmonths';
+    $productname = !empty($r->productname) ? format_string($r->productname) : '-';
+    $promocode = trim((string)($r->promocode ?? ''));
+    $durationmonths = max(1, (int)($r->durationmonths ?? 1));
 
-    $sql = "SELECT o.id, o.userid, o.productid, o.amount, o.timecreated,
-                   {$promoselect},
-                   {$durationselect},
-                   u.firstname, u.lastname, u.email,
-                   p.name AS productname
-              FROM {elearning_orders} o
-         LEFT JOIN {user} u ON u.id = o.userid
-         LEFT JOIN {elearning_products} p ON p.id = o.productid
-          ORDER BY o.id DESC";
-
-    $records = $DB->get_records_sql($sql);
-    foreach ($records as $r) {
-        $fullname = trim((string)$r->firstname . ' ' . (string)$r->lastname);
-        if ($fullname === '') {
-            $fullname = '-';
+    if (!empty($r->expiresat)) {
+        $expirationtimestamp = (int)$r->expiresat;
+    } else {
+        $expirationtimestamp = strtotime('+' . $durationmonths . ' months', (int)$r->timecreated);
+        if ($expirationtimestamp === false) {
+            $expirationtimestamp = (int)$r->timecreated;
         }
+    }
 
-        $productname = !empty($r->productname) ? format_string($r->productname) : '-';
-        $email = (string)($r->email ?? '-');
-        $promocode = trim((string)($r->promocode ?? ''));
-        $durationmonths = max(1, (int)($r->durationmonths ?? 1));
-       $expirationtimestamp = strtotime('+' . $durationmonths . ' months', (int)$r->timecreated);
+    if ($expirationfromts > 0 && $expirationtimestamp < $expirationfromts) {
+        continue;
+    }
 
-if ($expirationtimestamp === false) {
-    $expirationtimestamp = (int)$r->timecreated;
-}
+    if ($expirationtots > 0 && $expirationtimestamp > $expirationtots) {
+        continue;
+    }
 
-if ($expirationfromts > 0 && $expirationtimestamp < $expirationfromts) {
-    continue;
-}
+    if ($selectedproductid !== 0 && (int)$r->productid !== $selectedproductid) {
+        continue;
+    }
 
-if ($expirationtots > 0 && $expirationtimestamp > $expirationtots) {
-    continue;
-}
-        if ($selectedproductid !== 0 && (int)$r->productid !== $selectedproductid) {
+    if ($searchquery !== '') {
+        $haystack = core_text::strtolower(implode(' ', [
+            (string)$r->id,
+            $fullname,
+            $email,
+            $productname,
+            $promocode,
+            (string)$durationmonths,
+            (string)$r->amount,
+        ]));
+
+        $needle = core_text::strtolower($searchquery);
+
+        if (strpos($haystack, $needle) === false) {
             continue;
         }
-
-        if ($searchquery !== '') {
-            $haystack = core_text::strtolower(implode(' ', [
-                (string)$r->id,
-                $fullname,
-                $email,
-                $productname,
-                $promocode,
-                (string)($r->durationmonths ?? 1),
-                (string)$r->amount,
-            ]));
-            $needle = core_text::strtolower($searchquery);
-
-            if (strpos($haystack, $needle) === false) {
-                continue;
-            }
-        }
-
-        $orders[] = [
-            'id' => (int)$r->id,
-            'user' => format_string($fullname),
-            'email' => s($email),
-            'product' => $productname,
-            'promo' => $promocode !== '' ? ('Yes (' . s($promocode) . ')') : 'No',
-            'durationmonths' => $durationmonths,
-            'durationachetee' => $durationmonths . ' mois',
-            'amount' => number_format((float)$r->amount, 2),
-            'timecreated' => userdate((int)$r->timecreated, '%d/%m/%Y %H:%M'),
-            'expirationdate' => userdate($expirationtimestamp, '%d/%m/%Y %H:%M'),
-            'invoiceurl' => (new \moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),
-        ];
     }
+
+    $orders[] = [
+        'id' => (int)$r->id,
+        'user' => format_string($fullname),
+        'email' => s($email),
+        'product' => $productname,
+        'promo' => $promocode !== '' ? ('Yes (' . s($promocode) . ')') : 'No',
+        'durationmonths' => $durationmonths,
+        'durationachetee' => $durationmonths . ' mois',
+        'amount' => local_elearning_system_format_price((float)$r->amount),
+        'timecreated' => userdate((int)$r->timecreated, '%d/%m/%Y %H:%M'),
+        'expirationdate' => userdate($expirationtimestamp, '%d/%m/%Y %H:%M'),
+        'invoiceurl' => (new \moodle_url('/local/elearning_system/admin/invoice.php', ['id' => (int)$r->id]))->out(false),
+    ];
 }
 
 $totalorders = count($orders);
