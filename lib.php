@@ -2029,3 +2029,108 @@ function local_elearning_system_get_language_switcher_data(): array {
         'langurl_ar' => $arurl->out(false),
     ];
 }
+
+
+function local_elearning_system_send_admin_purchase_notification(int $orderid): bool {
+    global $DB;
+
+    if ($orderid <= 0) {
+        return false;
+    }
+
+    $order = $DB->get_record('elearning_orders', ['id' => $orderid], '*', IGNORE_MISSING);
+    if (!$order) {
+        return false;
+    }
+
+    $product = $DB->get_record('elearning_products', ['id' => (int)$order->productid], '*', IGNORE_MISSING);
+    $student = $DB->get_record('user', ['id' => (int)$order->userid], '*', IGNORE_MISSING);
+
+    if (!$product || !$student) {
+        return false;
+    }
+
+    $admins = get_admins();
+    if (empty($admins)) {
+        return false;
+    }
+
+    $currency = local_elearning_system_get_site_currency_code();
+    $amount = number_format((float)$order->amount, 2);
+    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
+
+    $purchasedate = userdate((int)($order->timecreated ?? time()));
+    $expirationdate = !empty($order->expiresat)
+        ? userdate((int)$order->expiresat)
+        : 'Unlimited';
+
+    $productname = format_string($product->name);
+    $studentname = fullname($student);
+    $studentemail = (string)$student->email;
+
+    $invoiceurl = (new moodle_url('/local/elearning_system/invoice.php', [
+        'id' => (int)$order->id,
+        'pdf' => 1,
+    ]))->out(false);
+
+    $ordersurl = (new moodle_url('/local/elearning_system/admin/orders.php'))->out(false);
+
+    $subject = 'New purchase received - ' . $productname;
+
+    $body = "Hello Admin,\n\n"
+        . "A new course purchase has been completed on the platform.\n\n"
+        . "Order number: " . (int)$order->id . "\n"
+        . "Student: " . $studentname . "\n"
+        . "Student email: " . $studentemail . "\n"
+        . "Product: " . $productname . "\n"
+        . "Amount: " . $currency . " " . $amount . "\n"
+        . "Access duration: " . $durationmonths . " month(s)\n"
+        . "Purchase date: " . $purchasedate . "\n"
+        . "Expiration date: " . $expirationdate . "\n\n"
+        . "Invoice: " . $invoiceurl . "\n"
+        . "Admin orders page: " . $ordersurl . "\n\n"
+        . "SIT E-learning System";
+
+    $messagehtml = '
+        <p>Hello Admin,</p>
+        <p>A new course purchase has been completed on the platform.</p>
+
+        <table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;">
+            <tr><td><strong>Order number</strong></td><td>#' . s((string)$order->id) . '</td></tr>
+            <tr><td><strong>Student</strong></td><td>' . s($studentname) . '</td></tr>
+            <tr><td><strong>Student email</strong></td><td>' . s($studentemail) . '</td></tr>
+            <tr><td><strong>Product</strong></td><td>' . s($productname) . '</td></tr>
+            <tr><td><strong>Amount</strong></td><td>' . s($currency . ' ' . $amount) . '</td></tr>
+            <tr><td><strong>Access duration</strong></td><td>' . s($durationmonths . ' month(s)') . '</td></tr>
+            <tr><td><strong>Purchase date</strong></td><td>' . s($purchasedate) . '</td></tr>
+            <tr><td><strong>Expiration date</strong></td><td>' . s($expirationdate) . '</td></tr>
+        </table>
+
+        <p>
+            <a href="' . s($invoiceurl) . '">Download invoice</a>
+        </p>
+
+        <p>
+            <a href="' . s($ordersurl) . '">Open admin orders page</a>
+        </p>
+
+        <p>SIT E-learning System</p>
+    ';
+
+    $sent = false;
+
+    foreach ($admins as $admin) {
+        if (empty($admin->email) || !validate_email((string)$admin->email)) {
+            continue;
+        }
+
+        $admin = local_elearning_system_prepare_mail_user($admin);
+        $fromuser = local_elearning_system_get_valid_from_user($admin);
+
+        if (email_to_user($admin, $fromuser, $subject, $body, $messagehtml)) {
+            $sent = true;
+        }
+    }
+
+    return $sent;
+}

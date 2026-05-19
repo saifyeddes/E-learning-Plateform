@@ -310,12 +310,15 @@ if ($action === 'start') {
             }
             $ordertimecreated = time();
             $order->timecreated = $ordertimecreated;
-            $order->id = (int)$DB->insert_record('elearning_orders', $order);
-            local_elearning_system_enrol_user_for_product((int)$item['productid'], $beneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
-            local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
-            if ($isparentaccount && (int)$USER->id !== $beneficiaryuserid) {
-                local_elearning_system_send_parent_purchase_email($order, (int)$USER->id, $DB);
-            }
+           $order->id = (int)$DB->insert_record('elearning_orders', $order);
+local_elearning_system_enrol_user_for_product((int)$item['productid'], $beneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
+
+local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
+local_elearning_system_send_admin_purchase_notification($order, $DB);
+
+if ($isparentaccount && (int)$USER->id !== $beneficiaryuserid) {
+    local_elearning_system_send_parent_purchase_email($order, (int)$USER->id, $DB);
+}
         }
 
         if ($appliedcoupon) {
@@ -445,11 +448,14 @@ if ($paidsuccess) {
                 $ordertimecreated = time();
                 $order->timecreated = $ordertimecreated;
                 $order->id = (int)$DB->insert_record('elearning_orders', $order);
-                local_elearning_system_enrol_user_for_product((int)$item['productid'], $pendingbeneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
-                local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
-                if ($isparentaccount && (int)$USER->id !== $pendingbeneficiaryuserid) {
-                    local_elearning_system_send_parent_purchase_email($order, (int)$USER->id, $DB);
-                }
+local_elearning_system_enrol_user_for_product((int)$item['productid'], $pendingbeneficiaryuserid, (int)$item['durationmonths'], $ordertimecreated, $DB);
+
+local_elearning_system_send_order_notification_if_needed($order, 'purchase_product', $DB);
+local_elearning_system_send_admin_purchase_notification($order, $DB);
+
+if ($isparentaccount && (int)$USER->id !== $pendingbeneficiaryuserid) {
+    local_elearning_system_send_parent_purchase_email($order, (int)$USER->id, $DB);
+}
             }
         }
     }
