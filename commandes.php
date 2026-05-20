@@ -2,6 +2,7 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 require_login();
 
 $context = context_system::instance();
@@ -12,6 +13,82 @@ $PAGE->set_title('Mes commandes');
 $PAGE->set_heading('Mes commandes');
 
 global $DB, $USER, $CFG;
+function local_elearning_system_commandes_plugin_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_commandes_get_orders(int $userid): array {
+    $db = local_elearning_system_commandes_plugin_db();
+
+    $stmt = $db->prepare("
+        SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
+               o.expiresat, o.durationmonths,
+               p.id AS productid,
+               p.name AS productname,
+               p.courseid,
+               p.isbundle,
+               p.bundleitems,
+               p.image,
+               p.description,
+               p.price,
+               p.saleprice
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.userid = ?
+      ORDER BY o.id DESC
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $userid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $orders = [];
+    while ($row = $result->fetch_object()) {
+        $orders[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $orders;
+}
+
+function local_elearning_system_commandes_get_products_by_ids(array $ids): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+    if (empty($ids)) {
+        return [];
+    }
+
+    $db = local_elearning_system_commandes_plugin_db();
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    $stmt = $db->prepare("SELECT id, name, courseid, image FROM el_products WHERE id IN ($placeholders)");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $products;
+}
 
 $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
 $targetuserid = (int)$usercontext['targetuserid'];
@@ -82,22 +159,13 @@ if ($isparentaccount && $targetfullname !== '') {
     $pageheading = 'Commandes de ' . $targetfullname;
 }
 
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user($targetuserid, $DB);
-    $ordercolumns = $DB->get_columns('elearning_orders');
-    $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
-        $sql = "SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
-                       p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image, p.description, p.price, p.saleprice,
-                       {$expireselect},
-                   c.fullname AS coursename
-              FROM {elearning_orders} o
-         LEFT JOIN {elearning_products} p ON p.id = o.productid
-         LEFT JOIN {course} c ON c.id = p.courseid
-             WHERE o.userid = :userid
-          ORDER BY o.id DESC";
+$records = local_elearning_system_commandes_get_orders($targetuserid);
+$ordercolumns = [
+    'expiresat' => true,
+    'durationmonths' => true,
+];
 
-    $records = $DB->get_records_sql($sql, ['userid' => $targetuserid]);
-
+if (!empty($records)) {
     foreach ($records as $r) {
         $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
         $courseid = !empty($r->courseid) ? (int)$r->courseid : 0;
@@ -128,8 +196,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         if ($isbundle && !empty($r->bundleitems)) {
             $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$r->bundleitems)))));
             if (!empty($bundleitemids)) {
-                [$insql, $params] = $DB->get_in_or_equal($bundleitemids, SQL_PARAMS_NAMED);
-                $bundleproducts = $DB->get_records_select('elearning_products', 'id ' . $insql, $params, '', 'id,name,courseid,image');
+                $bundleproducts = local_elearning_system_commandes_get_products_by_ids($bundleitemids);
                 
                 foreach ($bundleproducts as $bundleproduct) {
                     [$bundleimage, $hasbundleimage] = local_elearning_system_resolve_order_image(
@@ -166,22 +233,30 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         }
         
         // Get course info
-        $hascourse = $courseid > 0 && !empty($r->coursename);
+        $coursename = '';
+
+if ($courseid > 0) {
+    $course = $DB->get_record('course', ['id' => $courseid], 'id,fullname', IGNORE_MISSING);
+    if ($course) {
+        $coursename = $course->fullname;
+    }
+}
+
+$hascourse = $courseid > 0 && $coursename !== '';
         
         $orders[] = [
             'id' => (int)$r->id,
             'productname' => !empty($r->productname) ? format_string($r->productname) : '-',
-            'coursename' => $hascourse ? format_string($r->coursename) : '-',
+            'coursename' => $hascourse ? format_string($coursename) : '-',
             'hascourse' => $hascourse,
             'courseurl' => $hascourse ? (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
             'productimage' => $productimage,
             'hasproductimage' => $hasproductimage,
-            'amount' => number_format($subtotal, 2),
-            'productprice' => number_format($productdisplayprice, 2),
-            'subtotal' => number_format($subtotal, 2),
-            'tvapercent' => number_format($tvapercent, 1),
-            'taxamount' => number_format($tax, 2),
-            'total' => number_format($total, 2),
+            'amount' => local_elearning_system_format_price($subtotal),
+'productprice' => local_elearning_system_format_price($productdisplayprice),
+'subtotal' => local_elearning_system_format_price($subtotal),
+'taxamount' => local_elearning_system_format_price($tax),
+'total' => local_elearning_system_format_price($total),
             'hastvapercent' => ($tvapercent > 0),
             'timecreated' => userdate((int)$r->timecreated),
             'durationmonths' => max(1, (int)($r->durationmonths ?? 1)),

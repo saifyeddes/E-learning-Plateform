@@ -52,7 +52,7 @@ function local_elearning_system_plugin_get_payment_products(array $ids): array {
 
 function local_elearning_system_plugin_insert_order(stdClass $order): int {
     $db = local_elearning_system_plugin_payment_db();
-
+    
     $stmt = $db->prepare("
         INSERT INTO el_orders
         (userid, productid, amount, promocode, discountamount, durationmonths, expiresat, timecreated)
@@ -93,6 +93,69 @@ function local_elearning_system_plugin_insert_order(stdClass $order): int {
 
     return $orderid;
 }
+
+function local_elearning_system_plugin_get_coupon_by_id(int $couponid): ?stdClass {
+    if ($couponid <= 0) {
+        return null;
+    }
+
+    $db = local_elearning_system_plugin_payment_db();
+
+    $stmt = $db->prepare("
+        SELECT *
+          FROM el_coupons
+         WHERE id = ?
+         LIMIT 1
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare coupon error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $couponid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $coupon = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $coupon ?: null;
+}
+
+function local_elearning_system_plugin_increment_coupon_use(int $couponid): void {
+    if ($couponid <= 0) {
+        return;
+    }
+
+    $db = local_elearning_system_plugin_payment_db();
+
+    $stmt = $db->prepare("
+        UPDATE el_coupons
+           SET currentuse = currentuse + 1,
+               status = CASE
+                   WHEN maxuse IS NOT NULL
+                    AND maxuse > 0
+                    AND currentuse + 1 >= maxuse
+                   THEN 'inactive'
+                   ELSE status
+               END
+         WHERE id = ?
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare coupon update error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $couponid);
+
+    if (!$stmt->execute()) {
+        throw new moodle_exception('Plugin DB coupon update error: ' . $stmt->error);
+    }
+
+    $stmt->close();
+}
+
 
 function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
     return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
@@ -262,17 +325,24 @@ if (empty($records)) {
     $totalamount = 0.0;
 
     $appliedcoupon = null;
-    if (!empty($SESSION->local_elearning_system_coupon)) {
-        $couponid = (int)($SESSION->local_elearning_system_coupon->id ?? 0);
-        if ($couponid > 0) {
-            $coupon = $DB->get_record('elearning_coupons', ['id' => $couponid], '*', IGNORE_MISSING);
-            if ($coupon && (string)$coupon->status === 'active' && (empty($coupon->expirydate) || (int)$coupon->expirydate >= time())) {
-                $appliedcoupon = $coupon;
-            } else {
-                unset($SESSION->local_elearning_system_coupon);
-            }
+
+if (!empty($SESSION->local_elearning_system_coupon)) {
+    $couponid = (int)($SESSION->local_elearning_system_coupon->id ?? 0);
+
+    if ($couponid > 0) {
+        $coupon = local_elearning_system_plugin_get_coupon_by_id($couponid);
+
+        if (
+            $coupon
+            && strtolower((string)$coupon->status) === 'active'
+            && (empty($coupon->expirydate) || (int)$coupon->expirydate >= time())
+        ) {
+            $appliedcoupon = $coupon;
+        } else {
+            unset($SESSION->local_elearning_system_coupon);
         }
     }
+}
 
     $stripepostfields = [
         'mode' => 'payment',
@@ -337,7 +407,7 @@ if (empty($records)) {
 
         $pricewithtax = $displayprice + (($displayprice * $tvapercent) / 100);
         $lineamount = $pricewithtax * $durationmonths;
-        $discountamount = $discountperunit;
+        $discountamount = $discountperunit * $durationmonths;
         $totalamount += $lineamount;
 
         $expiresat = local_elearning_system_calculate_expiration(time(), $durationmonths);
@@ -383,21 +453,13 @@ if (empty($records)) {
             }
 
             $order = new stdClass();
-            $order->userid = $beneficiaryuserid;
-            $order->productid = (int)$item['productid'];
-            $order->amount = (float)$item['amount'];
-            if (isset($ordercolumns['promocode'])) {
-                $order->promocode = trim((string)($item['promocode'] ?? ''));
-            }
-            if (isset($ordercolumns['discountamount'])) {
-                $order->discountamount = (float)($item['discountamount'] ?? 0);
-            }
-            if (isset($ordercolumns['durationmonths'])) {
-                $order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
-            }
-            if (isset($ordercolumns['expiresat'])) {
-                $order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
-            }
+$order->userid = $beneficiaryuserid;
+$order->productid = (int)$item['productid'];
+$order->amount = (float)$item['amount'];
+$order->promocode = trim((string)($item['promocode'] ?? ''));
+$order->discountamount = (float)($item['discountamount'] ?? 0);
+$order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
+$order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
             $ordertimecreated = time();
             $order->timecreated = $ordertimecreated;
            $order->id = local_elearning_system_plugin_insert_order($order);
@@ -412,9 +474,8 @@ if ($isparentaccount && (int)$USER->id !== $beneficiaryuserid) {
         }
 
         if ($appliedcoupon) {
-            $appliedcoupon->currentuse = ((int)$appliedcoupon->currentuse) + 1;
-            $DB->update_record('elearning_coupons', $appliedcoupon);
-        }
+    local_elearning_system_plugin_increment_coupon_use((int)$appliedcoupon->id);
+}
 
         $SESSION->local_elearning_system_pending_order = [];
         $SESSION->local_elearning_system_cart = [];
@@ -547,21 +608,13 @@ if ($paidsuccess) {
                 }
 
                 $order = new stdClass();
-                $order->userid = $pendingbeneficiaryuserid;
-                $order->productid = (int)$item['productid'];
-                $order->amount = (float)$item['amount'];
-                if (isset($ordercolumns['promocode'])) {
-                    $order->promocode = trim((string)($item['promocode'] ?? ''));
-                }
-                if (isset($ordercolumns['discountamount'])) {
-                    $order->discountamount = (float)($item['discountamount'] ?? 0);
-                }
-                if (isset($ordercolumns['durationmonths'])) {
-                    $order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
-                }
-                if (isset($ordercolumns['expiresat'])) {
-                    $order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
-                }
+$order->userid = $pendingbeneficiaryuserid;
+$order->productid = (int)$item['productid'];
+$order->amount = (float)$item['amount'];
+$order->promocode = trim((string)($item['promocode'] ?? ''));
+$order->discountamount = (float)($item['discountamount'] ?? 0);
+$order->durationmonths = max(1, (int)($item['durationmonths'] ?? 1));
+$order->expiresat = (int)($item['expiresat'] ?? local_elearning_system_calculate_expiration(time(), (int)($item['durationmonths'] ?? 1)));
                 $ordertimecreated = time();
                 $order->timecreated = $ordertimecreated;
                 $order->id = local_elearning_system_plugin_insert_order($order);
@@ -578,22 +631,12 @@ if ($isparentaccount && (int)$USER->id !== $pendingbeneficiaryuserid) {
     }
 
     if (!empty($SESSION->local_elearning_system_coupon)) {
-        $couponid = (int)($SESSION->local_elearning_system_coupon->id ?? 0);
-        if ($couponid > 0) {
-            $coupon = $DB->get_record('elearning_coupons', ['id' => $couponid], '*', IGNORE_MISSING);
-            if ($coupon) {
-                $coupon->currentuse = ((int)$coupon->currentuse) + 1;
-                if (!empty($coupon->maxuse) && (int)$coupon->currentuse >= (int)$coupon->maxuse) {
-                    $coupon->status = 'inactive';
-                }
-                if (!empty($coupon->maxuse) && (int)$coupon->currentuse >= (int)$coupon->maxuse) {
-                    $coupon->status = 'inactive';
-                }
-                $DB->update_record('elearning_coupons', $coupon);
-            }
-        }
-    }
+    $couponid = (int)($SESSION->local_elearning_system_coupon->id ?? 0);
 
+    if ($couponid > 0) {
+        local_elearning_system_plugin_increment_coupon_use($couponid);
+    }
+}
     $SESSION->local_elearning_system_pending_order = [];
     $SESSION->local_elearning_system_cart = [];
     unset($SESSION->local_elearning_system_coupon);

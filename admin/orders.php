@@ -4,7 +4,6 @@ require_once(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/../classes/plugin_db.php');
 require_once(__DIR__ . '/../lib.php');
 require_login();
-require_login();
 
 $context = context_system::instance();
 require_capability('local/elearning_system:manage', $context);

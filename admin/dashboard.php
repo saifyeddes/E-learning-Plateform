@@ -1,6 +1,8 @@
 <?php
 
 require('../../../config.php');
+require_once(__DIR__ . '/../classes/plugin_db.php');
+require_once(__DIR__ . '/../lib.php');
 require_login();
 
 $context = context_system::instance();
@@ -13,6 +15,80 @@ $PAGE->set_title('Dashboard');
 $PAGE->set_heading('Dashboard');
 
 global $DB;
+function local_elearning_system_dashboard_plugin_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_dashboard_count_products(): int {
+    $db = local_elearning_system_dashboard_plugin_db();
+
+    $result = $db->query("SELECT COUNT(*) AS total FROM el_products");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $row = $result->fetch_object();
+
+    return $row ? (int)$row->total : 0;
+}
+
+function local_elearning_system_dashboard_count_orders(): int {
+    $db = local_elearning_system_dashboard_plugin_db();
+
+    $result = $db->query("SELECT COUNT(*) AS total FROM el_orders");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $row = $result->fetch_object();
+
+    return $row ? (int)$row->total : 0;
+}
+
+function local_elearning_system_dashboard_total_revenue(): float {
+    $db = local_elearning_system_dashboard_plugin_db();
+
+    $result = $db->query("SELECT COALESCE(SUM(amount), 0) AS total FROM el_orders");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $row = $result->fetch_object();
+
+    return $row ? (float)$row->total : 0.0;
+}
+
+function local_elearning_system_dashboard_revenue_since(int $starttimestamp): array {
+    $db = local_elearning_system_dashboard_plugin_db();
+
+    $stmt = $db->prepare("
+        SELECT id, timecreated, amount
+          FROM el_orders
+         WHERE timecreated >= ?
+         ORDER BY timecreated ASC
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $starttimestamp);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $orders = [];
+    while ($row = $result->fetch_object()) {
+        $orders[] = $row;
+    }
+
+    $stmt->close();
+
+    return $orders;
+}
 
 /**
  * Build sparkline SVG paths from monthly values.
@@ -100,20 +176,10 @@ function local_elearning_system_month_buckets(int $months = 12): array {
     return $buckets;
 }
 
-// STATS
-$totalproducts = $DB->count_records('elearning_products');
-
-$totalorders = 0;
-$totalrevenue = 0;
-
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    $totalorders = $DB->count_records('elearning_orders');
-
-    $orders = $DB->get_records('elearning_orders');
-    foreach ($orders as $o) {
-        $totalrevenue += $o->amount;
-    }
-}
+// STATS from independent plugin database.
+$totalproducts = local_elearning_system_dashboard_count_products();
+$totalorders = local_elearning_system_dashboard_count_orders();
+$totalrevenue = local_elearning_system_dashboard_total_revenue();
 
 // Users and revenue trend (last 12 months).
 $usersbuckets = local_elearning_system_month_buckets(12);
@@ -132,18 +198,18 @@ foreach ($usersrs as $user) {
 }
 $usersrs->close();
 
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    $ordersrs = $DB->get_recordset_select('elearning_orders', 'timecreated >= :startts', ['startts' => $starttimestamp], '', 'id,timecreated,amount');
-    foreach ($ordersrs as $order) {
-        if (empty($order->timecreated)) {
-            continue;
-        }
-        $key = date('Y-m', (int)$order->timecreated);
-        if (isset($revenuebuckets[$key])) {
-            $revenuebuckets[$key]['value'] += (float)$order->amount;
-        }
+$pluginorders = local_elearning_system_dashboard_revenue_since((int)$starttimestamp);
+
+foreach ($pluginorders as $order) {
+    if (empty($order->timecreated)) {
+        continue;
     }
-    $ordersrs->close();
+
+    $key = date('Y-m', (int)$order->timecreated);
+
+    if (isset($revenuebuckets[$key])) {
+        $revenuebuckets[$key]['value'] += (float)$order->amount;
+    }
 }
 
 $usersvalues = [];

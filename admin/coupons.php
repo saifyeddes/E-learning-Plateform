@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../../../config.php');
+require_once(__DIR__ . '/../classes/plugin_db.php');
 require_login();
 
 $context = \context_system::instance();
@@ -12,6 +13,149 @@ $PAGE->set_title('Coupons');
 $PAGE->set_heading('Manage Coupons');
 
 global $DB, $CFG;
+function local_elearning_system_coupons_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_coupon_get_by_id(int $id): ?stdClass {
+    $db = local_elearning_system_coupons_db();
+
+    $stmt = $db->prepare("SELECT * FROM el_coupons WHERE id = ? LIMIT 1");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $coupon = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $coupon ?: null;
+}
+
+function local_elearning_system_coupon_get_by_code(string $code): ?stdClass {
+    $db = local_elearning_system_coupons_db();
+
+    $stmt = $db->prepare("SELECT * FROM el_coupons WHERE code = ? LIMIT 1");
+    $stmt->bind_param('s', $code);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $coupon = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $coupon ?: null;
+}
+
+function local_elearning_system_coupon_delete(int $id): void {
+    $db = local_elearning_system_coupons_db();
+
+    $stmt = $db->prepare("DELETE FROM el_coupons WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+}
+
+function local_elearning_system_coupon_insert(stdClass $coupon): int {
+    $db = local_elearning_system_coupons_db();
+
+    $stmt = $db->prepare("
+        INSERT INTO el_coupons
+        (code, targetproductid, discounttype, discountvalue, minpurchase, maxuse, currentuse, status, expirydate, timecreated)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    $code = (string)$coupon->code;
+    $targetproductid = !empty($coupon->targetproductid) ? (int)$coupon->targetproductid : 0;
+    $discounttype = (string)$coupon->discounttype;
+    $discountvalue = (float)$coupon->discountvalue;
+    $minpurchase = null;
+    $maxuse = !empty($coupon->maxuse) ? (int)$coupon->maxuse : null;
+    $currentuse = !empty($coupon->currentuse) ? (int)$coupon->currentuse : 0;
+    $status = (string)$coupon->status;
+    $expirydate = !empty($coupon->expirydate) ? (int)$coupon->expirydate : null;
+    $timecreated = !empty($coupon->timecreated) ? (int)$coupon->timecreated : time();
+
+    $stmt->bind_param(
+        'sisddiisii',
+        $code,
+        $targetproductid,
+        $discounttype,
+        $discountvalue,
+        $minpurchase,
+        $maxuse,
+        $currentuse,
+        $status,
+        $expirydate,
+        $timecreated
+    );
+
+    $stmt->execute();
+    $id = (int)$db->insert_id;
+    $stmt->close();
+
+    return $id;
+}
+
+function local_elearning_system_coupon_update(stdClass $coupon): void {
+    $db = local_elearning_system_coupons_db();
+
+    $stmt = $db->prepare("
+        UPDATE el_coupons
+           SET code = ?,
+               targetproductid = ?,
+               discounttype = ?,
+               discountvalue = ?,
+               minpurchase = ?,
+               maxuse = ?,
+               status = ?,
+               expirydate = ?
+         WHERE id = ?
+    ");
+
+    $id = (int)$coupon->id;
+    $code = (string)$coupon->code;
+    $targetproductid = !empty($coupon->targetproductid) ? (int)$coupon->targetproductid : 0;
+    $discounttype = (string)$coupon->discounttype;
+    $discountvalue = (float)$coupon->discountvalue;
+    $minpurchase = null;
+    $maxuse = !empty($coupon->maxuse) ? (int)$coupon->maxuse : null;
+    $status = (string)$coupon->status;
+    $expirydate = !empty($coupon->expirydate) ? (int)$coupon->expirydate : null;
+
+    $stmt->bind_param(
+        'sisddisii',
+        $code,
+        $targetproductid,
+        $discounttype,
+        $discountvalue,
+        $minpurchase,
+        $maxuse,
+        $status,
+        $expirydate,
+        $id
+    );
+
+    $stmt->execute();
+    $stmt->close();
+}
+
+function local_elearning_system_coupon_get_all(): array {
+    $db = local_elearning_system_coupons_db();
+
+    $result = $db->query("SELECT * FROM el_coupons ORDER BY timecreated DESC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $coupons = [];
+    while ($row = $result->fetch_object()) {
+        $coupons[(int)$row->id] = $row;
+    }
+
+    return $coupons;
+}
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $couponid = optional_param('id', 0, PARAM_INT);
@@ -25,7 +169,7 @@ $editingcoupon = null;
 // HANDLE DELETE
 // =============================
 if ($action === 'delete' && $couponid && confirm_sesskey()) {
-    $DB->delete_records('elearning_coupons', ['id' => $couponid]);
+    local_elearning_system_coupon_delete((int)$couponid);
     redirect(new \moodle_url('/local/elearning_system/admin/coupons.php'));
 }
 
@@ -47,7 +191,7 @@ if ($action === 'save' && confirm_sesskey()) {
 
     // Check if code already exists (for new coupons)
     if (empty($couponid) && !empty($code)) {
-        $existing = $DB->get_record('elearning_coupons', ['code' => strtoupper($code)]);
+        $existing = local_elearning_system_coupon_get_by_code(strtoupper($code));
         if ($existing) {
             $errors[] = 'This coupon code already exists';
         }
@@ -87,13 +231,13 @@ if ($action === 'save' && confirm_sesskey()) {
         if ($couponid) {
             // Update
             $coupon->id = $couponid;
-            $DB->update_record('elearning_coupons', $coupon);
+            local_elearning_system_coupon_update($coupon);
             redirect(new \moodle_url('/local/elearning_system/admin/coupons.php'), 'Coupon updated successfully');
         } else {
             // Create
             $coupon->timecreated = time();
             $coupon->currentuse = 0;
-            $DB->insert_record('elearning_coupons', $coupon);
+            local_elearning_system_coupon_insert($coupon);
             redirect(new \moodle_url('/local/elearning_system/admin/coupons.php'), 'Coupon created successfully');
         }
     } else {
@@ -113,7 +257,7 @@ if ($action === 'save' && confirm_sesskey()) {
 // GET EDIT DATA (if editing)
 // =============================
 if (($action === 'edit' || $action === 'add') && $couponid) {
-    $editingcoupon = $DB->get_record('elearning_coupons', ['id' => $couponid]);
+    $editingcoupon = local_elearning_system_coupon_get_by_id((int)$couponid);
     if (!$editingcoupon) {
         redirect(new \moodle_url('/local/elearning_system/admin/coupons.php'));
     }
@@ -136,49 +280,99 @@ if ($action === 'add') {
     $showcoupondrawer = true;
 }
 
+function local_elearning_system_coupon_get_products(): array {
+    $db = local_elearning_system_coupons_db();
+
+    $result = $db->query("SELECT id, name FROM el_products ORDER BY name ASC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error products: ' . $db->error);
+    }
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    return $products;
+}
+
+$targetproducts = [];
+$targetproducts[] = [
+    'id' => 0,
+    'name' => 'All products',
+    'selected' => empty($editingcoupon->targetproductid),
+];
+
+foreach (local_elearning_system_coupon_get_products() as $product) {
+    $targetproducts[] = [
+        'id' => (int)$product->id,
+        'name' => format_string($product->name),
+        'selected' => !empty($editingcoupon->targetproductid)
+            && (int)$editingcoupon->targetproductid === (int)$product->id,
+    ];
+}
+
 // =============================
 // GET ALL COUPONS
 // =============================
 $coupons = [];
-if ($DB->get_manager()->table_exists('elearning_coupons')) {
-    $sql = "SELECT c.*
-              FROM {elearning_coupons} c
-          ORDER BY c.timecreated DESC";
-    $records = $DB->get_records_sql($sql);
-    foreach ($records as $r) {
-        $expirytext = '';
-        if (!empty($r->expirydate)) {
-            $expirytime = (int)$r->expirydate;
-            $isexpired = $expirytime < time();
-            $expirytext = userdate($expirytime) . ($isexpired ? ' (EXPIRED)' : '');
-        }
+$records = local_elearning_system_coupon_get_all();
 
-        $coupons[] = [
-            'id' => (int)$r->id,
-            'code' => s($r->code),
-            'target' => 'All products and bundles',
-            'discount' => number_format((float)$r->discountvalue, 2) . '%',
-            'currentuse' => isset($r->currentuse) ? (int)$r->currentuse : 0,
-            'maxuse' => !empty($r->maxuse) ? (int)$r->maxuse : 0,
-            'usage' => !empty($r->maxuse)
-                ? ((int)($r->currentuse ?? 0) . ' / ' . (int)$r->maxuse)
-                : ((int)($r->currentuse ?? 0) . ' / Unlimited'),
-            'status' => ucfirst($r->status),
-            'isstatus_active' => $r->status === 'active',
-            'expirydate' => $expirytext ?: 'No expiry',
-            'editurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
-                'action' => 'edit',
-                'id' => (int)$r->id,
-            ]))->out(false),
-            'deleteurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
-                'action' => 'delete',
-                'id' => (int)$r->id,
-                'sesskey' => sesskey(),
-            ]))->out(false),
-        ];
+foreach ($records as $r) {
+    $discountlabel = '';
+
+$discounttype = strtolower((string)($r->discounttype ?? 'percentage'));
+$discountvalue = (float)($r->discountvalue ?? 0);
+
+if ($discounttype === 'percentage') {
+    $discountlabel = number_format($discountvalue, 2) . '%';
+} else {
+    $discountlabel = local_elearning_system_format_price($discountvalue);
+}
+
+$currentuse = isset($r->currentuse) ? (int)$r->currentuse : 0;
+$maxuse = !empty($r->maxuse) ? (int)$r->maxuse : 0;
+
+$usagelabel = $maxuse > 0
+    ? $currentuse . ' / ' . $maxuse
+    : $currentuse . ' / Unlimited';
+
+$expirytext = '';
+if (!empty($r->expirydate)) {
+    $expirytime = (int)$r->expirydate;
+    $expirytext = userdate($expirytime);
+    if ($expirytime < time()) {
+        $expirytext .= ' (Expired)';
     }
 }
 
+$coupons[] = [
+    'id' => (int)$r->id,
+    'code' => s($r->code),
+
+    'discount' => $discountlabel,
+    'usage' => $usagelabel,
+
+    'currentuse' => $currentuse,
+    'maxuse' => $maxuse,
+
+    'status' => s((string)$r->status),
+    'isstatus_active' => strtolower((string)$r->status) === 'active',
+    'expirydate' => $expirytext !== '' ? $expirytext : 'No expiry',
+
+    'editurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
+        'action' => 'edit',
+        'id' => (int)$r->id,
+    ]))->out(false),
+
+    'deleteurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
+        'action' => 'delete',
+        'id' => (int)$r->id,
+        'sesskey' => sesskey(),
+    ]))->out(false),
+];
+}
 $totalcoupons = count($coupons);
 $totalpages = max(1, (int)ceil($totalcoupons / $perpage));
 if ($page > $totalpages) {

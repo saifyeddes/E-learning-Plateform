@@ -263,3 +263,1222 @@
         gap: 0;
     }
 }
+
+
+/* Forgot password custom page */
+body#page-login-forgot_password {
+    margin: 0 !important;
+    overflow: hidden !important;
+    background:
+        radial-gradient(circle at 10% 15%, rgba(97, 184, 240, 0.20), transparent 34%),
+        radial-gradient(circle at 90% 85%, rgba(72, 181, 150, 0.12), transparent 30%),
+        linear-gradient(135deg, #f5fbff 0%, #edf6ff 48%, #ffffff 100%) !important;
+}
+
+body#page-login-forgot_password header,
+body#page-login-forgot_password footer,
+body#page-login-forgot_password .navbar,
+body#page-login-forgot_password .secondary-navigation,
+body#page-login-forgot_password .breadcrumb,
+body#page-login-forgot_password #page-header,
+body#page-login-forgot_password .drawer-toggles {
+    display: none !important;
+}
+
+body#page-login-forgot_password #page-wrapper,
+body#page-login-forgot_password #page,
+body#page-login-forgot_password #page-content,
+body#page-login-forgot_password #region-main-box,
+body#page-login-forgot_password .main-inner,
+body#page-login-forgot_password .container,
+body#page-login-forgot_password .container-fluid,
+body#page-login-forgot_password #region-main {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+.es-forgot-wrapper {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.es-forgot-card {
+    width: min(1120px, calc(100vw - 48px));
+    height: min(680px, calc(100vh - 48px));
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    background: #ffffff;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 28px 80px rgba(16, 42, 67, 0.18);
+}
+
+.es-forgot-left {
+    padding: 0 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.es-forgot-left h1 {
+    color: #102a43;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 10px;
+}
+
+.es-forgot-left p {
+    color: #627d98;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.es-forgot-left label {
+    display: block;
+    color: #102a43;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.es-forgot-left input[type="email"] {
+    width: 100%;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid #d9e2ec;
+    padding: 9px 13px;
+    margin-bottom: 14px;
+    outline: none;
+}
+
+.es-forgot-left input[type="email"]:focus {
+    border-color: #006794;
+    box-shadow: 0 0 0 4px rgba(0, 103, 148, 0.12);
+}
+
+.es-forgot-left button {
+    width: 100%;
+    height: 44px;
+    border-radius: 13px;
+    border: none;
+    background: linear-gradient(135deg, #006794 0%, #0f6cbf 52%, #61b8f0 100%);
+    color: #ffffff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.es-forgot-left button:hover {
+    filter: brightness(0.96);
+}
+
+.es-forgot-back-login {
+    margin-top: 16px;
+    text-align: right;
+}
+
+.es-forgot-back-login a {
+    color: #006794;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.es-forgot-back-login a:hover {
+    text-decoration: underline;
+}
+
+.es-forgot-right {
+    position: relative;
+    background: linear-gradient(145deg, #102a43 0%, #006794 48%, #61b8f0 100%);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.es-forgot-right::before {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+    top: 44px;
+    left: 46px;
+}
+
+.es-forgot-right::after {
+    content: "";
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    right: -90px;
+    bottom: -120px;
+}
+
+.es-forgot-lock {
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    margin-bottom: 24px;
+    z-index: 2;
+}
+
+.es-forgot-right h2 {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    z-index: 2;
+}
+
+.es-forgot-right p {
+    color: #ffffff;
+    font-size: 15px;
+    z-index: 2;
+}
+
+@media (max-width: 900px) {
+    body#page-login-forgot_password {
+        overflow: auto !important;
+    }
+
+    .es-forgot-wrapper {
+        height: auto;
+        min-height: 100vh;
+        padding: 0;
+    }
+
+    .es-forgot-card {
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        display: block;
+        border-radius: 0;
+    }
+
+    .es-forgot-left {
+        padding: 36px 24px;
+    }
+
+    .es-forgot-right {
+        display: none;
+    }
+}
+
+body#page-login-forgot_password {
+    overflow: hidden !important;
+    background: linear-gradient(135deg, #eef6fb 0%, #f7fbff 55%, #ffffff 100%) !important;
+}
+
+/* Masquer Moodle header/footer */
+body#page-login-forgot_password header,
+body#page-login-forgot_password footer,
+body#page-login-forgot_password .navbar,
+body#page-login-forgot_password .secondary-navigation,
+body#page-login-forgot_password .breadcrumb,
+body#page-login-forgot_password #page-header,
+body#page-login-forgot_password .drawer-toggles {
+    display: none !important;
+}
+
+/* Layout pleine page */
+body#page-login-forgot_password #page-wrapper,
+body#page-login-forgot_password #page,
+body#page-login-forgot_password #page-content,
+body#page-login-forgot_password #region-main-box,
+body#page-login-forgot_password .main-inner,
+body#page-login-forgot_password .container,
+body#page-login-forgot_password .container-fluid {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+}
+
+/* Grande carte centrale */
+body#page-login-forgot_password #region-main {
+    width: min(760px, calc(100vw - 48px)) !important;
+    max-height: calc(100vh - 48px) !important;
+    margin: 24px auto !important;
+    padding: 34px 46px !important;
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    border: none !important;
+    box-shadow: 0 24px 70px rgba(16, 42, 67, 0.16) !important;
+    overflow: auto !important;
+}
+
+/* Texte intro */
+body#page-login-forgot_password #region-main > p:first-child {
+    color: #53657a !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 18px !important;
+}
+
+/* Titre */
+body#page-login-forgot_password h2,
+body#page-login-forgot_password legend,
+body#page-login-forgot_password .ftoggler {
+    color: #102a43 !important;
+    font-size: 28px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+    margin-bottom: 20px !important;
+}
+
+/* Correction importante du formulaire Moodle */
+body#page-login-forgot_password .mform .form-group,
+body#page-login-forgot_password .mform .fitem,
+body#page-login-forgot_password .mform .row {
+    display: grid !important;
+    grid-template-columns: 210px 1fr !important;
+    column-gap: 22px !important;
+    align-items: center !important;
+    margin-bottom: 14px !important;
+}
+
+/* Label */
+body#page-login-forgot_password .mform .col-md-3,
+body#page-login-forgot_password .mform .col-form-label,
+body#page-login-forgot_password .mform label {
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+    color: #102a43 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    padding: 0 !important;
+}
+
+/* Zone input */
+body#page-login-forgot_password .mform .col-md-9,
+body#page-login-forgot_password .mform .form-inline,
+body#page-login-forgot_password .mform .felement {
+    width: 100% !important;
+    max-width: none !important;
+    flex: none !important;
+    padding: 0 !important;
+}
+
+/* Inputs */
+body#page-login-forgot_password input[type="password"],
+body#page-login-forgot_password input[type="text"],
+body#page-login-forgot_password .form-control {
+    width: 100% !important;
+    max-width: 360px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    padding: 8px 13px !important;
+    color: #102a43 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+body#page-login-forgot_password input:focus,
+body#page-login-forgot_password .form-control:focus {
+    border-color: #006794 !important;
+    box-shadow: 0 0 0 4px rgba(0, 103, 148, 0.12) !important;
+}
+
+/* Texte d'aide mot de passe */
+body#page-login-forgot_password .form-text,
+body#page-login-forgot_password .form-description,
+body#page-login-forgot_password .description {
+    color: #53657a !important;
+    font-size: 12.5px !important;
+    line-height: 1.55 !important;
+    margin-top: 4px !important;
+}
+
+/* Checkbox */
+body#page-login-forgot_password .form-check,
+body#page-login-forgot_password .form-check-inline {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+/* Ligne des boutons */
+body#page-login-forgot_password .fitem_actionbuttons,
+body#page-login-forgot_password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    margin-top: 20px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+/* Boutons */
+body#page-login-forgot_password .btn-primary,
+body#page-login-forgot_password input[type="submit"] {
+    height: 42px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #006794, #3ca8ef) !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    padding: 0 26px !important;
+    box-shadow: 0 10px 22px rgba(0, 103, 148, 0.22) !important;
+}
+
+body#page-login-forgot_password .btn-secondary {
+    height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    background: #eef2f6 !important;
+    color: #102a43 !important;
+    font-weight: 700 !important;
+    padding: 0 24px !important;
+}
+
+/* Required text */
+body#page-login-forgot_password .fdescription.required {
+    color: #53657a !important;
+    font-size: 12.5px !important;
+    margin-top: 14px !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    body#page-login-forgot_password {
+        overflow: auto !important;
+    }
+
+    body#page-login-forgot_password #region-main {
+        width: calc(100vw - 24px) !important;
+        max-height: none !important;
+        margin: 12px auto !important;
+        padding: 26px 22px !important;
+        border-radius: 20px !important;
+        overflow: visible !important;
+    }
+
+    body#page-login-forgot_password .mform .form-group,
+    body#page-login-forgot_password .mform .fitem,
+    body#page-login-forgot_password .mform .row {
+        display: block !important;
+    }
+
+    body#page-login-forgot_password input[type="password"],
+    body#page-login-forgot_password input[type="text"],
+    body#page-login-forgot_password .form-control {
+        max-width: 100% !important;
+    }
+}
+
+/* ==================================================
+   RESET PASSWORD TOKEN PAGE - SAME DESIGN AS FORGOT PASSWORD
+   ================================================== */
+
+body#page-login-forgot_password {
+    margin: 0 !important;
+    overflow: hidden !important;
+    background:
+        radial-gradient(circle at 10% 15%, rgba(97, 184, 240, 0.18), transparent 34%),
+        radial-gradient(circle at 90% 85%, rgba(72, 181, 150, 0.12), transparent 30%),
+        linear-gradient(135deg, #f7fbff 0%, #edf5ff 48%, #ffffff 100%) !important;
+    font-family: "Poppins", "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Hide Moodle header/footer */
+body#page-login-forgot_password header,
+body#page-login-forgot_password footer,
+body#page-login-forgot_password .navbar,
+body#page-login-forgot_password .secondary-navigation,
+body#page-login-forgot_password .breadcrumb,
+body#page-login-forgot_password #page-header,
+body#page-login-forgot_password .drawer-toggles {
+    display: none !important;
+}
+
+/* Full page reset */
+body#page-login-forgot_password #page-wrapper,
+body#page-login-forgot_password #page,
+body#page-login-forgot_password #page-content,
+body#page-login-forgot_password #region-main-box,
+body#page-login-forgot_password .main-inner,
+body#page-login-forgot_password .container,
+body#page-login-forgot_password .container-fluid {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+}
+
+/* Main card like forgot password */
+body#page-login-forgot_password #region-main {
+    position: fixed !important;
+    inset: 0 !important;
+    width: min(1120px, calc(100vw - 48px)) !important;
+    height: min(610px, calc(100vh - 48px)) !important;
+    margin: auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: 440px 1fr !important;
+    background: #ffffff !important;
+    border-radius: 28px !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 24px 70px rgba(16, 42, 67, 0.14) !important;
+}
+
+/* All Moodle content stays in left column */
+body#page-login-forgot_password #region-main > * {
+    grid-column: 1 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    margin-left: 52px !important;
+    margin-right: 52px !important;
+}
+
+body#page-login-forgot_password #region-main > p:first-child {
+    margin-top: 78px !important;
+    color: #53657a !important;
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+    margin-bottom: 16px !important;
+}
+
+/* Right blue panel */
+body#page-login-forgot_password #region-main::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc(100% - 440px);
+    height: 100%;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.13), transparent 0 90px, transparent 91px),
+        radial-gradient(circle at 92% 88%, rgba(255,255,255,0.18), transparent 0 175px, transparent 176px),
+        linear-gradient(135deg, #07314f 0%, #006794 52%, #45aeea 100%);
+    z-index: 1;
+}
+
+/* Text on blue panel */
+body#page-login-forgot_password #region-main::before {
+    content: "🔒\A\AReset your password\ASecure access to your learning space";
+    white-space: pre-line;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: calc(100% - 440px);
+    transform: translateY(-50%);
+    z-index: 2;
+    text-align: center;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.6;
+    pointer-events: none;
+}
+
+/* Title */
+body#page-login-forgot_password h2,
+body#page-login-forgot_password legend,
+body#page-login-forgot_password .ftoggler {
+    color: #102a43 !important;
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+    margin-top: 0 !important;
+    margin-bottom: 18px !important;
+}
+
+/* Moodle form forced into simple vertical layout */
+body#page-login-forgot_password .mform {
+    margin-top: 0 !important;
+}
+
+body#page-login-forgot_password fieldset {
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body#page-login-forgot_password .mform .form-group,
+body#page-login-forgot_password .mform .fitem,
+body#page-login-forgot_password .mform .row {
+    display: block !important;
+    margin-bottom: 12px !important;
+}
+
+body#page-login-forgot_password .mform .col-md-3,
+body#page-login-forgot_password .mform .col-md-9,
+body#page-login-forgot_password .mform .col-form-label,
+body#page-login-forgot_password .mform .felement,
+body#page-login-forgot_password .mform .form-inline {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Labels */
+body#page-login-forgot_password label,
+body#page-login-forgot_password .col-form-label {
+    display: block !important;
+    color: #102a43 !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    margin-bottom: 6px !important;
+}
+
+/* Inputs */
+body#page-login-forgot_password input[type="password"],
+body#page-login-forgot_password input[type="text"],
+body#page-login-forgot_password .form-control {
+    width: 100% !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    padding: 8px 13px !important;
+    color: #102a43 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+body#page-login-forgot_password input:focus,
+body#page-login-forgot_password .form-control:focus {
+    border-color: #006794 !important;
+    box-shadow: 0 0 0 4px rgba(0, 103, 148, 0.12) !important;
+}
+
+/* Password rule text */
+body#page-login-forgot_password .form-text,
+body#page-login-forgot_password .form-description,
+body#page-login-forgot_password .description {
+    color: #53657a !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+    margin-top: 4px !important;
+}
+
+/* Checkbox line */
+body#page-login-forgot_password .form-check {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+body#page-login-forgot_password .form-check label {
+    margin-bottom: 0 !important;
+    font-size: 12.5px !important;
+}
+
+/* Buttons */
+body#page-login-forgot_password .fitem_actionbuttons,
+body#page-login-forgot_password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+body#page-login-forgot_password .btn-primary,
+body#page-login-forgot_password input[type="submit"] {
+    height: 40px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #006794, #3ca8ef) !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    padding: 0 24px !important;
+    box-shadow: 0 10px 22px rgba(0, 103, 148, 0.22) !important;
+}
+
+body#page-login-forgot_password .btn-secondary {
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    background: #eef2f6 !important;
+    color: #102a43 !important;
+    font-weight: 700 !important;
+    padding: 0 22px !important;
+}
+
+/* Required text */
+body#page-login-forgot_password .fdescription.required {
+    color: #53657a !important;
+    font-size: 12px !important;
+    margin-top: 12px !important;
+}
+
+/* Remove horizontal scroll */
+body#page-login-forgot_password * {
+    max-width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    body#page-login-forgot_password {
+        overflow: auto !important;
+    }
+
+    body#page-login-forgot_password #page-wrapper,
+    body#page-login-forgot_password #page,
+    body#page-login-forgot_password #page-content,
+    body#page-login-forgot_password #region-main-box,
+    body#page-login-forgot_password .main-inner,
+    body#page-login-forgot_password .container,
+    body#page-login-forgot_password .container-fluid {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    body#page-login-forgot_password #region-main {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        display: block !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        padding: 30px 24px !important;
+    }
+
+    body#page-login-forgot_password #region-main::before,
+    body#page-login-forgot_password #region-main::after {
+        display: none !important;
+    }
+
+    body#page-login-forgot_password #region-main > * {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+
+/* RESET PASSWORD TOKEN PAGE - CLEAR COMPLETE FORM */
+body#page-login-forgot_password #region-main {
+    position: fixed !important;
+    inset: 0 !important;
+    width: min(1180px, calc(100vw - 40px)) !important;
+    height: min(620px, calc(100vh - 40px)) !important;
+    margin: auto !important;
+    padding: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 520px 1fr !important;
+
+    background: #ffffff !important;
+    border-radius: 28px !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 24px 70px rgba(16, 42, 67, 0.14) !important;
+}
+
+/* Left content area */
+body#page-login-forgot_password #region-main > * {
+    grid-column: 1 !important;
+    position: relative !important;
+    z-index: 3 !important;
+    margin-left: 56px !important;
+    margin-right: 56px !important;
+    max-width: 408px !important;
+}
+
+/* First intro paragraph */
+body#page-login-forgot_password #region-main > p:first-child {
+    margin-top: 54px !important;
+    margin-bottom: 18px !important;
+    color: #53657a !important;
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+}
+
+/* Right blue visual panel */
+body#page-login-forgot_password #region-main::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: calc(100% - 520px);
+    height: 100%;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.13), transparent 0 90px, transparent 91px),
+        radial-gradient(circle at 92% 88%, rgba(255,255,255,0.18), transparent 0 175px, transparent 176px),
+        linear-gradient(135deg, #07314f 0%, #006794 52%, #45aeea 100%);
+    z-index: 1;
+}
+
+body#page-login-forgot_password #region-main::before {
+    content: "🔒\A\AReset your password\ASecure access to your learning space";
+    white-space: pre-line;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: calc(100% - 520px);
+    transform: translateY(-50%);
+    z-index: 2;
+    text-align: center;
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.55;
+    pointer-events: none;
+}
+
+/* Title */
+body#page-login-forgot_password h2,
+body#page-login-forgot_password legend,
+body#page-login-forgot_password .ftoggler {
+    color: #102a43 !important;
+    font-size: 26px !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 20px !important;
+}
+
+/* Force Moodle form into clean vertical layout */
+body#page-login-forgot_password .mform .form-group,
+body#page-login-forgot_password .mform .fitem,
+body#page-login-forgot_password .mform .row {
+    display: block !important;
+    margin-bottom: 14px !important;
+}
+
+body#page-login-forgot_password .mform .col-md-3,
+body#page-login-forgot_password .mform .col-md-9,
+body#page-login-forgot_password .mform .col-form-label,
+body#page-login-forgot_password .mform .felement,
+body#page-login-forgot_password .mform .form-inline {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Labels */
+body#page-login-forgot_password label,
+body#page-login-forgot_password .col-form-label {
+    display: block !important;
+    color: #102a43 !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    margin-bottom: 6px !important;
+    line-height: 1.3 !important;
+}
+
+/* Inputs */
+body#page-login-forgot_password input[type="password"],
+body#page-login-forgot_password input[type="text"],
+body#page-login-forgot_password .form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    padding: 8px 13px !important;
+    color: #102a43 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+body#page-login-forgot_password input:focus,
+body#page-login-forgot_password .form-control:focus {
+    border-color: #006794 !important;
+    box-shadow: 0 0 0 4px rgba(0, 103, 148, 0.12) !important;
+}
+
+/* Password help text */
+body#page-login-forgot_password .form-text,
+body#page-login-forgot_password .form-description,
+body#page-login-forgot_password .description {
+    color: #53657a !important;
+    font-size: 12.5px !important;
+    line-height: 1.45 !important;
+    margin-top: 4px !important;
+}
+
+/* Checkbox */
+body#page-login-forgot_password .form-check {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+}
+
+body#page-login-forgot_password .form-check label {
+    margin-bottom: 0 !important;
+    font-size: 12.5px !important;
+}
+
+/* Buttons */
+body#page-login-forgot_password .fitem_actionbuttons,
+body#page-login-forgot_password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    margin-top: 16px !important;
+    padding-top: 14px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+body#page-login-forgot_password .btn-primary,
+body#page-login-forgot_password input[type="submit"] {
+    height: 42px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #006794, #3ca8ef) !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    padding: 0 24px !important;
+    box-shadow: 0 10px 22px rgba(0, 103, 148, 0.22) !important;
+}
+
+body#page-login-forgot_password .btn-secondary {
+    height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d5e0ec !important;
+    background: #eef2f6 !important;
+    color: #102a43 !important;
+    font-weight: 700 !important;
+    padding: 0 22px !important;
+}
+
+/* Required text */
+body#page-login-forgot_password .fdescription.required {
+    color: #53657a !important;
+    font-size: 12px !important;
+    margin-top: 12px !important;
+}
+
+/* Prevent horizontal scroll */
+body#page-login-forgot_password,
+body#page-login-forgot_password * {
+    max-width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    body#page-login-forgot_password {
+        overflow: auto !important;
+    }
+
+    body#page-login-forgot_password #region-main {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        display: block !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        padding: 30px 24px !important;
+    }
+
+    body#page-login-forgot_password #region-main::before,
+    body#page-login-forgot_password #region-main::after {
+        display: none !important;
+    }
+
+    body#page-login-forgot_password #region-main > * {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+    }
+}
+
+/* RESET PASSWORD TOKEN PAGE - SHOW FULL FORM AND BUTTONS */
+body#page-login-forgot_password #region-main {
+    width: min(1180px, calc(100vw - 40px)) !important;
+    height: min(680px, calc(100vh - 24px)) !important;
+    grid-template-columns: 520px 1fr !important;
+    overflow: hidden !important;
+}
+
+/* Left column content */
+body#page-login-forgot_password #region-main > * {
+    grid-column: 1 !important;
+    margin-left: 56px !important;
+    margin-right: 56px !important;
+    max-width: 408px !important;
+}
+
+/* Reduce top spacing */
+body#page-login-forgot_password #region-main > p:first-child {
+    margin-top: 42px !important;
+    margin-bottom: 14px !important;
+    font-size: 13.5px !important;
+    line-height: 1.45 !important;
+}
+
+/* Smaller title */
+body#page-login-forgot_password h2,
+body#page-login-forgot_password legend,
+body#page-login-forgot_password .ftoggler {
+    font-size: 24px !important;
+    margin-bottom: 14px !important;
+}
+
+/* Reduce password help text */
+body#page-login-forgot_password .form-text,
+body#page-login-forgot_password .form-description,
+body#page-login-forgot_password .description {
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
+}
+
+/* Reduce field spacing */
+body#page-login-forgot_password .mform .form-group,
+body#page-login-forgot_password .mform .fitem,
+body#page-login-forgot_password .mform .row {
+    display: block !important;
+    margin-bottom: 10px !important;
+}
+
+/* Labels */
+body#page-login-forgot_password label,
+body#page-login-forgot_password .col-form-label {
+    font-size: 12.5px !important;
+    margin-bottom: 5px !important;
+}
+
+/* Inputs */
+body#page-login-forgot_password input[type="password"],
+body#page-login-forgot_password input[type="text"],
+body#page-login-forgot_password .form-control {
+    height: 38px !important;
+    border-radius: 11px !important;
+}
+
+/* Checkbox line smaller */
+body#page-login-forgot_password .form-check {
+    margin-top: 4px !important;
+    margin-bottom: 8px !important;
+}
+
+body#page-login-forgot_password .form-check label {
+    font-size: 12px !important;
+}
+
+/* Buttons visible */
+body#page-login-forgot_password .fitem_actionbuttons,
+body#page-login-forgot_password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+/* Button style */
+body#page-login-forgot_password .btn-primary,
+body#page-login-forgot_password input[type="submit"] {
+    height: 38px !important;
+    border-radius: 11px !important;
+    padding: 0 22px !important;
+}
+
+body#page-login-forgot_password .btn-secondary {
+    height: 38px !important;
+    border-radius: 11px !important;
+    padding: 0 20px !important;
+}
+
+/* Required text */
+body#page-login-forgot_password .fdescription.required {
+    font-size: 11.5px !important;
+    margin-top: 8px !important;
+}
+
+/* Right panel width follows new left column */
+body#page-login-forgot_password #region-main::after {
+    width: calc(100% - 520px) !important;
+}
+
+body#page-login-forgot_password #region-main::before {
+    width: calc(100% - 520px) !important;
+}
+
+/* ==================================================
+   RESET PASSWORD TOKEN PAGE - COMPACT FINAL VERSION
+   ================================================== */
+
+body#page-login-forgot_password #region-main {
+    width: min(1180px, calc(100vw - 40px)) !important;
+    height: min(610px, calc(100vh - 24px)) !important;
+    grid-template-columns: 520px 1fr !important;
+    overflow: hidden !important;
+}
+
+/* Zone gauche */
+body#page-login-forgot_password #region-main > * {
+    grid-column: 1 !important;
+    margin-left: 50px !important;
+    margin-right: 50px !important;
+    max-width: 400px !important;
+}
+
+/* Texte intro */
+body#page-login-forgot_password #region-main > p:first-child {
+    margin-top: 34px !important;
+    margin-bottom: 10px !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+}
+
+/* Titre */
+body#page-login-forgot_password h2,
+body#page-login-forgot_password legend,
+body#page-login-forgot_password .ftoggler {
+    font-size: 23px !important;
+    line-height: 1.1 !important;
+    margin-bottom: 10px !important;
+}
+
+/* Formulaire Moodle compact */
+body#page-login-forgot_password .mform {
+    margin-top: 0 !important;
+}
+
+body#page-login-forgot_password .mform .form-group,
+body#page-login-forgot_password .mform .fitem,
+body#page-login-forgot_password .mform .row {
+    display: block !important;
+    margin-bottom: 7px !important;
+}
+
+body#page-login-forgot_password .mform .col-md-3,
+body#page-login-forgot_password .mform .col-md-9,
+body#page-login-forgot_password .mform .col-form-label,
+body#page-login-forgot_password .mform .felement,
+body#page-login-forgot_password .mform .form-inline {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Labels */
+body#page-login-forgot_password label,
+body#page-login-forgot_password .col-form-label {
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+    margin-bottom: 3px !important;
+}
+
+/* Texte règle mot de passe */
+body#page-login-forgot_password .form-text,
+body#page-login-forgot_password .form-description,
+body#page-login-forgot_password .description {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+    margin-top: 2px !important;
+    margin-bottom: 4px !important;
+}
+
+/* Champs */
+body#page-login-forgot_password input[type="password"],
+body#page-login-forgot_password input[type="text"],
+body#page-login-forgot_password .form-control {
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    padding: 6px 11px !important;
+}
+
+/* Icônes erreur */
+body#page-login-forgot_password .text-danger,
+body#page-login-forgot_password .error,
+body#page-login-forgot_password .invalid-feedback {
+    font-size: 11px !important;
+    margin: 0 !important;
+}
+
+/* Checkbox */
+body#page-login-forgot_password .form-check {
+    margin-top: 2px !important;
+    margin-bottom: 4px !important;
+    align-items: center !important;
+}
+
+body#page-login-forgot_password .form-check label {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+}
+
+/* Boutons visibles dans la carte */
+body#page-login-forgot_password .fitem_actionbuttons,
+body#page-login-forgot_password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+body#page-login-forgot_password .btn-primary,
+body#page-login-forgot_password input[type="submit"] {
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 12.5px !important;
+    padding: 0 20px !important;
+}
+
+body#page-login-forgot_password .btn-secondary {
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-size: 12.5px !important;
+    padding: 0 18px !important;
+}
+
+/* Texte requis */
+body#page-login-forgot_password .fdescription.required {
+    font-size: 11px !important;
+    margin-top: 4px !important;
+}
+
+/* Panneau bleu */
+body#page-login-forgot_password #region-main::after {
+    width: calc(100% - 520px) !important;
+}
+
+body#page-login-forgot_password #region-main::before {
+    width: calc(100% - 520px) !important;
+    font-size: 20px !important;
+}

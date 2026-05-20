@@ -69,8 +69,89 @@ function local_elearning_system_plugin_get_products_by_ids_client(array $ids): a
     return $products;
 }
 
-function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
-    return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
+function local_elearning_system_product_plugin_order_is_active(stdClass $order): bool {
+    $durationmonths = !empty($order->durationmonths)
+        ? max(1, (int)$order->durationmonths)
+        : 1;
+
+    if (!empty($order->expiresat)) {
+        return (int)$order->expiresat > time();
+    }
+
+    if (!empty($order->timecreated)) {
+        $expiresat = strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+        return $expiresat === false || $expiresat > time();
+    }
+
+    return true;
+}
+
+function local_elearning_system_product_plugin_get_user_active_orders(int $userid): array {
+    if ($userid <= 0) {
+        return [];
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $stmt = $db->prepare("
+        SELECT o.id, o.userid, o.productid, o.timecreated, o.durationmonths, o.expiresat,
+               p.isbundle, p.bundleitems
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.userid = ?
+      ORDER BY o.id DESC
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $userid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $orders = [];
+    while ($row = $result->fetch_object()) {
+        if (local_elearning_system_product_plugin_order_is_active($row)) {
+            $orders[] = $row;
+        }
+    }
+
+    $stmt->close();
+
+    return $orders;
+}
+
+function local_elearning_system_product_plugin_get_purchase_status(int $userid, int $productid): string {
+    if ($userid <= 0 || $productid <= 0) {
+        return 'none';
+    }
+
+    $orders = local_elearning_system_product_plugin_get_user_active_orders($userid);
+
+    foreach ($orders as $order) {
+        if ((int)$order->productid === $productid) {
+            return 'direct';
+        }
+    }
+
+    foreach ($orders as $order) {
+        if (empty($order->isbundle) || empty($order->bundleitems)) {
+            continue;
+        }
+
+        $bundleitemids = array_values(array_unique(array_filter(array_map(
+            'intval',
+            explode(',', (string)$order->bundleitems)
+        ))));
+
+        if (in_array($productid, $bundleitemids, true)) {
+            return 'bundle';
+        }
+    }
+
+    return 'none';
 }
 
 $isloggedin = isloggedin() && !isguestuser();
@@ -183,31 +264,29 @@ $templatedata = [
     'hasbundleitems' => false,
 ];
 
-if ($isloggedin && $DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user($beneficiaryuserid, $DB);
-    $templatedata['ispurchased'] = local_elearning_system_is_product_covered_by_purchase($beneficiaryuserid, (int)$productid, $DB);
+if ($isloggedin) {
+    $purchasestatus = local_elearning_system_product_plugin_get_purchase_status($beneficiaryuserid, (int)$productid);
 
-    if (!$templatedata['ispurchased']) {
-        $orders = $DB->get_records('elearning_orders', ['userid' => $beneficiaryuserid], '', 'id,productid');
-        foreach ($orders as $order) {
-            $bundleproduct = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,isbundle,bundleitems', IGNORE_MISSING);
-            if (!$bundleproduct || empty($bundleproduct->isbundle) || empty($bundleproduct->bundleitems)) {
-                continue;
-            }
+    $templatedata['ispurchased'] = ($purchasestatus !== 'none');
+    $templatedata['isdirectpurchase'] = ($purchasestatus === 'direct');
+    $templatedata['isbundlepurchase'] = ($purchasestatus === 'bundle');
+    $templatedata['purchaselabel'] = ($purchasestatus === 'direct')
+        ? get_string('purchased', 'local_elearning_system')
+        : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
+}
+$isfreeproduct = isset($product->type) && strtolower((string)$product->type) === 'free';
 
-            $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$bundleproduct->bundleitems)))));
-            if (in_array((int)$productid, $bundleitemids, true)) {
-                $templatedata['ispurchased'] = true;
-                break;
-            }
-        }
+$templatedata['canopencourse'] = false;
+
+if (!empty($templatedata['courseurl'])) {
+    if ($isfreeproduct || !empty($templatedata['ispurchased'])) {
+        $templatedata['canopencourse'] = true;
     }
 }
-
 if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
     $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$productrecord->bundleitems)))));
     if (!empty($bundleitemids)) {
-        $bundleproducts = $DB->get_records_list('elearning_products', 'id', $bundleitemids, '', 'id,name,courseid');
+        $bundleproducts = local_elearning_system_plugin_get_products_by_ids_client($bundleitemids);
         foreach ($bundleitemids as $bundleitemid) {
             if (empty($bundleproducts[$bundleitemid])) {
                 continue;
@@ -228,9 +307,10 @@ if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
             if (!empty($templatedata['ispurchased'])) {
                 $itempurchased = true;
             } else if ($isloggedin) {
-                if (local_elearning_system_is_product_covered_by_active_purchase($beneficiaryuserid, (int)$bundleproduct->id, $DB)) {
-                    $itempurchased = true;
-                }
+                $itemstatus = local_elearning_system_product_plugin_get_purchase_status($beneficiaryuserid, (int)$bundleproduct->id);
+if ($itemstatus !== 'none') {
+    $itempurchased = true;
+}
             }
 
             $templatedata['bundleitems'][] = [

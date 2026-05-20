@@ -2,12 +2,46 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 require_login();
 
 $orderid = required_param('id', PARAM_INT);
 $pdfgenerate = optional_param('pdf', 0, PARAM_INT);
 
 global $DB, $USER, $CFG, $OUTPUT;
+
+function local_elearning_system_client_invoice_get_order(int $orderid): ?stdClass {
+    $db = \local_elearning_system\plugin_db::get();
+
+    $stmt = $db->prepare("
+        SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
+               o.expiresat, o.durationmonths,
+               p.id AS productid,
+               p.name AS productname,
+               p.courseid,
+               p.isbundle,
+               p.bundleitems,
+               p.image
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.id = ?
+         LIMIT 1
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $orderid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $order = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $order ?: null;
+}
 
 $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
 $isparentaccount = !empty($usercontext['isparentaccount']);
@@ -24,40 +58,47 @@ $product = null;
 $course = null;
 $user = null;
 
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    $sql = "SELECT o.id, o.userid, o.amount, o.timecreated, o.productid,
-                   p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image,
-                   c.fullname AS coursename
-              FROM {elearning_orders} o
-         LEFT JOIN {elearning_products} p ON p.id = o.productid
-         LEFT JOIN {course} c ON c.id = p.courseid
-             WHERE o.id = :id";
+$orderdata = local_elearning_system_client_invoice_get_order($orderid);
 
-    $orderdata = $DB->get_record_sql($sql, ['id' => $orderid]);
-    
-    if (!$orderdata) {
-        throw new moodle_exception('ordernotfound', 'local_elearning_system', '', null, 'Order not found');
-    }
-    
-    // Check permissions
-    $canvieworder = ((int)$orderdata->userid === (int)$USER->id);
-    if (!$canvieworder && $isparentaccount) {
-        $canvieworder = in_array((int)$orderdata->userid, array_map('intval', $childids), true);
-    }
-
-    if (!$canvieworder && !has_capability('local/elearning_system:manage', $context)) {
-        throw new moodle_exception('accessdenied', 'admin');
-    }
-    
-    // Get user info
-    $user = $DB->get_record('user', ['id' => (int)$orderdata->userid]);
-    
-    // Get product if exists
-    if (!empty($orderdata->productid)) {
-        $product = $DB->get_record('elearning_products', ['id' => (int)$orderdata->productid]);
-    }
+if (!$orderdata) {
+    throw new moodle_exception('ordernotfound', 'local_elearning_system', '', null, 'Order not found');
 }
 
+// Check permissions.
+$canvieworder = ((int)$orderdata->userid === (int)$USER->id);
+
+if (!$canvieworder && $isparentaccount) {
+    $canvieworder = in_array((int)$orderdata->userid, array_map('intval', $childids), true);
+}
+
+if (!$canvieworder && !has_capability('local/elearning_system:manage', $context)) {
+    throw new moodle_exception('accessdenied', 'admin');
+}
+
+// Get user info from Moodle DB.
+$user = $DB->get_record('user', ['id' => (int)$orderdata->userid], '*', IGNORE_MISSING);
+
+// Create product object from plugin DB data.
+if (!empty($orderdata->productid)) {
+    $product = (object)[
+        'id' => (int)$orderdata->productid,
+        'name' => (string)($orderdata->productname ?? ''),
+        'courseid' => (int)($orderdata->courseid ?? 0),
+        'isbundle' => (int)($orderdata->isbundle ?? 0),
+        'bundleitems' => (string)($orderdata->bundleitems ?? ''),
+        'image' => (string)($orderdata->image ?? ''),
+    ];
+}
+
+// Get course name from Moodle DB.
+$orderdata->coursename = '';
+
+if (!empty($orderdata->courseid)) {
+    $course = $DB->get_record('course', ['id' => (int)$orderdata->courseid], 'id,fullname', IGNORE_MISSING);
+    if ($course) {
+        $orderdata->coursename = $course->fullname;
+    }
+}
 // Get TVA
 $tvapercent = get_config('local_elearning_system', 'vat_percent');
 if ($tvapercent === false) {
@@ -119,11 +160,11 @@ if ($pdfgenerate == 1) {
         $pdf->MultiCell(80, 6, $productname, 0, 'L');
         $pdf->SetXY(80, $pdf->GetY() - 6);
         $pdf->Cell(35, 6, '1', 0, 0, 'C');
-        $pdf->Cell(40, 6, '$' . number_format($subtotal, 2), 0, 1, 'R');
+        $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
     } else {
         $pdf->Cell(80, 6, 'Product', 0, 0, 'L');
         $pdf->Cell(35, 6, '1', 0, 0, 'C');
-        $pdf->Cell(40, 6, '$' . number_format($subtotal, 2), 0, 1, 'R');
+        $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
     }
     
     $pdf->Ln(3);
@@ -131,16 +172,16 @@ if ($pdfgenerate == 1) {
     // Totals
     $pdf->SetFont('helvetica', '', 10);
     $pdf->Cell(115, 6, 'Subtotal:', 0, 0, 'R');
-    $pdf->Cell(40, 6, '$' . number_format($subtotal, 2), 0, 1, 'R');
+    $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
     
     if ($tvapercent > 0) {
         $pdf->Cell(115, 6, 'TVA (' . number_format($tvapercent, 1) . '%):', 0, 0, 'R');
-        $pdf->Cell(40, 6, '$' . number_format($tax, 2), 0, 1, 'R');
+        $pdf->Cell(40, 6, local_elearning_system_format_price($tax), 0, 1, 'R');
     }
     
     $pdf->SetFont('helvetica', 'B', 11);
     $pdf->Cell(115, 6, 'TOTAL:', 0, 0, 'R');
-    $pdf->Cell(40, 6, '$' . number_format($total, 2), 0, 1, 'R');
+    $pdf->Cell(40, 6, local_elearning_system_format_price($total), 0, 1, 'R');
     
     $pdf->Output('facture_' . $orderid . '.pdf', 'D');
     exit;
@@ -156,10 +197,11 @@ $PAGE->set_heading('Facture');
 $invoicehtml = [
     'id' => (int)$orderid,
     'timecreated' => userdate((int)$orderdata->timecreated),
-    'subtotal' => number_format($subtotal, 2),
     'tvapercent' => number_format($tvapercent, 1),
-    'taxamount' => number_format($tax, 2),
-    'total' => number_format($total, 2),
+    'subtotal' => local_elearning_system_format_price($subtotal),
+'taxamount' => local_elearning_system_format_price($tax),
+'total' => local_elearning_system_format_price($total),
+
     'hastvapercent' => ($tvapercent > 0),
     'isparentaccount' => $isparentaccount,
     'targetfullname' => $targetfullname,
@@ -183,7 +225,7 @@ if ($product) {
     
     $invoicehtml['product'] = [
         'name' => $productname . $coursetext,
-        'amount' => number_format($subtotal, 2),
+        'amount' => local_elearning_system_format_price($subtotal),
     ];
 }
 

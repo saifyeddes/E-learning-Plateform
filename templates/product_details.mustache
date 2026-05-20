@@ -95,14 +95,17 @@
                             {{/isincart}}
                         {{/ispurchased}}
                         <a href="{{carturl}}" class="btn btn-outline-primary">{{t_viewcart}}</a>
-                        {{#hascourse}}
-                        {{#isloggedin}}
-                        <a href="{{courseurl}}" class="btn btn-outline-secondary">{{t_opencourse}}</a>
-                        {{/isloggedin}}
-                        {{^isloggedin}}
-                        <a href="{{authurl}}" class="btn btn-success">{{t_buynow}}</a>
-                        {{/isloggedin}}
-                        {{/hascourse}}
+                        {{#canopencourse}}
+<a href="{{courseurl}}" class="btn btn-outline-secondary">{{t_opencourse}}</a>
+{{/canopencourse}}
+
+{{^canopencourse}}
+    {{#hascourse}}
+        {{^isloggedin}}
+        <a href="{{authurl}}" class="btn btn-success">{{t_buynow}}</a>
+        {{/isloggedin}}
+    {{/hascourse}}
+{{/canopencourse}}
                     </div>
                 </div>
             </div>

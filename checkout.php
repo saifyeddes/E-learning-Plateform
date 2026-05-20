@@ -14,6 +14,52 @@ $PAGE->set_heading(get_string('checkout', 'local_elearning_system'));
 local_elearning_system_force_auth_login_url('/local/elearning_system/checkout.php');
 
 global $DB;
+function local_elearning_system_checkout_plugin_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_checkout_get_coupon_by_code(string $code): ?stdClass {
+    $db = local_elearning_system_checkout_plugin_db();
+
+    $stmt = $db->prepare("
+        SELECT *
+          FROM el_coupons
+         WHERE UPPER(code) = UPPER(?)
+         LIMIT 1
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error coupon: ' . $db->error);
+    }
+
+    $stmt->bind_param('s', $code);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $coupon = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $coupon ?: null;
+}
+
+function local_elearning_system_checkout_increment_coupon_use(int $couponid): void {
+    $db = local_elearning_system_checkout_plugin_db();
+
+    $stmt = $db->prepare("
+        UPDATE el_coupons
+           SET currentuse = currentuse + 1
+         WHERE id = ?
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error coupon use: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $couponid);
+    $stmt->execute();
+    $stmt->close();
+}
 function local_elearning_system_plugin_get_checkout_products(array $ids): array {
     $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
 
@@ -130,7 +176,7 @@ if (optional_param('applycoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
     if ($couponcode === '') {
         $couponerror = get_string('couponcodeempty', 'local_elearning_system');
     } else {
-        $coupon = $DB->get_record('elearning_coupons', ['code' => $couponcode], '*', IGNORE_MISSING);
+        $coupon = local_elearning_system_checkout_get_coupon_by_code($couponcode);
         if (!$coupon) {
             $couponerror = get_string('couponnotfound', 'local_elearning_system');
         } else if ((string)$coupon->status !== 'active') {
@@ -151,7 +197,7 @@ if (optional_param('applycoupon', 0, PARAM_BOOL) && confirm_sesskey()) {
 
 if (!empty($SESSION->local_elearning_system_coupon)) {
     $sessioncoupon = $SESSION->local_elearning_system_coupon;
-    $couponrecord = $DB->get_record('elearning_coupons', ['id' => (int)$sessioncoupon->id], '*', IGNORE_MISSING);
+    $couponrecord = local_elearning_system_checkout_get_coupon_by_code($sessioncoupon->code);
 
     if (!$couponrecord || (string)$couponrecord->status !== 'active' || (!empty($couponrecord->expirydate) && (int)$couponrecord->expirydate < time())) {
         unset($SESSION->local_elearning_system_coupon);

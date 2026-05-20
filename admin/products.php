@@ -1,6 +1,7 @@
 <?php
 
 require('../../../config.php');
+require_once(__DIR__ . '/../classes/plugin_db.php');
 require_login();
 
 $context = context_system::instance();
@@ -249,9 +250,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $filename = time().'_'.clean_param($uploadedfile['name'], PARAM_FILE);
-            move_uploaded_file($uploadedfile['tmp_name'], $dir.$filename);
-            $bundlerecord->image = '/local/elearning_system/uploads/'.$filename;
-        }
+$destination = $dir . $filename;
+
+if (!move_uploaded_file($uploadedfile['tmp_name'], $destination)) {
+    \core\notification::add('Image upload failed: file could not be saved.', \core\output\notification::NOTIFY_ERROR);
+    redirect(new moodle_url('/local/elearning_system/admin/products.php', $redirectparams));
+}
+
+@chmod($destination, 0644);
+
+$record->image = '/local/elearning_system/uploads/' . $filename;
 
         $bundlerecord->timemodified = time();
         if ($bundleaction === 'updatebundle' && $bundleid > 0) {
@@ -352,9 +360,16 @@ if ($productid) {
         if (!file_exists($dir)) mkdir($dir,0755,true);
 
         $filename = time().'_'.clean_param($uploadedfile['name'], PARAM_FILE);
-        move_uploaded_file($uploadedfile['tmp_name'], $dir.$filename);
+$destination = $dir . $filename;
 
-        $record->image = '/local/elearning_system/uploads/'.$filename;
+if (!move_uploaded_file($uploadedfile['tmp_name'], $destination)) {
+    \core\notification::add('Image upload failed: file could not be saved.', \core\output\notification::NOTIFY_ERROR);
+    redirect(new moodle_url('/local/elearning_system/admin/products.php', $redirectparams));
+}
+
+@chmod($destination, 0644);
+
+$record->image = '/local/elearning_system/uploads/' . $filename;
     }
     $record->timemodified = time();
 

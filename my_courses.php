@@ -2,8 +2,8 @@
 
 require('../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 require_login();
-
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/my_courses.php');
@@ -12,6 +12,126 @@ $PAGE->set_title('Mes cours');
 $PAGE->set_heading('Mes cours');
 
 global $DB, $USER, $CFG;
+function local_elearning_system_my_courses_plugin_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_my_courses_get_orders(int $userid): array {
+    $db = local_elearning_system_my_courses_plugin_db();
+
+    $stmt = $db->prepare("
+        SELECT o.id, o.userid, o.productid, o.amount, o.timecreated,
+               o.expiresat, o.durationmonths,
+               p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image,
+               p.price, p.saleprice, p.status, p.type
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.userid = ?
+      ORDER BY o.id DESC
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $userid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $records = [];
+    while ($row = $result->fetch_object()) {
+        $records[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $records;
+}
+
+function local_elearning_system_my_courses_get_products_by_ids(array $ids): array {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+    if (empty($ids)) {
+        return [];
+    }
+
+    $db = local_elearning_system_my_courses_plugin_db();
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+
+    $stmt = $db->prepare("SELECT * FROM el_products WHERE id IN ($placeholders)");
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    $stmt->close();
+
+    return $products;
+}
+
+function local_elearning_system_my_courses_get_all_products(): array {
+    $db = local_elearning_system_my_courses_plugin_db();
+
+    $result = $db->query("SELECT * FROM el_products ORDER BY id DESC");
+
+    if (!$result) {
+        throw new moodle_exception('Plugin DB query error: ' . $db->error);
+    }
+
+    $products = [];
+    while ($row = $result->fetch_object()) {
+        $products[(int)$row->id] = $row;
+    }
+
+    return $products;
+}
+
+function local_elearning_system_my_courses_product_has_active_purchase(int $userid, int $productid): bool {
+    $db = local_elearning_system_my_courses_plugin_db();
+
+    $stmt = $db->prepare("
+        SELECT id, timecreated, durationmonths, expiresat
+          FROM el_orders
+         WHERE userid = ? AND productid = ?
+      ORDER BY id DESC
+         LIMIT 1
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('ii', $userid, $productid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $order = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    if (!$order) {
+        return false;
+    }
+
+    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
+    $expiresat = !empty($order->expiresat)
+        ? (int)$order->expiresat
+        : strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+
+    return $expiresat === false || $expiresat <= 0 || $expiresat > time();
+}
 
 $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
 $targetuserid = (int)$usercontext['targetuserid'];
@@ -79,28 +199,26 @@ function local_elearning_system_resolve_product_or_course_image($productimagepat
 $orders = [];
 $coursesbyid = [];
 
-if ($DB->get_manager()->table_exists('elearning_orders')) {
-    local_elearning_system_cleanup_expired_orders_for_user($targetuserid, $DB);
-    $ordercolumns = $DB->get_columns('elearning_orders');
+$records = local_elearning_system_my_courses_get_orders($targetuserid);
+$ordercolumns = [
+    'expiresat' => true,
+    'durationmonths' => true,
+];
 
-    $expireselect = isset($ordercolumns['expiresat']) ? 'o.expiresat, o.durationmonths' : '0 AS expiresat, 1 AS durationmonths';
-    $sql = "SELECT o.id, o.amount, o.timecreated,
-                p.id AS productid, p.name AS productname, p.courseid, p.isbundle, p.bundleitems, p.image,
-                {$expireselect},
-                   c.fullname AS coursename
-              FROM {elearning_orders} o
-         LEFT JOIN {elearning_products} p ON p.id = o.productid
-         LEFT JOIN {course} c ON c.id = p.courseid
-             WHERE o.userid = :userid
-          ORDER BY o.id DESC";
-
-    $records = $DB->get_records_sql($sql, ['userid' => $targetuserid]);
-
+if (!empty($records)) {
     foreach ($records as $r) {
         $isactiveorder = local_elearning_system_is_order_active($r, $ordercolumns ?? []);
         $isbundle = !empty($r->isbundle);
         $courseid = !empty($r->courseid) ? (int)$r->courseid : 0;
-        $hascourse = $courseid > 0 && !empty($r->coursename);
+        $coursename = '';
+if ($courseid > 0) {
+    $course = $DB->get_record('course', ['id' => $courseid], 'id,fullname', IGNORE_MISSING);
+    if ($course) {
+        $coursename = $course->fullname;
+    }
+}
+
+$hascourse = $courseid > 0 && $coursename !== '';
         $bundleproductsdisplay = '';
         
         [$productimage, $hasproductimage] = local_elearning_system_resolve_product_or_course_image(
@@ -111,7 +229,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         if ($isactiveorder && $hascourse && !isset($coursesbyid[$courseid])) {
             $coursesbyid[$courseid] = [
                 'courseid' => $courseid,
-                'coursename' => format_string($r->coursename),
+                'coursename' => format_string($coursename),
                 'productname' => !empty($r->productname) ? format_string($r->productname) : '-',
                 'showproductname' => true,
                 'productimage' => $productimage,
@@ -124,7 +242,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
         if ($isactiveorder && $isbundle && !empty($r->bundleitems)) {
             $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$r->bundleitems)))));
             if (!empty($bundleitemids)) {
-                $bundleproducts = $DB->get_records_list('elearning_products', 'id', $bundleitemids, '', 'id,name,courseid,image');
+                $bundleproducts = local_elearning_system_my_courses_get_products_by_ids($bundleitemids);
                 $bundlenames = [];
                 foreach ($bundleproducts as $bundleproduct) {
                     $bundlenames[] = format_string($bundleproduct->name);
@@ -178,7 +296,7 @@ if ($DB->get_manager()->table_exists('elearning_orders')) {
             'productname' => !empty($r->productname) ? format_string($r->productname) : '-',
             'bundleproducts' => $bundleproductsdisplay,
             'hasbundleproducts' => ($bundleproductsdisplay !== ''),
-            'coursename' => $hascourse ? format_string($r->coursename) : '-',
+            'coursename' => $hascourse ? format_string($coursename) : '-',
             'hascourse' => $hascourse,
             'courseurl' => $hascourse ? (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
             'amount' => local_elearning_system_format_price((float)$r->amount),
@@ -195,17 +313,20 @@ $courses = array_values($coursesbyid);
 
 $availablecourses = [];
 $eligibleproductscount = 0;
-if ($DB->get_manager()->table_exists('elearning_products')) {
-    $allproducts = $DB->get_records('elearning_products', null, 'id DESC');
+$allproducts = local_elearning_system_my_courses_get_all_products();
+
+if (!empty($allproducts)) {
     foreach ($allproducts as $product) {
         $productid = (int)$product->id;
         if ($productid <= 0) {
             continue;
         }
 
-        $price = !empty($product->price) ? (float)$product->price : 0.0;
-        $saleprice = !empty($product->saleprice) ? (float)$product->saleprice : 0.0;
-        $displayprice = $saleprice > 0 ? $saleprice : $price;
+        $originalprice = !empty($product->price) ? (float)$product->price : 0.0;
+$saleprice = !empty($product->saleprice) ? (float)$product->saleprice : 0.0;
+
+$displayprice = $saleprice > 0 ? $saleprice : $originalprice;
+$hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $saleprice;
         $status = strtolower(trim((string)($product->status ?? '')));
         $rawtype = strtolower(trim((string)($product->type ?? '')));
         if ($displayprice <= 0) {
@@ -222,9 +343,9 @@ if ($DB->get_manager()->table_exists('elearning_products')) {
 
         $eligibleproductscount++;
 
-        if (local_elearning_system_is_product_covered_by_active_purchase($targetuserid, $productid, $DB)) {
-            continue;
-        }
+        if (local_elearning_system_my_courses_product_has_active_purchase($targetuserid, $productid)) {
+    continue;
+}
 
         $courseid = !empty($product->courseid) ? (int)$product->courseid : 0;
         $coursename = '';
@@ -261,30 +382,8 @@ if ($DB->get_manager()->table_exists('elearning_products')) {
 echo $OUTPUT->header();
 $expiredcourses = [];
 
-if (isloggedin() && !isguestuser() && $DB->get_manager()->table_exists('elearning_orders')) {
-    $ordercolumns = $DB->get_columns('elearning_orders');
-
-    $durationselect = isset($ordercolumns['durationmonths'])
-        ? 'o.durationmonths AS durationmonths'
-        : '1 AS durationmonths';
-
-    $expiresatselect = isset($ordercolumns['expiresat'])
-        ? 'o.expiresat AS expiresat'
-        : '0 AS expiresat';
-
-    $sql = "SELECT o.id, o.userid, o.productid, o.timecreated,
-                   {$durationselect},
-                   {$expiresatselect},
-                   p.name AS productname
-              FROM {elearning_orders} o
-              JOIN {elearning_products} p ON p.id = o.productid
-             WHERE o.userid = :userid
-          ORDER BY o.id DESC";
-
-    $records = $DB->get_records_sql($sql, [
-        'userid' => (int)$USER->id,
-    ]);
-
+if (isloggedin() && !isguestuser()) {
+    $records = local_elearning_system_my_courses_get_orders((int)$USER->id);
     $seenproducts = [];
 
     foreach ($records as $record) {

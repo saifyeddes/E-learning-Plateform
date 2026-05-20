@@ -2,12 +2,87 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/classes/plugin_db.php');
 
 require_login();
 
-global $DB, $USER, $SESSION;
+global $USER, $SESSION;
 
 require_sesskey();
+
+function local_elearning_system_reactivate_db(): mysqli {
+    return \local_elearning_system\plugin_db::get();
+}
+
+function local_elearning_system_reactivate_get_order(int $userid, int $productid, int $orderid = 0): ?stdClass {
+    $db = local_elearning_system_reactivate_db();
+
+    if ($orderid > 0) {
+        $stmt = $db->prepare("
+            SELECT *
+              FROM el_orders
+             WHERE id = ?
+               AND userid = ?
+               AND productid = ?
+             LIMIT 1
+        ");
+
+        if (!$stmt) {
+            throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+        }
+
+        $stmt->bind_param('iii', $orderid, $userid, $productid);
+    } else {
+        $stmt = $db->prepare("
+            SELECT *
+              FROM el_orders
+             WHERE userid = ?
+               AND productid = ?
+          ORDER BY id DESC
+             LIMIT 1
+        ");
+
+        if (!$stmt) {
+            throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+        }
+
+        $stmt->bind_param('ii', $userid, $productid);
+    }
+
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $order = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $order ?: null;
+}
+
+function local_elearning_system_reactivate_get_product(int $productid): ?stdClass {
+    $db = local_elearning_system_reactivate_db();
+
+    $stmt = $db->prepare("
+        SELECT *
+          FROM el_products
+         WHERE id = ?
+         LIMIT 1
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $productid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $product = $result ? $result->fetch_object() : null;
+
+    $stmt->close();
+
+    return $product ?: null;
+}
 
 $productid = required_param('productid', PARAM_INT);
 $orderid = optional_param('orderid', 0, PARAM_INT);
@@ -18,40 +93,30 @@ if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_e
 
 local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
 
-$orderconditions = [
-    'userid' => (int)$USER->id,
-    'productid' => $productid,
-];
-
-if ($orderid > 0) {
-    $orderconditions['id'] = $orderid;
-}
-
-$order = $DB->get_record('elearning_orders', $orderconditions, '*', IGNORE_MULTIPLE);
+$order = local_elearning_system_reactivate_get_order((int)$USER->id, $productid, $orderid);
 
 if (!$order) {
     redirect(new moodle_url('/local/elearning_system/my_courses.php'));
 }
 
-$product = $DB->get_record('elearning_products', ['id' => $productid], '*', MUST_EXIST);
+$product = local_elearning_system_reactivate_get_product($productid);
 
-$ordercolumns = $DB->get_columns('elearning_orders');
-
-$durationmonths = 1;
-if (isset($ordercolumns['durationmonths']) && !empty($order->durationmonths)) {
-    $durationmonths = max(1, (int)$order->durationmonths);
+if (!$product) {
+    redirect(new moodle_url('/local/elearning_system/my_courses.php'));
 }
+
+$durationmonths = !empty($order->durationmonths)
+    ? max(1, (int)$order->durationmonths)
+    : 1;
 
 $now = time();
 $expiresat = 0;
 
-if (isset($ordercolumns['expiresat']) && !empty($order->expiresat)) {
+if (!empty($order->expiresat)) {
     $expiresat = (int)$order->expiresat;
 } else {
-    $expiresat = strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
-    if ($expiresat === false) {
-        $expiresat = 0;
-    }
+    $calculated = strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+    $expiresat = $calculated !== false ? (int)$calculated : 0;
 }
 
 if ($expiresat > $now) {
@@ -61,7 +126,6 @@ if ($expiresat > $now) {
 /*
  * Réactivation :
  * on remet le même produit dans le panier avec la même durée du dernier achat.
- * Selon votre système de panier, on stocke productid + durationmonths.
  */
 $SESSION->local_elearning_system_cart[$productid] = [
     'productid' => $productid,
