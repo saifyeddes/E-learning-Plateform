@@ -148,12 +148,12 @@ function formatCartMoney(amount) {
             const months = clampMonths(input.value);
             input.value = months;
             const line = unit * months;
-            lineEl.setAttribute('data-linevalue', formatCartMoney(total);
-            lineEl.textContent = formatCartMoney(line);
-            grand += line;
+lineEl.setAttribute('data-linevalue', line.toFixed(2));
+lineEl.textContent = formatCartMoney(line);
+grand += line;
         });
 
-        totalEl.textContent = formatCartMoney(total);
+        totalEl.textContent = formatCartMoney(grand);
     };
 
     const scheduleSubmit = function(form) {

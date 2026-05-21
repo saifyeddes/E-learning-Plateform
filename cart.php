@@ -76,15 +76,22 @@ if ($action === 'remove' && $itemid > 0) {
 if ($action === 'setduration' && $itemid > 0) {
     $durationmonths = optional_param('durationmonths', 1, PARAM_INT);
     $durationmonths = max(1, min(24, $durationmonths));
+
     if (isset($SESSION->local_elearning_system_cart[$itemid])) {
-        $SESSION->local_elearning_system_cart[$itemid] = [
-            'qty' => 1,
-            'durationmonths' => $durationmonths,
-        ];
+        $cartitem = local_elearning_system_get_cart_item(
+            $SESSION->local_elearning_system_cart,
+            $itemid
+        );
+
+        $cartitem['productid'] = $itemid;
+        $cartitem['qty'] = 1;
+        $cartitem['durationmonths'] = $durationmonths;
+
+        $SESSION->local_elearning_system_cart[$itemid] = $cartitem;
     }
+
     redirect(new moodle_url('/local/elearning_system/cart.php'));
 }
-
 if ($action === 'clear') {
     $SESSION->local_elearning_system_cart = [];
     redirect(new moodle_url('/local/elearning_system/cart.php'));
@@ -136,6 +143,8 @@ if (!empty($cartids)) {
         if ($durationmonths > 24) {
             $durationmonths = 24;
         }
+        $minusduration = max(1, $durationmonths - 1);
+$plusduration = min(24, $durationmonths + 1);
 
         // Force single-purchase quantity per product in cart.
         $SESSION->local_elearning_system_cart[$r->id] = [
@@ -166,8 +175,26 @@ if (!empty($cartids)) {
             'hasimage' => $hasimage,
             'image' => $image,
             'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => (int)$r->id]))->out(false),
-            'setdurationurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'setduration', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
-            'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
+'setdurationurl' => (new moodle_url('/local/elearning_system/cart.php', [
+    'action' => 'setduration',
+    'id' => (int)$r->id,
+    'durationmonths' => $durationmonths,
+    'sesskey' => sesskey(),
+]))->out(false),
+
+'decreasedurationurl' => (new moodle_url('/local/elearning_system/cart.php', [
+    'action' => 'setduration',
+    'id' => (int)$r->id,
+    'durationmonths' => $minusduration,
+    'sesskey' => sesskey(),
+]))->out(false),
+
+'increasedurationurl' => (new moodle_url('/local/elearning_system/cart.php', [
+    'action' => 'setduration',
+    'id' => (int)$r->id,
+    'durationmonths' => $plusduration,
+    'sesskey' => sesskey(),
+]))->out(false),            'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
         ];
     }
 }
