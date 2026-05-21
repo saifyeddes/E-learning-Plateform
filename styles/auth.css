@@ -1482,3 +1482,463 @@ body#page-login-forgot_password #region-main::before {
     width: calc(100% - 520px) !important;
     font-size: 20px !important;
 }
+
+/* ==================================================
+   FINAL OVERRIDE - PLUGIN SET PASSWORD PAGE
+   Fix RTL layout + complete visible form
+   ================================================== */
+
+body#page-local-elearning-system-set_password,
+body#page-local-elearning_system-set_password,
+body#page-local-elearning-system-set-password,
+body#page-local-elearning_system-set-password {
+    margin: 0 !important;
+    overflow: hidden !important;
+    background:
+        radial-gradient(circle at 10% 15%, rgba(97, 184, 240, 0.18), transparent 34%),
+        radial-gradient(circle at 90% 85%, rgba(72, 181, 150, 0.12), transparent 30%),
+        linear-gradient(135deg, #f7fbff 0%, #edf5ff 48%, #ffffff 100%) !important;
+    font-family: "Poppins", "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Hide Moodle chrome */
+body#page-local-elearning-system-set_password header,
+body#page-local-elearning_system-set_password header,
+body#page-local-elearning-system-set-password header,
+body#page-local-elearning_system-set-password header,
+body#page-local-elearning-system-set_password footer,
+body#page-local-elearning_system-set_password footer,
+body#page-local-elearning-system-set-password footer,
+body#page-local-elearning_system-set-password footer,
+body#page-local-elearning-system-set_password .navbar,
+body#page-local-elearning_system-set_password .navbar,
+body#page-local-elearning-system-set-password .navbar,
+body#page-local-elearning_system-set-password .navbar,
+body#page-local-elearning-system-set_password .secondary-navigation,
+body#page-local-elearning_system-set_password .secondary-navigation,
+body#page-local-elearning-system-set-password .secondary-navigation,
+body#page-local-elearning_system-set-password .secondary-navigation,
+body#page-local-elearning-system-set_password #page-header,
+body#page-local-elearning_system-set_password #page-header,
+body#page-local-elearning-system-set-password #page-header,
+body#page-local-elearning_system-set-password #page-header,
+body#page-local-elearning-system-set_password .drawer-toggles,
+body#page-local-elearning_system-set_password .drawer-toggles,
+body#page-local-elearning-system-set-password .drawer-toggles,
+body#page-local-elearning_system-set-password .drawer-toggles {
+    display: none !important;
+}
+
+/* Full page reset */
+body#page-local-elearning-system-set_password #page-wrapper,
+body#page-local-elearning_system-set_password #page-wrapper,
+body#page-local-elearning-system-set-password #page-wrapper,
+body#page-local-elearning_system-set-password #page-wrapper,
+body#page-local-elearning-system-set_password #page,
+body#page-local-elearning_system-set_password #page,
+body#page-local-elearning-system-set-password #page,
+body#page-local-elearning_system-set-password #page,
+body#page-local-elearning-system-set_password #page-content,
+body#page-local-elearning_system-set_password #page-content,
+body#page-local-elearning-system-set-password #page-content,
+body#page-local-elearning_system-set-password #page-content,
+body#page-local-elearning-system-set_password #region-main-box,
+body#page-local-elearning_system-set_password #region-main-box,
+body#page-local-elearning-system-set-password #region-main-box,
+body#page-local-elearning_system-set-password #region-main-box,
+body#page-local-elearning-system-set_password .main-inner,
+body#page-local-elearning_system-set_password .main-inner,
+body#page-local-elearning-system-set-password .main-inner,
+body#page-local-elearning_system-set-password .main-inner,
+body#page-local-elearning-system-set_password .container,
+body#page-local-elearning_system-set_password .container,
+body#page-local-elearning-system-set-password .container,
+body#page-local-elearning_system-set-password .container,
+body#page-local-elearning-system-set_password .container-fluid,
+body#page-local-elearning_system-set_password .container-fluid,
+body#page-local-elearning-system-set-password .container-fluid,
+body#page-local-elearning_system-set-password .container-fluid {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+}
+
+/* Main card: force LTR grid even in Arabic */
+body#page-local-elearning-system-set_password #region-main,
+body#page-local-elearning_system-set_password #region-main,
+body#page-local-elearning-system-set-password #region-main,
+body#page-local-elearning_system-set-password #region-main {
+    position: fixed !important;
+    inset: 0 !important;
+    width: min(1180px, calc(100vw - 40px)) !important;
+    height: min(660px, calc(100vh - 24px)) !important;
+    margin: auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: 520px 1fr !important;
+    direction: ltr !important;
+    background: #ffffff !important;
+    border-radius: 28px !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 24px 70px rgba(16, 42, 67, 0.14) !important;
+}
+
+/* Left form content */
+body#page-local-elearning-system-set_password #region-main > *,
+body#page-local-elearning_system-set_password #region-main > *,
+body#page-local-elearning-system-set-password #region-main > *,
+body#page-local-elearning_system-set-password #region-main > * {
+    grid-column: 1 !important;
+    position: relative !important;
+    z-index: 3 !important;
+    width: auto !important;
+    max-width: 410px !important;
+    margin-left: 52px !important;
+    margin-right: 52px !important;
+}
+
+/* Restore RTL only inside the form content */
+html[dir="rtl"] body#page-local-elearning-system-set_password #region-main > *,
+html[dir="rtl"] body#page-local-elearning_system-set_password #region-main > *,
+html[dir="rtl"] body#page-local-elearning-system-set-password #region-main > *,
+html[dir="rtl"] body#page-local-elearning_system-set-password #region-main > * {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* Intro paragraph */
+body#page-local-elearning-system-set_password #region-main > p:first-child,
+body#page-local-elearning_system-set_password #region-main > p:first-child,
+body#page-local-elearning-system-set-password #region-main > p:first-child,
+body#page-local-elearning_system-set-password #region-main > p:first-child {
+    margin-top: 34px !important;
+    margin-bottom: 12px !important;
+    color: #53657a !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+}
+
+/* Blue right panel */
+body#page-local-elearning-system-set_password #region-main::after,
+body#page-local-elearning_system-set_password #region-main::after,
+body#page-local-elearning-system-set-password #region-main::after,
+body#page-local-elearning_system-set-password #region-main::after {
+    content: "";
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    width: calc(100% - 520px) !important;
+    height: 100% !important;
+    background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.13), transparent 0 90px, transparent 91px),
+        radial-gradient(circle at 92% 88%, rgba(255,255,255,0.18), transparent 0 175px, transparent 176px),
+        linear-gradient(135deg, #07314f 0%, #006794 52%, #45aeea 100%) !important;
+    z-index: 1 !important;
+}
+
+body#page-local-elearning-system-set_password #region-main::before,
+body#page-local-elearning_system-set_password #region-main::before,
+body#page-local-elearning-system-set-password #region-main::before,
+body#page-local-elearning_system-set-password #region-main::before {
+    content: "🔒\A\AReset your password\ASecure access to your learning space";
+    white-space: pre-line;
+    position: absolute !important;
+    top: 50% !important;
+    right: 0 !important;
+    left: auto !important;
+    width: calc(100% - 520px) !important;
+    transform: translateY(-50%) !important;
+    z-index: 2 !important;
+    text-align: center !important;
+    color: #ffffff !important;
+    font-size: 21px !important;
+    font-weight: 900 !important;
+    line-height: 1.55 !important;
+    pointer-events: none !important;
+}
+
+/* Titles */
+body#page-local-elearning-system-set_password h2,
+body#page-local-elearning_system-set_password h2,
+body#page-local-elearning-system-set-password h2,
+body#page-local-elearning_system-set-password h2,
+body#page-local-elearning-system-set_password legend,
+body#page-local-elearning_system-set_password legend,
+body#page-local-elearning-system-set-password legend,
+body#page-local-elearning_system-set-password legend,
+body#page-local-elearning-system-set_password .ftoggler,
+body#page-local-elearning_system-set_password .ftoggler,
+body#page-local-elearning-system-set-password .ftoggler,
+body#page-local-elearning_system-set-password .ftoggler {
+    color: #102a43 !important;
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin: 0 0 12px !important;
+}
+
+/* Compact native Moodle form */
+body#page-local-elearning-system-set_password .mform,
+body#page-local-elearning_system-set_password .mform,
+body#page-local-elearning-system-set-password .mform,
+body#page-local-elearning_system-set-password .mform {
+    margin-top: 0 !important;
+}
+
+body#page-local-elearning-system-set_password .mform .form-group,
+body#page-local-elearning_system-set_password .mform .form-group,
+body#page-local-elearning-system-set-password .mform .form-group,
+body#page-local-elearning_system-set-password .mform .form-group,
+body#page-local-elearning-system-set_password .mform .fitem,
+body#page-local-elearning_system-set_password .mform .fitem,
+body#page-local-elearning-system-set-password .mform .fitem,
+body#page-local-elearning_system-set-password .mform .fitem,
+body#page-local-elearning-system-set_password .mform .row,
+body#page-local-elearning_system-set_password .mform .row,
+body#page-local-elearning-system-set-password .mform .row,
+body#page-local-elearning_system-set-password .mform .row {
+    display: block !important;
+    margin-bottom: 8px !important;
+}
+
+body#page-local-elearning-system-set_password .mform .col-md-3,
+body#page-local-elearning_system-set_password .mform .col-md-3,
+body#page-local-elearning-system-set-password .mform .col-md-3,
+body#page-local-elearning_system-set-password .mform .col-md-3,
+body#page-local-elearning-system-set_password .mform .col-md-9,
+body#page-local-elearning_system-set_password .mform .col-md-9,
+body#page-local-elearning-system-set-password .mform .col-md-9,
+body#page-local-elearning_system-set-password .mform .col-md-9,
+body#page-local-elearning-system-set_password .mform .felement,
+body#page-local-elearning_system-set_password .mform .felement,
+body#page-local-elearning-system-set-password .mform .felement,
+body#page-local-elearning_system-set-password .mform .felement,
+body#page-local-elearning-system-set_password .mform .form-inline,
+body#page-local-elearning_system-set_password .mform .form-inline,
+body#page-local-elearning-system-set-password .mform .form-inline,
+body#page-local-elearning_system-set-password .mform .form-inline {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Labels */
+body#page-local-elearning-system-set_password label,
+body#page-local-elearning_system-set_password label,
+body#page-local-elearning-system-set-password label,
+body#page-local-elearning_system-set-password label,
+body#page-local-elearning-system-set_password .col-form-label,
+body#page-local-elearning_system-set_password .col-form-label,
+body#page-local-elearning-system-set-password .col-form-label,
+body#page-local-elearning_system-set-password .col-form-label {
+    display: block !important;
+    color: #102a43 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Inputs */
+body#page-local-elearning-system-set_password input[type="password"],
+body#page-local-elearning_system-set_password input[type="password"],
+body#page-local-elearning-system-set-password input[type="password"],
+body#page-local-elearning_system-set-password input[type="password"],
+body#page-local-elearning-system-set_password input[type="text"],
+body#page-local-elearning_system-set_password input[type="text"],
+body#page-local-elearning-system-set-password input[type="text"],
+body#page-local-elearning_system-set-password input[type="text"],
+body#page-local-elearning-system-set_password .form-control,
+body#page-local-elearning_system-set_password .form-control,
+body#page-local-elearning-system-set-password .form-control,
+body#page-local-elearning_system-set-password .form-control {
+    width: 100% !important;
+    height: 35px !important;
+    border-radius: 10px !important;
+    border: 1px solid #d5e0ec !important;
+    padding: 6px 11px !important;
+    color: #102a43 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* Help text */
+body#page-local-elearning-system-set_password .form-text,
+body#page-local-elearning_system-set_password .form-text,
+body#page-local-elearning-system-set-password .form-text,
+body#page-local-elearning_system-set-password .form-text,
+body#page-local-elearning-system-set_password .form-description,
+body#page-local-elearning_system-set_password .form-description,
+body#page-local-elearning-system-set-password .form-description,
+body#page-local-elearning_system-set-password .form-description,
+body#page-local-elearning-system-set_password .description,
+body#page-local-elearning_system-set_password .description,
+body#page-local-elearning-system-set-password .description,
+body#page-local-elearning_system-set-password .description {
+    color: #53657a !important;
+    font-size: 11.2px !important;
+    line-height: 1.25 !important;
+    margin: 2px 0 4px !important;
+}
+
+/* Checkbox */
+body#page-local-elearning-system-set_password .form-check,
+body#page-local-elearning_system-set_password .form-check,
+body#page-local-elearning-system-set-password .form-check,
+body#page-local-elearning_system-set-password .form-check {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 4px 0 6px !important;
+}
+
+html[dir="rtl"] body#page-local-elearning-system-set_password .form-check,
+html[dir="rtl"] body#page-local-elearning_system-set_password .form-check,
+html[dir="rtl"] body#page-local-elearning-system-set-password .form-check,
+html[dir="rtl"] body#page-local-elearning_system-set-password .form-check {
+    justify-content: flex-end !important;
+}
+
+/* Buttons */
+body#page-local-elearning-system-set_password .fitem_actionbuttons,
+body#page-local-elearning_system-set_password .fitem_actionbuttons,
+body#page-local-elearning-system-set-password .fitem_actionbuttons,
+body#page-local-elearning_system-set-password .fitem_actionbuttons,
+body#page-local-elearning-system-set_password .form-group.row.fitem.femptylabel,
+body#page-local-elearning_system-set_password .form-group.row.fitem.femptylabel,
+body#page-local-elearning-system-set-password .form-group.row.fitem.femptylabel,
+body#page-local-elearning_system-set-password .form-group.row.fitem.femptylabel {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    margin-top: 8px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #e5edf5 !important;
+}
+
+html[dir="rtl"] body#page-local-elearning-system-set_password .fitem_actionbuttons,
+html[dir="rtl"] body#page-local-elearning_system-set_password .fitem_actionbuttons,
+html[dir="rtl"] body#page-local-elearning-system-set-password .fitem_actionbuttons,
+html[dir="rtl"] body#page-local-elearning_system-set-password .fitem_actionbuttons,
+html[dir="rtl"] body#page-local-elearning-system-set_password .form-group.row.fitem.femptylabel,
+html[dir="rtl"] body#page-local-elearning_system-set_password .form-group.row.fitem.femptylabel,
+html[dir="rtl"] body#page-local-elearning-system-set-password .form-group.row.fitem.femptylabel,
+html[dir="rtl"] body#page-local-elearning_system-set-password .form-group.row.fitem.femptylabel {
+    justify-content: flex-end !important;
+}
+
+body#page-local-elearning-system-set_password .btn-primary,
+body#page-local-elearning_system-set_password .btn-primary,
+body#page-local-elearning-system-set-password .btn-primary,
+body#page-local-elearning_system-set-password .btn-primary,
+body#page-local-elearning-system-set_password input[type="submit"],
+body#page-local-elearning_system-set_password input[type="submit"],
+body#page-local-elearning-system-set-password input[type="submit"],
+body#page-local-elearning_system-set-password input[type="submit"] {
+    height: 36px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #006794, #3ca8ef) !important;
+    color: #ffffff !important;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+    padding: 0 20px !important;
+    box-shadow: 0 10px 22px rgba(0, 103, 148, 0.22) !important;
+}
+
+body#page-local-elearning-system-set_password .btn-secondary,
+body#page-local-elearning_system-set_password .btn-secondary,
+body#page-local-elearning-system-set-password .btn-secondary,
+body#page-local-elearning_system-set-password .btn-secondary {
+    height: 36px !important;
+    border-radius: 10px !important;
+    border: 1px solid #d5e0ec !important;
+    background: #eef2f6 !important;
+    color: #102a43 !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    padding: 0 18px !important;
+}
+
+/* Required text */
+body#page-local-elearning-system-set_password .fdescription.required,
+body#page-local-elearning_system-set_password .fdescription.required,
+body#page-local-elearning-system-set-password .fdescription.required,
+body#page-local-elearning_system-set-password .fdescription.required {
+    color: #53657a !important;
+    font-size: 10.8px !important;
+    margin-top: 4px !important;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    body#page-local-elearning-system-set_password,
+    body#page-local-elearning_system-set_password,
+    body#page-local-elearning-system-set-password,
+    body#page-local-elearning_system-set-password {
+        overflow: auto !important;
+    }
+
+    body#page-local-elearning-system-set_password #page-wrapper,
+    body#page-local-elearning_system-set_password #page-wrapper,
+    body#page-local-elearning-system-set-password #page-wrapper,
+    body#page-local-elearning_system-set-password #page-wrapper,
+    body#page-local-elearning-system-set_password #page,
+    body#page-local-elearning_system-set_password #page,
+    body#page-local-elearning-system-set-password #page,
+    body#page-local-elearning_system-set-password #page,
+    body#page-local-elearning-system-set_password #page-content,
+    body#page-local-elearning_system-set_password #page-content,
+    body#page-local-elearning-system-set-password #page-content,
+    body#page-local-elearning_system-set-password #page-content {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    body#page-local-elearning-system-set_password #region-main,
+    body#page-local-elearning_system-set_password #region-main,
+    body#page-local-elearning-system-set-password #region-main,
+    body#page-local-elearning_system-set-password #region-main {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        display: block !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        padding: 30px 24px !important;
+    }
+
+    body#page-local-elearning-system-set_password #region-main::before,
+    body#page-local-elearning_system-set_password #region-main::before,
+    body#page-local-elearning-system-set-password #region-main::before,
+    body#page-local-elearning_system-set-password #region-main::before,
+    body#page-local-elearning-system-set_password #region-main::after,
+    body#page-local-elearning_system-set_password #region-main::after,
+    body#page-local-elearning-system-set-password #region-main::after,
+    body#page-local-elearning_system-set-password #region-main::after {
+        display: none !important;
+    }
+
+    body#page-local-elearning-system-set_password #region-main > *,
+    body#page-local-elearning_system-set_password #region-main > *,
+    body#page-local-elearning-system-set-password #region-main > *,
+    body#page-local-elearning_system-set-password #region-main > * {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+        direction: inherit !important;
+    }
+}
