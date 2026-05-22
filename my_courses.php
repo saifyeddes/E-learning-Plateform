@@ -7,9 +7,96 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/my_courses.php');
+local_elearning_system_apply_requested_language();
+
+$lang = local_elearning_system_get_active_language();
+
+$mycoursestexts = [
+    'fr' => [
+        'page_title' => 'Mes cours et commandes',
+        'catalogue' => 'Catalogue',
+        'cart' => 'Panier',
+        'orders' => 'Commandes',
+        'parent_viewing' => 'Vous consultez les cours de votre enfant :',
+        'purchased_courses' => 'Cours achetés',
+        'available_courses' => 'Cours non achetés',
+        'start_course' => 'Démarrer le cours',
+        'download_invoice' => 'Télécharger la facture',
+        'view_progress' => 'Voir la progression',
+        'no_image' => 'Pas d’image',
+        'no_purchased_courses' => 'Aucun cours acheté pour le moment.',
+        'orders_info_before' => 'Pour voir toutes vos commandes avec détails complets et télécharger vos factures, visitez la',
+        'orders_info_link' => 'page des commandes',
+        'free' => 'Gratuit',
+        'view_buy' => 'Voir / Acheter',
+        'all_purchased_child' => 'Tous les cours sont déjà achetés pour cet enfant.',
+        'no_available_courses' => 'Aucun cours disponible dans le catalogue pour le moment.',
+        'expired_title' => 'Accès au cours expiré',
+        'expired_text_before' => 'Votre cours',
+        'expired_text_after' => 'est maintenant désactivé.',
+        'last_duration' => 'Dernière durée',
+        'expired_on' => 'Expiré le',
+        'reactivate_payment' => 'Réactiver le paiement',
+    ],
+    'en' => [
+        'page_title' => 'My courses and orders',
+        'catalogue' => 'Catalogue',
+        'cart' => 'Cart',
+        'orders' => 'Orders',
+        'parent_viewing' => 'You are viewing your child’s courses:',
+        'purchased_courses' => 'Purchased courses',
+        'available_courses' => 'Courses not purchased',
+        'start_course' => 'Start course',
+        'download_invoice' => 'Download invoice',
+        'view_progress' => 'View progress',
+        'no_image' => 'No image',
+        'no_purchased_courses' => 'No purchased courses yet.',
+        'orders_info_before' => 'To view all your orders with full details and download your invoices, visit the',
+        'orders_info_link' => 'orders page',
+        'free' => 'Free',
+        'view_buy' => 'View / Buy',
+        'all_purchased_child' => 'All courses are already purchased for this child.',
+        'no_available_courses' => 'No courses are currently available in the catalogue.',
+        'expired_title' => 'Course access expired',
+        'expired_text_before' => 'Your course',
+        'expired_text_after' => 'is disabled now.',
+        'last_duration' => 'Last duration',
+        'expired_on' => 'Expired on',
+        'reactivate_payment' => 'Reactivate payment',
+    ],
+    'ar' => [
+        'page_title' => 'دوراتي وطلباتي',
+        'catalogue' => 'الفهرس',
+        'cart' => 'السلة',
+        'orders' => 'الطلبات',
+        'parent_viewing' => 'أنت تطّلع على دورات طفلك:',
+        'purchased_courses' => 'الدورات المشتراة',
+        'available_courses' => 'الدورات غير المشتراة',
+        'start_course' => 'بدء الدورة',
+        'download_invoice' => 'تحميل الفاتورة',
+        'view_progress' => 'عرض التقدم',
+        'no_image' => 'لا توجد صورة',
+        'no_purchased_courses' => 'لا توجد دورات مشتراة حاليًا.',
+        'orders_info_before' => 'لعرض جميع طلباتك مع التفاصيل الكاملة وتحميل الفواتير، يرجى زيارة',
+        'orders_info_link' => 'صفحة الطلبات',
+        'free' => 'مجاني',
+        'view_buy' => 'عرض / شراء',
+        'all_purchased_child' => 'تم شراء جميع الدورات لهذا الطفل.',
+        'no_available_courses' => 'لا توجد دورات متاحة في الفهرس حاليًا.',
+        'expired_title' => 'انتهت صلاحية الوصول إلى الدورة',
+        'expired_text_before' => 'الدورة',
+        'expired_text_after' => 'أصبحت غير مفعلة الآن.',
+        'last_duration' => 'آخر مدة',
+        'expired_on' => 'انتهت بتاريخ',
+        'reactivate_payment' => 'إعادة تفعيل الدفع',
+    ],
+];
+
+$mt = $mycoursestexts[$lang] ?? $mycoursestexts['fr'];
+
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Mes cours');
-$PAGE->set_heading('Mes cours');
+$PAGE->set_title($mt['page_title']);
+$PAGE->set_heading($mt['page_title']);
 
 global $DB, $USER, $CFG;
 function local_elearning_system_my_courses_plugin_db(): mysqli {
@@ -228,6 +315,17 @@ $hascourse = $courseid > 0 && $coursename !== '';
 
         if ($isactiveorder && $hascourse && !isset($coursesbyid[$courseid])) {
             $coursesbyid[$courseid] = [
+                'orderid' => (int)$r->id,
+'canstartcourse' => !$isparentaccount,
+'canparentactions' => $isparentaccount,
+'invoiceurl' => (new moodle_url('/local/elearning_system/invoice.php', [
+    'id' => (int)$r->id,
+]))->out(false),
+'progressurl' => (new moodle_url('/local/elearning_system/my_courses.php', [
+    'progress' => 1,
+    'courseid' => $courseid,
+    'userid' => $targetuserid,
+]))->out(false),
                 'courseid' => $courseid,
                 'coursename' => format_string($coursename),
                 'productname' => !empty($r->productname) ? format_string($r->productname) : '-',
@@ -406,7 +504,7 @@ if (isloggedin() && !isguestuser()) {
                 'productid' => $productid,
                 'coursename' => format_string($record->productname),
                 'durationmonths' => $durationmonths,
-                'durationlabel' => $durationmonths . ' mois',
+                'durationlabel' => local_elearning_system_format_email_duration($durationmonths, $lang),
                 'expirationdate' => userdate($expiresat),
                 'reactivateurl' => (new moodle_url('/local/elearning_system/reactivate.php', [
                     'productid' => $productid,
@@ -420,18 +518,51 @@ if (isloggedin() && !isguestuser()) {
 echo $OUTPUT->render_from_template('local_elearning_system/my_courses', [
     'courses' => $courses,
     'hascourses' => !empty($courses),
+
     'availablecourses' => $availablecourses,
     'hasavailablecourses' => !empty($availablecourses),
+
     'haseligibleproducts' => $eligibleproductscount > 0,
     'alleligibleproductspurchased' => $eligibleproductscount > 0 && empty($availablecourses),
+
     'orders' => $orders,
     'hasorders' => !empty($orders),
+
     'isparentaccount' => $isparentaccount,
     'targetfullname' => $targetfullname,
-    'homeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
-    'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
-    'commandesurl' => (new moodle_url('/local/elearning_system/commandes.php'))->out(false),
+
+    'homeurl' => (new moodle_url('/local/elearning_system/index.php', ['lang' => $lang]))->out(false),
+    'carturl' => (new moodle_url('/local/elearning_system/cart.php', ['lang' => $lang]))->out(false),
+    'commandesurl' => (new moodle_url('/local/elearning_system/commandes.php', ['lang' => $lang]))->out(false),
+
     'expiredcourses' => $expiredcourses,
-'hasexpiredcourses' => !empty($expiredcourses),
+    'hasexpiredcourses' => !empty($expiredcourses),
+
+    'isrtl' => ($lang === 'ar'),
+
+    't_page_title' => $mt['page_title'],
+    't_catalogue' => $mt['catalogue'],
+    't_cart' => $mt['cart'],
+    't_orders' => $mt['orders'],
+    't_parent_viewing' => $mt['parent_viewing'],
+    't_purchased_courses' => $mt['purchased_courses'],
+    't_available_courses' => $mt['available_courses'],
+    't_start_course' => $mt['start_course'],
+    't_download_invoice' => $mt['download_invoice'],
+    't_view_progress' => $mt['view_progress'],
+    't_no_image' => $mt['no_image'],
+    't_no_purchased_courses' => $mt['no_purchased_courses'],
+    't_orders_info_before' => $mt['orders_info_before'],
+    't_orders_info_link' => $mt['orders_info_link'],
+    't_free' => $mt['free'],
+    't_view_buy' => $mt['view_buy'],
+    't_all_purchased_child' => $mt['all_purchased_child'],
+    't_no_available_courses' => $mt['no_available_courses'],
+    't_expired_title' => $mt['expired_title'],
+    't_expired_text_before' => $mt['expired_text_before'],
+    't_expired_text_after' => $mt['expired_text_after'],
+    't_last_duration' => $mt['last_duration'],
+    't_expired_on' => $mt['expired_on'],
+    't_reactivate_payment' => $mt['reactivate_payment'],
 ]);
 echo $OUTPUT->footer();

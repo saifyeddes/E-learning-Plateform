@@ -9,10 +9,64 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/payment.php');
+local_elearning_system_apply_requested_language();
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('paymenttitle', 'local_elearning_system'));
 $PAGE->set_heading(get_string('paymenttitle', 'local_elearning_system'));
+$lang = local_elearning_system_get_active_language();
 
+$paymenttexts = [
+    'fr' => [
+        'page_title' => 'Paiement',
+        'success_head' => 'Paiement confirmé',
+        'success_title' => 'Cours acheté avec succès',
+        'success_text' => 'Votre achat est validé et l’accès au cours est actif. Vous pouvez commencer maintenant depuis votre espace de cours.',
+        'success_item_1' => 'Accès activé immédiatement',
+        'success_item_2' => 'Historique disponible dans votre espace',
+        'success_item_3' => 'Paiement confirmé et enregistré',
+        'my_courses' => 'Voir mes cours',
+        'continue' => 'Continuer',
+        'error_head' => 'Paiement non valide',
+        'error_title' => 'Le paiement a échoué',
+        'error_text' => 'La transaction n’a pas pu être finalisée. Veuillez réessayer.',
+        'back_checkout' => 'Retour au paiement',
+        'back_cart' => 'Revoir mon panier',
+    ],
+    'en' => [
+        'page_title' => 'Payment',
+        'success_head' => 'Payment confirmed',
+        'success_title' => 'Course purchased successfully',
+        'success_text' => 'Your purchase is valid and course access is active. You can start now from your course area.',
+        'success_item_1' => 'Access activated immediately',
+        'success_item_2' => 'History available in your space',
+        'success_item_3' => 'Payment confirmed and saved',
+        'my_courses' => 'View my courses',
+        'continue' => 'Continue',
+        'error_head' => 'Invalid payment',
+        'error_title' => 'Payment failed',
+        'error_text' => 'The transaction could not be completed. Please try again.',
+        'back_checkout' => 'Back to checkout',
+        'back_cart' => 'Review my cart',
+    ],
+    'ar' => [
+        'page_title' => 'الدفع',
+        'success_head' => 'تم تأكيد الدفع',
+        'success_title' => 'تم شراء الدورة بنجاح',
+        'success_text' => 'تم تأكيد عملية الشراء وتفعيل الوصول إلى الدورة. يمكنك البدء الآن من مساحة الدورات الخاصة بك.',
+        'success_item_1' => 'تم تفعيل الوصول مباشرة',
+        'success_item_2' => 'السجل متاح في مساحتك',
+        'success_item_3' => 'تم تأكيد الدفع وتسجيله',
+        'my_courses' => 'عرض دوراتي',
+        'continue' => 'متابعة',
+        'error_head' => 'الدفع غير صالح',
+        'error_title' => 'فشلت عملية الدفع',
+        'error_text' => 'تعذر إتمام العملية. يرجى إعادة المحاولة.',
+        'back_checkout' => 'العودة إلى الدفع',
+        'back_cart' => 'مراجعة السلة',
+    ],
+];
+
+$pt = $paymenttexts[$lang] ?? $paymenttexts['fr'];
 global $DB, $CFG, $USER;
 function local_elearning_system_plugin_payment_db(): mysqli {
     return \local_elearning_system\plugin_db::get();
@@ -489,6 +543,60 @@ if ($isparentaccount && (int)$USER->id !== $beneficiaryuserid) {
     }
 
 if ($stripesk === '') {
+    $lang = local_elearning_system_get_active_language();
+
+$paymenttexts = [
+    'fr' => [
+        'success_head' => 'Paiement confirmé',
+        'success_title' => 'Cours acheté avec succès',
+        'success_text' => 'Votre achat est validé et l’accès au cours est actif. Vous pouvez commencer maintenant depuis votre espace de cours.',
+        'success_item_1' => 'Accès activé immédiatement',
+        'success_item_2' => 'Historique disponible dans votre espace',
+        'success_item_3' => 'Paiement confirmé et enregistré',
+        'child_purchase' => 'Achat enregistré pour votre enfant : ',
+        'my_courses' => 'Voir mes cours',
+        'continue' => 'Continuer',
+        'error_head' => 'Paiement non valide',
+        'error_title' => 'Le paiement a échoué',
+        'error_text' => 'La transaction n’a pas pu être finalisée. Vérifiez vos informations puis relancez le paiement.',
+        'back_checkout' => 'Retour au paiement',
+        'back_cart' => 'Revoir mon panier',
+    ],
+    'en' => [
+        'success_head' => 'Payment confirmed',
+        'success_title' => 'Course purchased successfully',
+        'success_text' => 'Your purchase is valid and course access is active. You can start now from your course area.',
+        'success_item_1' => 'Access activated immediately',
+        'success_item_2' => 'History available in your space',
+        'success_item_3' => 'Payment confirmed and saved',
+        'child_purchase' => 'Purchase saved for your child: ',
+        'my_courses' => 'View my courses',
+        'continue' => 'Continue',
+        'error_head' => 'Invalid payment',
+        'error_title' => 'Payment failed',
+        'error_text' => 'The transaction could not be completed. Please check your information and try again.',
+        'back_checkout' => 'Back to checkout',
+        'back_cart' => 'Review my cart',
+    ],
+    'ar' => [
+        'success_head' => 'تم تأكيد الدفع',
+        'success_title' => 'تم شراء الدورة بنجاح',
+        'success_text' => 'تم تأكيد عملية الشراء وتفعيل الوصول إلى الدورة. يمكنك البدء الآن من مساحة الدورات الخاصة بك.',
+        'success_item_1' => 'تم تفعيل الوصول مباشرة',
+        'success_item_2' => 'السجل متاح في مساحتك',
+        'success_item_3' => 'تم تأكيد الدفع وتسجيله',
+        'child_purchase' => 'تم تسجيل الشراء لطفلك: ',
+        'my_courses' => 'عرض دوراتي',
+        'continue' => 'متابعة',
+        'error_head' => 'الدفع غير صالح',
+        'error_title' => 'فشلت عملية الدفع',
+        'error_text' => 'تعذر إتمام العملية. يرجى التحقق من المعلومات ثم إعادة المحاولة.',
+        'back_checkout' => 'العودة إلى الدفع',
+        'back_cart' => 'مراجعة السلة',
+    ],
+];
+
+$t = $paymenttexts[$lang] ?? $paymenttexts['fr'];
     echo $OUTPUT->header();
     echo html_writer::div('Achat failed', 'alert alert-danger');
     echo html_writer::div('Stripe secret key is not configured.', 'alert alert-warning');
@@ -647,159 +755,246 @@ if ($isparentaccount && (int)$USER->id !== $pendingbeneficiaryuserid) {
     }
 }
 
+$lang = local_elearning_system_get_active_language();
+$pt = $paymenttexts[$lang] ?? $paymenttexts['fr'];
+
 echo $OUTPUT->header();
 
-$resultstyles = '<style>
-.elearn-payment-result-wrap {
-    min-height: 66vh;
-    display: grid;
-    place-items: center;
-    padding: 1rem 0 2rem;
+echo '<style>
+body.path-local-elearning_system {
+    overflow: hidden !important;
 }
+
+.elearn-payment-result-wrap {
+    max-width: 760px;
+    margin: 18px auto 0;
+    padding: 0 12px;
+}
+
+.elearn-payment-page-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 18px;
+    color: #071d33;
+}
+
 .elearn-payment-result {
-    width: min(840px, 100%);
-    border-radius: 20px;
-    border: 1px solid #d5e2f0;
-    background:
-        radial-gradient(circle at 8% 5%, rgba(16, 185, 129, 0.14), transparent 32%),
-        radial-gradient(circle at 95% 90%, rgba(15, 108, 191, 0.12), transparent 34%),
-        #ffffff;
-    box-shadow: 0 20px 48px rgba(16, 42, 67, 0.16);
+    background: #ffffff;
+    border: 1px solid #d7e5f3;
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(20, 60, 90, 0.12);
     overflow: hidden;
 }
+
+.elearn-payment-result__head {
+    padding: 14px 22px;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.elearn-payment-result__head.is-success {
+    background: linear-gradient(90deg, #cdeedd, #f7fbff);
+    color: #064b2b;
+}
+
+.elearn-payment-result__head.is-error {
+    background: linear-gradient(90deg, #ffdada, #fff7f7);
+    color: #8a1111;
+}
+
+.elearn-payment-result__body {
+    padding: 24px 34px 26px;
+}
+
 .elearn-payment-result__hero {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 16px;
 }
+
 .elearn-payment-result__badge {
-    width: 62px;
-    height: 62px;
-    border-radius: 999px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.65rem;
-    font-weight: 700;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 800;
+    flex: 0 0 58px;
 }
+
 .elearn-payment-result__badge.is-success {
-    background: linear-gradient(135deg, #1f9d60, #34c381);
-    color: #fff;
-    box-shadow: 0 12px 30px rgba(31, 157, 96, 0.35);
+    background: #26b66b;
 }
+
 .elearn-payment-result__badge.is-error {
-    background: linear-gradient(135deg, #d94856, #f16d7a);
-    color: #fff;
-    box-shadow: 0 12px 30px rgba(217, 72, 86, 0.35);
+    background: #d93025;
 }
-.elearn-payment-result__head {
-    padding: 1.15rem 1.35rem;
-    border-bottom: 1px solid #e6eef7;
-    font-weight: 700;
-    font-size: 1.05rem;
-}
-.elearn-payment-result__head.is-success {
-    color: #0f5132;
-    background: linear-gradient(135deg, rgba(25, 135, 84, 0.17), rgba(25, 135, 84, 0.06));
-}
-.elearn-payment-result__head.is-error {
-    color: #842029;
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.18), rgba(220, 53, 69, 0.08));
-}
-.elearn-payment-result__body {
-    padding: 2rem 1.35rem 1.6rem;
-}
+
 .elearn-payment-result__title {
     margin: 0;
-    font-size: clamp(1.8rem, 4.2vw, 2.55rem);
-    font-weight: 700;
-    color: #102a43;
+    font-size: 32px;
+    line-height: 1.15;
+    color: #08233f;
+    font-weight: 900;
 }
+
 .elearn-payment-result__text {
-    margin: 0.8rem 0 0;
-    color: #334e68;
-    font-size: 1.03rem;
-    line-height: 1.6;
+    color: #163b60;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0 0 16px;
 }
-.elearn-payment-result__child {
-    margin-top: 0.9rem;
-    padding: 0.8rem 0.95rem;
-    border-radius: 12px;
-    border: 1px solid #c4e9d5;
-    background: #eaf8f1;
-    color: #0f5132;
-}
-.elearn-payment-result__actions {
-    margin-top: 1.4rem;
-    display: flex;
-    gap: 0.65rem;
-    flex-wrap: wrap;
-}
-.elearn-payment-result__actions .btn {
-    border-radius: 999px;
-    padding: 0.58rem 1.15rem;
-    font-weight: 600;
-}
+
 .elearn-payment-result__list {
-    margin: 1rem 0 0;
-    padding: 0;
     list-style: none;
-    display: grid;
-    gap: 0.5rem;
+    padding: 0;
+    margin: 0 0 18px;
 }
+
 .elearn-payment-result__list li {
-    border: 1px solid #dce8f4;
-    border-radius: 10px;
-    padding: 0.55rem 0.7rem;
-    color: #243b53;
-    background: #f8fbff;
+    background: #f7fbff;
+    border: 1px solid #d8e8f7;
+    border-radius: 11px;
+    padding: 9px 14px;
+    margin-bottom: 8px;
+    color: #102a43;
+    font-size: 14px;
+}
+
+.elearn-payment-result__actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.elearn-payment-result__actions .btn {
+    border-radius: 22px;
+    padding: 9px 22px;
+    font-weight: 700;
+}
+
+html[dir="rtl"] .elearn-payment-result,
+body.dir-rtl .elearn-payment-result {
+    direction: rtl;
+    text-align: right;
+}
+
+html[dir="rtl"] .elearn-payment-result__hero,
+body.dir-rtl .elearn-payment-result__hero {
+    flex-direction: row-reverse;
+}
+
+@media (max-height: 720px) {
+    .elearn-payment-result-wrap {
+        margin-top: 10px;
+    }
+
+    .elearn-payment-page-title {
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+
+    .elearn-payment-result__body {
+        padding: 18px 24px;
+    }
+
+    .elearn-payment-result__title {
+        font-size: 27px;
+    }
+
+    .elearn-payment-result__badge {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        font-size: 27px;
+    }
+
+    .elearn-payment-result__text {
+        margin-bottom: 12px;
+    }
+
+    .elearn-payment-result__list {
+        margin-bottom: 14px;
+    }
+
+    .elearn-payment-result__list li {
+        padding: 7px 12px;
+        margin-bottom: 6px;
+    }
 }
 </style>';
-echo $resultstyles;
 
-if ($paidsuccess) {
-    echo '<section class="elearn-payment-result-wrap">';
+echo '<section class="elearn-payment-result-wrap">';
+echo '<h1 class="elearn-payment-page-title">' . s($pt['page_title'] ?? 'Payment') . '</h1>';
+
+if (!empty($paidsuccess)) {
     echo '<div class="elearn-payment-result">';
-    echo '<div class="elearn-payment-result__head is-success">Paiement confirme</div>';
+    echo '<div class="elearn-payment-result__head is-success">' . s($pt['success_head'] ?? 'Payment confirmed') . '</div>';
     echo '<div class="elearn-payment-result__body">';
+
     echo '<div class="elearn-payment-result__hero">';
-    echo '<span class="elearn-payment-result__badge is-success">&#10003;</span>';
-    echo '<h1 class="elearn-payment-result__title">Cours achete avec succes</h1>';
+    echo '<span class="elearn-payment-result__badge is-success">✓</span>';
+    echo '<h2 class="elearn-payment-result__title">' . s($pt['success_title'] ?? 'Course purchased successfully') . '</h2>';
     echo '</div>';
-    echo '<p class="elearn-payment-result__text">Votre achat est valide et l acces au cours est active. Vous pouvez commencer maintenant depuis votre espace de cours.</p>';
+
+    echo '<p class="elearn-payment-result__text">' . s($pt['success_text'] ?? '') . '</p>';
+
     echo '<ul class="elearn-payment-result__list">';
-    echo '<li>Acces active immediatement</li>';
-    echo '<li>Historique disponible dans votre espace</li>';
-    echo '<li>Paiement confirme et enregistre</li>';
+    echo '<li>' . s($pt['success_item_1'] ?? '') . '</li>';
+    echo '<li>' . s($pt['success_item_2'] ?? '') . '</li>';
+    echo '<li>' . s($pt['success_item_3'] ?? '') . '</li>';
     echo '</ul>';
-    if ($isparentaccount && $beneficiaryfullname !== '') {
-        echo '<div class="elearn-payment-result__child">Achat enregistre pour votre enfant: ' . s($beneficiaryfullname) . '</div>';
-    }
+
     echo '<div class="elearn-payment-result__actions">';
-    echo html_writer::link(new moodle_url('/local/elearning_system/my_courses.php'), 'Voir mes cours', ['class' => 'btn btn-success']);
-    echo html_writer::link(new moodle_url('/local/elearning_system/index.php'), 'Continuer', ['class' => 'btn btn-outline-primary']);
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/my_courses.php'),
+        s($pt['my_courses'] ?? 'View my courses'),
+        ['class' => 'btn btn-success']
+    );
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/index.php'),
+        s($pt['continue'] ?? 'Continue'),
+        ['class' => 'btn btn-outline-primary']
+    );
+    echo '</div>';
+
     echo '</div>';
     echo '</div>';
-    echo '</div>';
-    echo '</section>';
 } else {
-    echo '<section class="elearn-payment-result-wrap">';
     echo '<div class="elearn-payment-result">';
-    echo '<div class="elearn-payment-result__head is-error">Paiement non valide</div>';
+    echo '<div class="elearn-payment-result__head is-error">' . s($pt['error_head'] ?? 'Invalid payment') . '</div>';
     echo '<div class="elearn-payment-result__body">';
+
     echo '<div class="elearn-payment-result__hero">';
     echo '<span class="elearn-payment-result__badge is-error">!</span>';
-    echo '<h1 class="elearn-payment-result__title">Le paiement a echoue</h1>';
+    echo '<h2 class="elearn-payment-result__title">' . s($pt['error_title'] ?? 'Payment failed') . '</h2>';
     echo '</div>';
-    echo '<p class="elearn-payment-result__text">La transaction n a pas pu etre finalisee. Verifiez vos informations puis relancez le paiement.</p>';
+
+    echo '<p class="elearn-payment-result__text">' . s($pt['error_text'] ?? '') . '</p>';
+
     echo '<div class="elearn-payment-result__actions">';
-    echo html_writer::link(new moodle_url('/local/elearning_system/checkout.php'), 'Retour au checkout', ['class' => 'btn btn-secondary']);
-    echo html_writer::link(new moodle_url('/local/elearning_system/cart.php'), 'Revoir mon panier', ['class' => 'btn btn-outline-primary']);
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/checkout.php'),
+        s($pt['back_checkout'] ?? 'Back to checkout'),
+        ['class' => 'btn btn-secondary']
+    );
+    echo html_writer::link(
+        new moodle_url('/local/elearning_system/cart.php'),
+        s($pt['back_cart'] ?? 'Review my cart'),
+        ['class' => 'btn btn-outline-primary']
+    );
+    echo '</div>';
+
     echo '</div>';
     echo '</div>';
-    echo '</div>';
-    echo '</section>';
 }
 
+echo '</section>';
+
 echo $OUTPUT->footer();
+exit;

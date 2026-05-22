@@ -373,6 +373,48 @@ function local_elearning_system_format_price(float $amount): string {
     return local_elearning_system_get_site_currency_code() . ' ' . number_format($amount, 2);
 }
 
+function local_elearning_system_get_email_product_name(int $productid, moodle_database $DB): string {
+    if ($productid <= 0) {
+        return 'Produit';
+    }
+
+    /*
+     * Priorité : nouvelle base indépendante du plugin.
+     */
+    if (class_exists('\\local_elearning_system\\plugin_db')) {
+        try {
+            $plugindb = \local_elearning_system\plugin_db::get();
+
+            $stmt = $plugindb->prepare("SELECT name FROM el_products WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param('i', $productid);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result ? $result->fetch_object() : null;
+                $stmt->close();
+
+                if ($row && !empty($row->name)) {
+                    return format_string((string)$row->name);
+                }
+            }
+        } catch (Throwable $e) {
+            // Fallback vers l’ancienne table Moodle.
+        }
+    }
+
+    /*
+     * Fallback ancienne table Moodle si elle existe encore.
+     */
+    if ($DB->get_manager()->table_exists('elearning_products')) {
+        $product = $DB->get_record('elearning_products', ['id' => $productid], 'id,name', IGNORE_MISSING);
+        if ($product && !empty($product->name)) {
+            return format_string((string)$product->name);
+        }
+    }
+
+    return 'Produit #' . $productid;
+}
+
 /**
  * Return built-in email template definitions.
  *
@@ -831,13 +873,7 @@ function local_elearning_system_send_order_email_with_template(stdClass $order, 
         return false;
     }
 
-    $productname = 'Produit';
-    if (!empty($order->productid)) {
-        $product = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,name', IGNORE_MISSING);
-        if ($product && !empty($product->name)) {
-            $productname = format_string($product->name);
-        }
-    }
+    $productname = local_elearning_system_get_email_product_name((int)($order->productid ?? 0), $DB);
 
     $months = max(1, (int)($order->durationmonths ?? 1));
     $expiresat = (int)($order->expiresat ?? local_elearning_system_get_order_expiresat($order));
@@ -960,27 +996,59 @@ if (in_array($templatekey, ['purchase_product', 'purchase_confirmation'], true))
  * @return string en|fr|ar
  */
 function local_elearning_system_get_preferred_email_lang(int $userid): string {
-    global $DB;
+    global $DB, $SESSION, $USER;
 
-    $user = $DB->get_record('user', ['id' => $userid], 'id, lang', IGNORE_MISSING);
+    $supported = ['fr', 'en', 'ar'];
+    $lang = '';
 
-    if (!$user || empty($user->lang)) {
-        return 'en';
+    /*
+     * Priorité 1 : langue actuellement choisie dans le site/plugin.
+     * C’est cette langue qui doit contrôler l’email après achat.
+     */
+    if (!empty($SESSION->local_elearning_system_lang)) {
+        $lang = strtolower(substr((string)$SESSION->local_elearning_system_lang, 0, 2));
     }
 
-    $lang = strtolower((string)$user->lang);
-
-    if (strpos($lang, 'fr') === 0) {
-        return 'fr';
+    if ($lang === '' && !empty($SESSION->forcelang)) {
+        $lang = strtolower(substr((string)$SESSION->forcelang, 0, 2));
     }
 
-    if (strpos($lang, 'ar') === 0) {
-        return 'ar';
+    if ($lang === '' && !empty($SESSION->lang)) {
+        $lang = strtolower(substr((string)$SESSION->lang, 0, 2));
     }
 
-    return 'en';
+    if ($lang === '' && !empty($_COOKIE['local_elearning_system_lang'])) {
+        $lang = strtolower(substr((string)$_COOKIE['local_elearning_system_lang'], 0, 2));
+    }
+
+    /*
+     * Priorité 2 : langue Moodle courante.
+     */
+    if ($lang === '') {
+        $lang = strtolower(substr((string)current_language(), 0, 2));
+    }
+
+    /*
+     * Priorité 3 : langue enregistrée dans le profil utilisateur.
+     * Utile pour les emails envoyés par cron.
+     */
+    if (($lang === '' || !in_array($lang, $supported, true)) && $userid > 0) {
+        $user = $DB->get_record('user', ['id' => $userid], 'id,lang', IGNORE_MISSING);
+        if ($user && !empty($user->lang)) {
+            $lang = strtolower(substr((string)$user->lang, 0, 2));
+        }
+    }
+
+    if (($lang === '' || !in_array($lang, $supported, true)) && isset($USER) && !empty($USER->lang)) {
+        $lang = strtolower(substr((string)$USER->lang, 0, 2));
+    }
+
+    if (!in_array($lang, $supported, true)) {
+        $lang = 'fr';
+    }
+
+    return $lang;
 }
-
 function local_elearning_system_format_email_duration(int $months, string $lang): string {
     $months = max(1, $months);
 
@@ -1033,7 +1101,7 @@ function local_elearning_system_build_email_content(string $type, string $lang, 
     if ($type === 'purchase_confirmation') {
         if ($lang === 'fr') {
             return [
-                'subject' => 'Confirmation de votre achat',
+                'subject' => 'Confirmation de votre achat - ' . $coursename,
                 'html' => '
                     <p>Bonjour,</p>
                     <p>Votre achat du cours <strong>' . s($coursename) . '</strong> a été confirmé avec succès.</p>
@@ -1046,7 +1114,7 @@ function local_elearning_system_build_email_content(string $type, string $lang, 
 
         if ($lang === 'ar') {
             return [
-                'subject' => 'تأكيد عملية الشراء',
+                'subject' => 'تأكيد عملية الشراء - ' . $coursename,
                 'html' => '
                     <div dir="rtl" style="text-align:right;">
                         <p>مرحبًا،</p>
@@ -1060,7 +1128,7 @@ function local_elearning_system_build_email_content(string $type, string $lang, 
         }
 
         return [
-            'subject' => 'Purchase confirmation',
+            'subject' => 'Purchase confirmation - ' . $coursename,
             'html' => '
                 <p>Hello,</p>
                 <p>Your purchase of the course <strong>' . s($coursename) . '</strong> has been successfully confirmed.</p>
@@ -1151,7 +1219,48 @@ function local_elearning_system_build_email_content(string $type, string $lang, 
         ',
     ];
 }
+if ($type === 'inactive_no_purchase_2_months') {
+    $loginurl = $data['loginurl'] ?? '';
 
+    if ($lang === 'fr') {
+        return [
+            'subject' => 'Découvrez nos nouveaux cours',
+            'html' => '
+                <p>Bonjour,</p>
+                <p>Vous n’avez pas acheté de cours depuis 2 mois.</p>
+                <p>De nouveaux cours sont disponibles sur la plateforme.</p>
+                ' . ($loginurl ? '<p><a href="' . s($loginurl) . '">Découvrir les cours</a></p>' : '') . '
+                <p>Cordialement,<br>Équipe E-learning</p>
+            ',
+        ];
+    }
+
+    if ($lang === 'ar') {
+        return [
+            'subject' => 'اكتشف دوراتنا الجديدة',
+            'html' => '
+                <div dir="rtl" style="text-align:right;">
+                    <p>مرحبًا،</p>
+                    <p>لم تقم بشراء أي دورة منذ شهرين.</p>
+                    <p>توجد دورات جديدة متاحة على المنصة.</p>
+                    ' . ($loginurl ? '<p><a href="' . s($loginurl) . '">اكتشف الدورات</a></p>' : '') . '
+                    <p>مع تحياتنا،<br>فريق التعلم الإلكتروني</p>
+                </div>
+            ',
+        ];
+    }
+
+    return [
+        'subject' => 'Discover our latest courses',
+        'html' => '
+            <p>Hello,</p>
+            <p>You have not purchased a course for 2 months.</p>
+            <p>New courses are available on the platform.</p>
+            ' . ($loginurl ? '<p><a href="' . s($loginurl) . '">Discover courses</a></p>' : '') . '
+            <p>Best regards,<br>E-learning Team</p>
+        ',
+    ];
+}
     return [
         'subject' => 'E-learning notification',
         'html' => '<p>Hello,</p><p>You have a new notification.</p>',
@@ -1176,13 +1285,7 @@ function local_elearning_system_send_parent_purchase_email(stdClass $order, int 
         return false;
     }
 
-    $productname = 'Produit';
-    if (!empty($order->productid)) {
-        $product = $DB->get_record('elearning_products', ['id' => (int)$order->productid], 'id,name', IGNORE_MISSING);
-        if ($product && !empty($product->name)) {
-            $productname = format_string($product->name);
-        }
-    }
+    $productname = local_elearning_system_get_email_product_name((int)($order->productid ?? 0), $DB);
 
     $months = max(1, (int)($order->durationmonths ?? 1));
     $expiresat = (int)($order->expiresat ?? local_elearning_system_get_order_expiresat($order));
@@ -1215,7 +1318,7 @@ function local_elearning_system_send_parent_purchase_email(stdClass $order, int 
         'sitefullname' => $sitefullname,
     ];
 
- $lang = local_elearning_system_get_preferred_email_lang((int)$child->id);
+ $lang = local_elearning_system_get_preferred_email_lang((int)$parent->id);
 
 $emailcontent = local_elearning_system_build_email_content('purchase_for_child', $lang, [
     'coursename' => $productname,
@@ -1267,9 +1370,26 @@ function local_elearning_system_send_template_preview(stdClass $recipient, strin
         'sitefullname' => format_string(get_site()->fullname),
     ];
 
+    $lang = local_elearning_system_get_preferred_email_lang((int)$recipient->id);
+
+if (in_array($templatekey, ['expiration_reminder', 'inactive_no_purchase_2_months'], true)) {
+    $emailcontent = local_elearning_system_build_email_content($templatekey, $lang, [
+        'coursename' => $variables['coursename'] ?? '',
+        'duration' => !empty($variables['durationmonths'])
+            ? local_elearning_system_format_email_duration((int)$variables['durationmonths'], $lang)
+            : '',
+        'checkouturl' => '',
+        'loginurl' => $variables['loginurl'] ?? '',
+    ]);
+
+    $subject = $emailcontent['subject'];
+    $messagehtml = $emailcontent['html'];
+    $body = html_to_text($messagehtml);
+} else {
     $subject = local_elearning_system_render_template_string($template['subject'], $variables);
     $body = local_elearning_system_render_template_string($template['body'], $variables);
     $messagehtml = nl2br(s($body));
+}
     $fromuser = local_elearning_system_get_valid_from_user($recipient);
 
     return (bool)email_to_user($recipient, $fromuser, $subject, $body, $messagehtml);

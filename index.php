@@ -100,6 +100,31 @@ function local_elearning_system_plugin_get_product_purchase_status(int $userid, 
 
     return 'none';
 }
+
+function local_elearning_system_plugin_bundle_all_items_purchased(int $userid, stdClass $bundle): bool {
+    if ($userid <= 0 || empty($bundle->isbundle) || empty($bundle->bundleitems)) {
+        return false;
+    }
+
+    $bundleitemids = array_values(array_unique(array_filter(array_map(
+        'intval',
+        explode(',', (string)$bundle->bundleitems)
+    ))));
+
+    if (empty($bundleitemids)) {
+        return false;
+    }
+
+    foreach ($bundleitemids as $itemid) {
+        $itemstatus = local_elearning_system_plugin_get_product_purchase_status($userid, (int)$itemid);
+
+        if ($itemstatus === 'none') {
+            return false;
+        }
+    }
+
+    return true;
+}
 $context = context_system::instance();
 
 $PAGE->set_context($context);
@@ -201,15 +226,32 @@ $hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $salepri
         'ispurchased' => false,
     ];
 
-    if ($isloggedin) {
-    $purchasestatus = local_elearning_system_plugin_get_product_purchase_status($beneficiaryuserid, (int)$r->id);
+  if ($isloggedin) {
+    $purchasestatus = local_elearning_system_plugin_get_product_purchase_status(
+        $beneficiaryuserid,
+        (int)$r->id
+    );
 
-    $item['ispurchased'] = ($purchasestatus !== 'none');
-    $item['isdirectpurchase'] = ($purchasestatus === 'direct');
+    $bundleallitemspurchased = false;
+
+    if (!empty($r->isbundle)) {
+        $bundleallitemspurchased = local_elearning_system_plugin_bundle_all_items_purchased(
+            $beneficiaryuserid,
+            $r
+        );
+    }
+
+    $item['ispurchased'] = ($purchasestatus !== 'none') || $bundleallitemspurchased;
+    $item['isdirectpurchase'] = ($purchasestatus === 'direct') || $bundleallitemspurchased;
     $item['isbundlepurchase'] = ($purchasestatus === 'bundle');
-    $item['purchaselabel'] = ($purchasestatus === 'direct')
-        ? get_string('purchased', 'local_elearning_system')
-        : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
+
+    if ($bundleallitemspurchased && $purchasestatus === 'none') {
+        $item['purchaselabel'] = get_string('purchased', 'local_elearning_system');
+    } else {
+        $item['purchaselabel'] = ($purchasestatus === 'direct')
+            ? get_string('purchased', 'local_elearning_system')
+            : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
+    }
 }
     if (!empty($r->isbundle)) {
         $bundles[] = $item;

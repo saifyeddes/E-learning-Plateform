@@ -46,20 +46,94 @@ function local_elearning_system_plugin_get_cart_products(array $ids): array {
     return $products;
 }
 
-function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
-    return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
+function local_elearning_system_cart_order_is_active(stdClass $order): bool {
+    $durationmonths = !empty($order->durationmonths)
+        ? max(1, (int)$order->durationmonths)
+        : 1;
+
+    if (!empty($order->expiresat)) {
+        return (int)$order->expiresat > time();
+    }
+
+    if (!empty($order->timecreated)) {
+        $expiresat = strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+        return $expiresat === false || $expiresat > time();
+    }
+
+    return true;
+}
+
+function local_elearning_system_cart_purchase_status(int $userid, int $productid): string {
+    if ($userid <= 0 || $productid <= 0) {
+        return 'none';
+    }
+
+    $db = \local_elearning_system\plugin_db::get();
+
+    $stmt = $db->prepare("
+        SELECT o.id, o.userid, o.productid, o.durationmonths, o.expiresat, o.timecreated,
+               p.isbundle, p.bundleitems
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.userid = ?
+      ORDER BY o.id DESC
+    ");
+
+    if (!$stmt) {
+        throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
+    }
+
+    $stmt->bind_param('i', $userid);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $orders = [];
+    while ($row = $result->fetch_object()) {
+        if (local_elearning_system_cart_order_is_active($row)) {
+            $orders[] = $row;
+        }
+    }
+
+    $stmt->close();
+
+    foreach ($orders as $order) {
+        if ((int)$order->productid === $productid) {
+            return 'direct';
+        }
+    }
+
+    foreach ($orders as $order) {
+        if (empty($order->isbundle) || empty($order->bundleitems)) {
+            continue;
+        }
+
+        $bundleitemids = array_values(array_unique(array_filter(array_map(
+            'intval',
+            explode(',', (string)$order->bundleitems)
+        ))));
+
+        if (in_array($productid, $bundleitemids, true)) {
+            return 'bundle';
+        }
+    }
+
+    return 'none';
 }
 
 $isloggedin = isloggedin() && !isguestuser();
+
+$cartuserid = 0;
+
+if ($isloggedin) {
+    $effectiveuserctx = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
+    $cartuserid = (int)($effectiveuserctx['targetuserid'] ?? $USER->id);
+}
 
 if (!isset($SESSION->local_elearning_system_cart) || !is_array($SESSION->local_elearning_system_cart)) {
     $SESSION->local_elearning_system_cart = [];
 }
 local_elearning_system_normalise_cart_structure($SESSION->local_elearning_system_cart);
-
-if ($isloggedin) {
-    local_elearning_system_cleanup_expired_orders_for_user((int)$USER->id, $DB);
-}
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $itemid = optional_param('id', 0, PARAM_INT);
@@ -130,11 +204,10 @@ if (!empty($cartids)) {
             continue;
         }
 
-        if ($isloggedinuser && local_elearning_system_is_product_covered_by_purchase((int)$USER->id, (int)$r->id, $DB)) {
-            unset($SESSION->local_elearning_system_cart[$r->id]);
-            continue;
-        }
-
+        if ($isloggedinuser && local_elearning_system_cart_purchase_status($cartuserid, (int)$r->id) !== 'none') {
+    unset($SESSION->local_elearning_system_cart[$r->id]);
+    continue;
+}
         $cartitem = local_elearning_system_get_cart_item($SESSION->local_elearning_system_cart, (int)$r->id);
         $durationmonths = (int)$cartitem['durationmonths'];
         if ($durationmonths < 1) {
@@ -148,9 +221,10 @@ $plusduration = min(24, $durationmonths + 1);
 
         // Force single-purchase quantity per product in cart.
         $SESSION->local_elearning_system_cart[$r->id] = [
-            'qty' => 1,
-            'durationmonths' => $durationmonths,
-        ];
+    'productid' => (int)$r->id,
+    'qty' => 1,
+    'durationmonths' => $durationmonths,
+];
 
         $line = $displayprice * $durationmonths;
         $total += $line;
@@ -194,7 +268,8 @@ $plusduration = min(24, $durationmonths + 1);
     'id' => (int)$r->id,
     'durationmonths' => $plusduration,
     'sesskey' => sesskey(),
-]))->out(false),            'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
+]))->out(false),
+    'removeurl' => (new moodle_url('/local/elearning_system/cart.php', ['action' => 'remove', 'id' => (int)$r->id, 'sesskey' => sesskey()]))->out(false),
         ];
     }
 }

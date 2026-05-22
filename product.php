@@ -264,18 +264,52 @@ $templatedata = [
     'hasbundleitems' => false,
 ];
 
-if ($isloggedin) {
-    $purchasestatus = local_elearning_system_product_plugin_get_purchase_status($beneficiaryuserid, (int)$productid);
+$bundleitemids = [];
 
-    $templatedata['ispurchased'] = ($purchasestatus !== 'none');
+if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
+    $bundleitemids = array_values(array_unique(array_filter(array_map(
+        'intval',
+        explode(',', (string)$productrecord->bundleitems)
+    ))));
+}
+
+if ($isloggedin) {
+    $purchasestatus = local_elearning_system_product_plugin_get_purchase_status(
+        $beneficiaryuserid,
+        (int)$productid
+    );
+
+    $bundleallitemspurchased = false;
+
+    if (!empty($productrecord->isbundle) && !empty($bundleitemids)) {
+        $bundleallitemspurchased = true;
+
+        foreach ($bundleitemids as $bundleitemid) {
+            $itemstatus = local_elearning_system_product_plugin_get_purchase_status(
+                $beneficiaryuserid,
+                (int)$bundleitemid
+            );
+
+            if ($itemstatus === 'none') {
+                $bundleallitemspurchased = false;
+                break;
+            }
+        }
+    }
+
+    $templatedata['ispurchased'] = ($purchasestatus !== 'none') || $bundleallitemspurchased;
     $templatedata['isdirectpurchase'] = ($purchasestatus === 'direct');
     $templatedata['isbundlepurchase'] = ($purchasestatus === 'bundle');
-    $templatedata['purchaselabel'] = ($purchasestatus === 'direct')
-        ? get_string('purchased', 'local_elearning_system')
-        : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
-}
-$isfreeproduct = isset($product->type) && strtolower((string)$product->type) === 'free';
 
+    if ($bundleallitemspurchased && $purchasestatus === 'none') {
+        $templatedata['purchaselabel'] = get_string('purchased', 'local_elearning_system');
+    } else {
+        $templatedata['purchaselabel'] = ($purchasestatus === 'direct')
+            ? get_string('purchased', 'local_elearning_system')
+            : (($purchasestatus === 'bundle') ? get_string('includedinbundle', 'local_elearning_system') : '');
+    }
+}
+$isfreeproduct = isset($productrecord->type) && strtolower((string)$productrecord->type) === 'free';
 $templatedata['canopencourse'] = false;
 
 if (!empty($templatedata['courseurl'])) {
@@ -283,7 +317,7 @@ if (!empty($templatedata['courseurl'])) {
         $templatedata['canopencourse'] = true;
     }
 }
-if (!empty($productrecord->isbundle) && !empty($productrecord->bundleitems)) {
+if (!empty($productrecord->isbundle) && !empty($bundleitemids)) {
     $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$productrecord->bundleitems)))));
     if (!empty($bundleitemids)) {
         $bundleproducts = local_elearning_system_plugin_get_products_by_ids_client($bundleitemids);

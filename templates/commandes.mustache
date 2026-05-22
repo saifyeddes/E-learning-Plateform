@@ -413,9 +413,211 @@
         right: -100vw;
     }
 }
+.es-rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.es-rtl .es-top-actions {
+    justify-content: flex-start;
+}
+
+.es-rtl .es-order-date {
+    text-align: left;
+}
+
+.es-rtl .es-order-id {
+    left: auto;
+    right: 14px;
+}
+
+.es-rtl .es-status {
+    right: auto;
+    left: 14px;
+}
+
+.es-rtl .es-order-drawer {
+    right: auto;
+    left: -800px;
+}
+
+.es-rtl .es-order-drawer.is-open {
+    left: 0;
+}
+/* ==================================================
+   FIX COMMANDES PAGE WIDTH + RTL LAYOUT
+   ================================================== */
+
+body#page-local-elearning-system-commandes,
+body#page-local-elearning_system-commandes {
+    overflow-x: hidden !important;
+}
+
+.es-orders-page.es-client {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 22px 32px 44px !important;
+}
+
+.es-orders-page .container-fluid {
+    width: 100% !important;
+    max-width: 1180px !important;
+    margin: 0 auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+.es-orders-page .es-orders-hero {
+    width: 100% !important;
+}
+
+.es-orders-page .es-orders-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin-left: -12px !important;
+    margin-right: -12px !important;
+}
+
+.es-orders-page .es-orders-grid > [class*="col-"] {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    margin-bottom: 24px !important;
+}
+
+/* Desktop : 3 cards per row */
+@media (min-width: 1200px) {
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 33.333333% !important;
+        max-width: 33.333333% !important;
+    }
+}
+
+/* Tablet : 2 cards per row */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+}
+
+/* Mobile : 1 card per row */
+@media (max-width: 767px) {
+    .es-orders-page {
+        padding: 14px 12px 34px !important;
+    }
+
+    .es-orders-page .container-fluid {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Better card proportions */
+.es-orders-page .es-order-image,
+.es-orders-page .es-image-placeholder {
+    height: 190px !important;
+}
+
+.es-orders-page .es-order-body {
+    padding: 14px 16px !important;
+}
+
+.es-orders-page .es-order-footer {
+    padding: 14px 16px 16px !important;
+}
+
+.es-orders-page .es-card-actions {
+    grid-template-columns: 1fr 1fr !important;
+}
+
+/* RTL correction without shrinking the page */
+.es-orders-page.es-rtl {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+.es-orders-page.es-rtl .row {
+    direction: rtl !important;
+}
+
+.es-orders-page.es-rtl .es-orders-grid {
+    direction: rtl !important;
+}
+
+.es-orders-page.es-rtl .es-order-meta {
+    direction: rtl !important;
+}
+
+.es-orders-page.es-rtl .es-order-date {
+    text-align: left !important;
+}
+
+.es-orders-page.es-rtl .es-top-actions {
+    justify-content: flex-start !important;
+}
+/* FIX COMMANDES PAGE WIDTH */
+#page-local-elearning-system-commandes #region-main,
+#page-local-elearning_system-commandes #region-main,
+#page-local-elearning-system-commandes .region-main,
+#page-local-elearning_system-commandes .region-main {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+#page-local-elearning-system-commandes .main-inner,
+#page-local-elearning_system-commandes .main-inner,
+#page-local-elearning-system-commandes [role="main"],
+#page-local-elearning_system-commandes [role="main"] {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.es-orders-page.es-client {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 22px 32px 44px !important;
+}
+
+.es-orders-page .container-fluid {
+    width: 100% !important;
+    max-width: 1180px !important;
+    margin: 0 auto !important;
+}
+
+.es-orders-page .es-orders-grid > [class*="col-"] {
+    margin-bottom: 24px !important;
+}
+
+@media (min-width: 1200px) {
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 33.333333% !important;
+        max-width: 33.333333% !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .es-orders-page .es-orders-grid > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
 </style>
 
-<div class="es-client es-orders-page">
+<div class="es-client es-orders-page {{#isrtl}}es-rtl{{/isrtl}}">
     <div class="container-fluid">
 
         <div class="es-orders-hero">
@@ -423,21 +625,21 @@
                 <div class="col-12 col-lg-8">
                     <div class="es-kicker">
                         <i class="fa fa-receipt"></i>
-                        Espace commandes
+                        {{t_orders_space}}
                     </div>
                     <h2 class="es-page-title">{{pageheading}}</h2>
                     <p class="es-page-subtitle">
-                        Consultez vos achats, vérifiez le statut de vos accès et téléchargez vos factures PDF rapidement.
+                        {{t_subtitle}}
                     </p>
                 </div>
 
                 <div class="col-12 col-lg-4">
                     <div class="es-top-actions">
                         <a href="{{mycoursesurl}}" class="btn btn-light es-action-btn">
-                            <i class="fa fa-play-circle"></i> Mes cours
+                            <i class="fa fa-play-circle"></i> {{t_my_courses}}
                         </a>
                         <a href="{{homeurl}}" class="btn btn-outline-primary es-action-btn">
-                            <i class="fa fa-th-large"></i> Catalogue
+                            <i class="fa fa-th-large"></i> {{t_catalogue}}
                         </a>
                     </div>
                 </div>
@@ -447,7 +649,7 @@
         {{#isparentaccount}}
         <div class="es-parent-alert">
             <i class="fa fa-user-friends"></i>
-            Vous consultez les commandes de votre enfant : <strong>{{targetfullname}}</strong>
+            {{t_parent_viewing}} <strong>{{targetfullname}}</strong>
         </div>
         {{/isparentaccount}}
 
@@ -460,8 +662,8 @@
                     <div class="es-order-image">
                         <img src="{{productimage}}" alt="{{productname}}">
                         <span class="es-order-id">#{{id}}</span>
-                        {{#isactiveorder}}<span class="es-status es-status-active">Actif</span>{{/isactiveorder}}
-                        {{#isexpiredorder}}<span class="es-status es-status-expired">Expiré</span>{{/isexpiredorder}}
+                        {{#isactiveorder}}<span class="es-status es-status-active">{{t_active}}</span>{{/isactiveorder}}
+                        {{#isexpiredorder}}<span class="es-status es-status-expired">{{t_expired}}</span>{{/isexpiredorder}}
                     </div>
                     {{/hasproductimage}}
 
@@ -469,7 +671,7 @@
                     <div class="es-image-placeholder">
                         <div class="text-center">
                             <i class="fa fa-shopping-bag fa-2x"></i>
-                            <div class="mt-2">Aucune image</div>
+                            <div class="mt-2">{{t_no_image}}</div>
                         </div>
                         <span class="es-order-id">#{{id}}</span>
                     </div>
@@ -486,8 +688,8 @@
 
                         <div class="es-order-meta">
                             <div>
-                                <div class="small text-muted">Montant</div>
-                                <div class="es-order-amount">${{amount}}</div>
+                                <div class="small text-muted">{{t_amount}}</div>
+                                <div class="es-order-amount">{{amount}}</div>
                             </div>
                             <div class="es-order-date">
                                 <i class="fa fa-calendar"></i>
@@ -499,11 +701,11 @@
                     <div class="es-order-footer">
                         <div class="es-card-actions">
                             <button class="es-detail-btn" onclick="event.stopPropagation(); openOrderDrawer({{id}}); return false;">
-                                <i class="fa fa-eye"></i> Détails
+                                <i class="fa fa-eye"></i> {{t_details}}
                             </button>
 
                             <a href="{{pdfurl}}" class="es-download-btn" onclick="event.stopPropagation(); triggerInvoiceDownload(this.href); return false;">
-                                <i class="fa fa-download"></i> Facture
+                                <i class="fa fa-download"></i> {{t_invoice}}
                             </a>
                         </div>
                     </div>
@@ -516,8 +718,8 @@
         {{^hasorders}}
         <div class="es-empty-state">
             <i class="fa fa-folder-open fa-3x"></i>
-            <h5>Aucune commande trouvée</h5>
-            <p class="mb-0">Vous n’avez pas encore effectué d’achat sur la plateforme.</p>
+            <h5>{{t_empty_title}}</h5>
+<p class="mb-0">{{t_empty_text}}</p>
         </div>
         {{/hasorders}}
 
@@ -527,9 +729,9 @@
     <template id="orderDetailTemplate{{id}}">
         <div class="order-detail-wrapper">
             <div class="es-detail-head">
-                <h5>Commande #{{id}}</h5>
+                <h5>{{t_order}} #{{id}}</h5>
                 <a href="{{pdfurl}}" class="es-download-btn" onclick="triggerInvoiceDownload(this.href); return false;">
-                    <i class="fa fa-download"></i> Télécharger PDF
+                    <i class="fa fa-download"></i> {{t_download_pdf}}
                 </a>
             </div>
 
@@ -550,40 +752,40 @@
 
                         {{#hascourse}}
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Cours :</span>
+                            <span class="es-detail-label">{{t_course}} :</span>
                             <a href="{{courseurl}}" target="_blank">{{coursename}}</a>
                         </div>
                         {{/hascourse}}
 
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Date :</span> {{timecreated}}
+                            <span class="es-detail-label">{{t_date}} :</span> {{timecreated}}
                         </div>
 
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Durée choisie :</span> {{durationmonths}} mois
+                           <span class="es-detail-label">{{t_duration}} :</span> {{durationlabel}}
                         </div>
 
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Statut :</span>
-                            {{#isactiveorder}}<span class="badge bg-success">Accès actif</span>{{/isactiveorder}}
-                            {{#isexpiredorder}}<span class="badge bg-secondary">Accès expiré</span>{{/isexpiredorder}}
+                            <span class="es-detail-label">{{t_status}} :</span>
+{{#isactiveorder}}<span class="badge bg-success">{{t_active_access}}</span>{{/isactiveorder}}
+{{#isexpiredorder}}<span class="badge bg-secondary">{{t_expired_access}}</span>{{/isexpiredorder}}
                         </div>
 
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Prix produit :</span>
-                            <span class="text-success fw-bold">${{productprice}}</span>
+                            <span class="es-detail-label">{{t_product_price}} :</span>
+<span class="text-success fw-bold">{{productprice}}</span>
                         </div>
 
                         <div class="es-detail-row">
-                            <span class="es-detail-label">Montant commande :</span>
-                            <span class="fw-bold">${{amount}}</span>
+                            <span class="es-detail-label">{{t_order_amount}} :</span>
+<span class="fw-bold">{{amount}}</span>
                         </div>
 
                         {{#hasdescription}}
                         <div class="mt-3">
-                            <div class="es-detail-label mb-2">Description :</div>
+                            <div class="es-detail-label mb-2">{{t_description}} :</div>
                             <div class="small text-muted">
-                                {{{description}}}
+                                {{description}}
                             </div>
                         </div>
                         {{/hasdescription}}
@@ -594,7 +796,7 @@
             {{#hasbundleitems}}
             <div class="border-top pt-4 mb-3">
                 <h6 class="mb-3 fw-bold">
-                    <i class="fa fa-layer-group"></i> Articles du pack
+                    <i class="fa fa-layer-group"></i> {{t_bundle_items}}
                 </h6>
 
                 <div class="row g-3">
@@ -609,7 +811,7 @@
 
                             {{#course}}
                             <a href="{{course.url}}" class="btn btn-sm btn-outline-primary">
-                                Accéder
+                                {{t_access}}
                             </a>
                             {{/course}}
                         </div>
@@ -626,7 +828,7 @@
 
     <div id="orderDrawer" class="es-order-drawer">
         <div class="es-order-drawer-header">
-            <h5 class="es-order-drawer-title">Détails de la commande</h5>
+            <h5 class="es-order-drawer-title">{{t_drawer_title}}</h5>
             <button type="button" class="es-order-close" onclick="closeOrderDrawer()">✕</button>
         </div>
 
@@ -647,7 +849,11 @@ function openOrderDrawer(orderId) {
 
     content.innerHTML = template.innerHTML;
     overlay.style.display = 'block';
+    if (document.querySelector('.es-orders-page.es-rtl')) {
+    drawer.style.left = '0';
+} else {
     drawer.style.right = '0';
+}
 }
 
 function closeOrderDrawer() {
@@ -655,7 +861,11 @@ function closeOrderDrawer() {
     var overlay = document.getElementById('orderDrawerOverlay');
 
     if (drawer) {
-        drawer.style.right = window.innerWidth <= 768 ? '-100vw' : '-800px';
+        if (document.querySelector('.es-orders-page.es-rtl')) {
+    drawer.style.left = window.innerWidth <= 768 ? '-100vw' : '-800px';
+} else {
+    drawer.style.right = window.innerWidth <= 768 ? '-100vw' : '-800px';
+}
     }
 
     if (overlay) {

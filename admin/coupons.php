@@ -339,12 +339,31 @@ $usagelabel = $maxuse > 0
     : $currentuse . ' / Unlimited';
 
 $expirytext = '';
+$isexpired = false;
+
 if (!empty($r->expirydate)) {
     $expirytime = (int)$r->expirydate;
     $expirytext = userdate($expirytime);
+
     if ($expirytime < time()) {
-        $expirytext .= ' (Expired)';
+        $isexpired = true;
     }
+}
+
+$rawstatus = strtolower(trim((string)$r->status));
+
+$statuslabel = $rawstatus;
+$statusclass = 'badge bg-secondary';
+
+if ($isexpired) {
+    $statuslabel = 'expired';
+    $statusclass = 'badge bg-danger';
+} else if ($rawstatus === 'active') {
+    $statuslabel = 'active';
+    $statusclass = 'badge bg-success';
+} else if ($rawstatus === 'inactive') {
+    $statuslabel = 'inactive';
+    $statusclass = 'badge bg-secondary';
 }
 
 $coupons[] = [
@@ -357,11 +376,12 @@ $coupons[] = [
     'currentuse' => $currentuse,
     'maxuse' => $maxuse,
 
-    'status' => s((string)$r->status),
-    'isstatus_active' => strtolower((string)$r->status) === 'active',
+    'status' => s($statuslabel),
+    'statusclass' => $statusclass,
+    'isstatus_active' => (!$isexpired && $rawstatus === 'active'),
+    'isstatus_expired' => $isexpired,
     'expirydate' => $expirytext !== '' ? $expirytext : 'No expiry',
-
-    'editurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
+        'editurl' => (new \moodle_url('/local/elearning_system/admin/coupons.php', [
         'action' => 'edit',
         'id' => (int)$r->id,
     ]))->out(false),

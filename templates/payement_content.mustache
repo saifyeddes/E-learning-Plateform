@@ -1,17 +1,144 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="mb-0">Payement TVA</h3>
-</div>
+<<style>/* ==================================================
+   PAYMENT SUCCESS PAGE - FIXED NO SCROLL VERSION
+   ================================================== */
 
-<div class="card border-0 shadow-sm" style="max-width: 720px;">
-    <div class="card-body">
-        <p class="text-muted mb-3">Set one global TVA (%) and one global currency for this client. The same settings are applied to all products and bundles at checkout.</p>
+body.path-local-elearning_system,
+body#page-local-elearning-system-payment,
+body#page-local-elearning_system-payment {
+    overflow: hidden !important;
+}
 
+/* Conteneur global Moodle */
+body#page-local-elearning-system-payment #page,
+body#page-local-elearning_system-payment #page,
+body#page-local-elearning-system-payment #page-content,
+body#page-local-elearning_system-payment #page-content,
+body#page-local-elearning-system-payment #region-main,
+body#page-local-elearning_system-payment #region-main {
+    height: calc(100vh - 70px) !important;
+    max-height: calc(100vh - 70px) !important;
+    overflow: hidden !important;
+}
+
+/* Wrapper principal de la page paiement */
+.elearn-payment-result,
+.elearn-payment-result-page,
+.elearn-payment-container {
+    max-width: 760px !important;
+    margin: 18px auto 0 !important;
+    padding: 0 12px !important;
+    overflow: hidden !important;
+}
+
+/* Titre Payment */
+.elearn-payment-result h2,
+.elearn-payment-result-page h2,
+.elearn-payment-container h2,
+#page-local-elearning-system-payment h2,
+#page-local-elearning_system-payment h2 {
+    font-size: 26px !important;
+    line-height: 1.1 !important;
+    margin: 0 0 14px !important;
+}
+
+/* Carte résultat */
+.elearn-payment-result__card,
+.elearn-payment-card,
+.elearn-payment-result-card {
+    max-height: calc(100vh - 145px) !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
+}
+
+/* Bandeau vert */
+.elearn-payment-result__status,
+.elearn-payment-result__header {
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+}
+
+/* Corps */
+.elearn-payment-result__body,
+.elearn-payment-result-body {
+    padding: 22px 20px !important;
+}
+
+/* Icône + titre */
+.elearn-payment-result__main,
+.elearn-payment-result-main {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-bottom: 14px !important;
+}
+
+.elearn-payment-result__icon,
+.elearn-payment-success-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    font-size: 28px !important;
+}
+
+.elearn-payment-result__title,
+.elearn-payment-result-title {
+    font-size: 34px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+}
+
+/* Texte */
+.elearn-payment-result__text,
+.elearn-payment-result-text {
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 14px !important;
+}
+
+/* Liste des infos */
+.elearn-payment-result__item,
+.elearn-payment-result-item,
+.elearn-payment-result__body .alert,
+.elearn-payment-result__body .list-group-item {
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    margin-bottom: 8px !important;
+    border-radius: 10px !important;
+    font-size: 14px !important;
+}
+
+/* Boutons */
+.elearn-payment-result__actions,
+.elearn-payment-result-actions {
+    display: flex !important;
+    gap: 10px !important;
+    margin-top: 14px !important;
+}
+
+.elearn-payment-result__actions .btn,
+.elearn-payment-result-actions .btn {
+    height: 42px !important;
+    padding: 0 20px !important;
+    border-radius: 22px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+}</style>
+<div class="ea-payment-settings">
+    <div class="ea-payment-header">
+        <h3 class="ea-payment-title">Payment TVA</h3>
+        <p class="ea-payment-subtitle">
+            Configure the global VAT rate and currency used for all products, bundles and checkout payments.
+        </p>
+    </div>
+
+    <div class="ea-payment-card">
         {{#hassuccessmessage}}
-        <div class="alert alert-success">{{successmessage}}</div>
+        <div class="alert alert-success ea-payment-alert">{{successmessage}}</div>
         {{/hassuccessmessage}}
 
         {{#haserrors}}
-        <div class="alert alert-danger">
+        <div class="alert alert-danger ea-payment-alert">
             <ul class="mb-0">
                 {{#errors}}
                 <li>{{.}}</li>
@@ -20,32 +147,38 @@
         </div>
         {{/haserrors}}
 
-        <form method="post" action="{{payementurl}}" class="row g-3 align-items-end">
+        <form method="post" action="{{payementurl}}" class="ea-payment-form">
             <input type="hidden" name="sesskey" value="{{sesskey}}">
 
-            <div class="col-md-6">
-                <label class="form-label"><strong>TVA (%)</strong></label>
-                <input type="number"
-                       name="tvapercent"
-                       class="form-control"
-                       value="{{tvapercent}}"
-                       min="0"
-                       max="100"
-                       step="0.01"
-                       placeholder="e.g., 20">
+            <div class="ea-payment-grid">
+                <div class="ea-payment-field">
+                    <label class="ea-payment-label">TVA (%)</label>
+                    <input type="number"
+                           name="tvapercent"
+                           class="form-control ea-payment-input"
+                           value="{{tvapercent}}"
+                           min="0"
+                           max="100"
+                           step="0.01"
+                           placeholder="e.g., 20">
+                    <small class="ea-payment-help">Applied automatically during checkout.</small>
+                </div>
+
+                <div class="ea-payment-field">
+                    <label class="ea-payment-label">Currency</label>
+                    <select name="currency" class="form-select ea-payment-input">
+                        {{#currencyoptions}}
+                        <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                        {{/currencyoptions}}
+                    </select>
+                    <small class="ea-payment-help">Used for all displayed product prices.</small>
+                </div>
             </div>
 
-            <div class="col-md-6">
-                <label class="form-label"><strong>Currency</strong></label>
-                <select name="currency" class="form-select">
-                    {{#currencyoptions}}
-                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                    {{/currencyoptions}}
-                </select>
-            </div>
-
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-primary">Save settings</button>
+            <div class="ea-payment-actions">
+                <button type="submit" class="btn btn-primary ea-payment-save">
+                    Save settings
+                </button>
             </div>
         </form>
     </div>

@@ -75,12 +75,7 @@
                     <td>{{discount}}</td>
                     <td>{{usage}}</td>
                     <td>
-                        {{#isstatus_active}}
-                        <span class="coupon-badge-active">{{status}}</span>
-                        {{/isstatus_active}}
-                        {{^isstatus_active}}
-                        <span class="coupon-badge-inactive">{{status}}</span>
-                        {{/isstatus_active}}
+                        <span class="{{statusclass}}">{{status}}</span>
                     </td>
                     <td>{{expirydate}}</td>
                     <td>

@@ -8,9 +8,112 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/commandes.php');
+local_elearning_system_apply_requested_language();
+
+$lang = local_elearning_system_get_active_language();
+
+$commandestexts = [
+    'fr' => [
+        'page_title' => 'Mes commandes',
+        'orders_space' => 'Espace commandes',
+        'subtitle' => 'Consultez vos achats, vérifiez le statut de vos accès et téléchargez vos factures PDF rapidement.',
+        'my_courses' => 'Mes cours',
+        'catalogue' => 'Catalogue',
+        'parent_viewing' => 'Vous consultez les commandes de votre enfant :',
+        'active' => 'Actif',
+        'expired' => 'Expiré',
+        'no_image' => 'Aucune image',
+        'amount' => 'Montant',
+        'details' => 'Détails',
+        'invoice' => 'Facture',
+        'empty_title' => 'Aucune commande trouvée',
+        'empty_text' => 'Vous n’avez pas encore effectué d’achat sur la plateforme.',
+        'order' => 'Commande',
+        'download_pdf' => 'Télécharger PDF',
+        'course' => 'Cours',
+        'date' => 'Date',
+        'duration' => 'Durée choisie',
+        'months' => 'mois',
+        'status' => 'Statut',
+        'active_access' => 'Accès actif',
+        'expired_access' => 'Accès expiré',
+        'product_price' => 'Prix produit',
+        'order_amount' => 'Montant commande',
+        'description' => 'Description',
+        'bundle_items' => 'Articles du pack',
+        'access' => 'Accéder',
+        'drawer_title' => 'Détails de la commande',
+    ],
+    'en' => [
+        'page_title' => 'My orders',
+        'orders_space' => 'Orders area',
+        'subtitle' => 'View your purchases, check access status and quickly download your PDF invoices.',
+        'my_courses' => 'My courses',
+        'catalogue' => 'Catalogue',
+        'parent_viewing' => 'You are viewing your child’s orders:',
+        'active' => 'Active',
+        'expired' => 'Expired',
+        'no_image' => 'No image',
+        'amount' => 'Amount',
+        'details' => 'Details',
+        'invoice' => 'Invoice',
+        'empty_title' => 'No orders found',
+        'empty_text' => 'You have not made any purchase on the platform yet.',
+        'order' => 'Order',
+        'download_pdf' => 'Download PDF',
+        'course' => 'Course',
+        'date' => 'Date',
+        'duration' => 'Selected duration',
+        'months' => 'month(s)',
+        'status' => 'Status',
+        'active_access' => 'Active access',
+        'expired_access' => 'Expired access',
+        'product_price' => 'Product price',
+        'order_amount' => 'Order amount',
+        'description' => 'Description',
+        'bundle_items' => 'Bundle items',
+        'access' => 'Access',
+        'drawer_title' => 'Order details',
+    ],
+    'ar' => [
+        'page_title' => 'طلباتي',
+        'orders_space' => 'مساحة الطلبات',
+        'subtitle' => 'اطّلع على مشترياتك، تحقق من حالة الوصول، وقم بتحميل فواتيرك بصيغة PDF بسرعة.',
+        'my_courses' => 'دوراتي',
+        'catalogue' => 'الفهرس',
+        'parent_viewing' => 'أنت تطّلع على طلبات طفلك:',
+        'active' => 'نشط',
+        'expired' => 'منتهي',
+        'no_image' => 'لا توجد صورة',
+        'amount' => 'المبلغ',
+        'details' => 'التفاصيل',
+        'invoice' => 'الفاتورة',
+        'empty_title' => 'لا توجد طلبات',
+        'empty_text' => 'لم تقم بأي عملية شراء على المنصة حتى الآن.',
+        'order' => 'الطلب',
+        'download_pdf' => 'تحميل PDF',
+        'course' => 'الدورة',
+        'date' => 'التاريخ',
+        'duration' => 'المدة المختارة',
+        'months' => 'شهر',
+        'status' => 'الحالة',
+        'active_access' => 'وصول نشط',
+        'expired_access' => 'وصول منتهي',
+        'product_price' => 'سعر المنتج',
+        'order_amount' => 'مبلغ الطلب',
+        'description' => 'الوصف',
+        'bundle_items' => 'عناصر الباقة',
+        'access' => 'الدخول',
+        'drawer_title' => 'تفاصيل الطلب',
+    ],
+];
+
+$ct = $commandestexts[$lang] ?? $commandestexts['fr'];
+
+$PAGE->set_title($ct['page_title']);
+$PAGE->set_heading($ct['page_title']);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Mes commandes');
-$PAGE->set_heading('Mes commandes');
+
 
 global $DB, $USER, $CFG;
 function local_elearning_system_commandes_plugin_db(): mysqli {
@@ -153,10 +256,16 @@ function local_elearning_system_resolve_order_image($productimagepath, $courseid
 }
 
 $orders = [];
-$pageheading = 'Mes commandes';
+$pageheading = $ct['page_title'];
 
 if ($isparentaccount && $targetfullname !== '') {
-    $pageheading = 'Commandes de ' . $targetfullname;
+    if ($lang === 'ar') {
+        $pageheading = 'طلبات ' . $targetfullname;
+    } else if ($lang === 'en') {
+        $pageheading = $targetfullname . '’s orders';
+    } else {
+        $pageheading = 'Commandes de ' . $targetfullname;
+    }
 }
 
 $records = local_elearning_system_commandes_get_orders($targetuserid);
@@ -268,18 +377,61 @@ $hascourse = $courseid > 0 && $coursename !== '';
             'bundleitems' => $bundleitems,
             'hasbundleitems' => !empty($bundleitems),
             'pdfurl' => (new moodle_url('/local/elearning_system/invoice.php', ['id' => (int)$r->id, 'pdf' => 1]))->out(false),
-        ];
+            'isactiveorder' => $isactiveorder,
+            'statuslabel' => $isactiveorder ? $ct['active'] : $ct['expired'],
+            'activeaccesslabel' => $ct['active_access'],
+            'expiredaccesslabel' => $ct['expired_access'],
+            'durationlabel' => max(1, (int)($r->durationmonths ?? 1)) . ' ' . $ct['months'],       
+            ];
     }
 }
 
 $templatedata = [
     'orders' => $orders,
     'hasorders' => !empty($orders),
+
     'isparentaccount' => $isparentaccount,
     'targetfullname' => $targetfullname,
     'pageheading' => $pageheading,
-    'homeurl' => (new moodle_url('/local/elearning_system/index.php'))->out(false),
-    'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
+
+    'isrtl' => ($lang === 'ar'),
+
+    'homeurl' => (new moodle_url('/local/elearning_system/index.php', [
+        'lang' => $lang,
+    ]))->out(false),
+
+    'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php', [
+        'lang' => $lang,
+    ]))->out(false),
+
+    't_orders_space' => $ct['orders_space'],
+    't_subtitle' => $ct['subtitle'],
+    't_my_courses' => $ct['my_courses'],
+    't_catalogue' => $ct['catalogue'],
+    't_parent_viewing' => $ct['parent_viewing'],
+    't_active' => $ct['active'],
+    't_expired' => $ct['expired'],
+    't_no_image' => $ct['no_image'],
+    't_amount' => $ct['amount'],
+    't_details' => $ct['details'],
+    't_invoice' => $ct['invoice'],
+    't_empty_title' => $ct['empty_title'],
+    't_empty_text' => $ct['empty_text'],
+    't_order' => $ct['order'],
+    't_download_pdf' => $ct['download_pdf'],
+    't_course' => $ct['course'],
+    't_date' => $ct['date'],
+    't_duration' => $ct['duration'],
+    't_months' => $ct['months'],
+    't_status' => $ct['status'],
+    't_active_access' => $ct['active_access'],
+    't_expired_access' => $ct['expired_access'],
+    't_product_price' => $ct['product_price'],
+    't_order_amount' => $ct['order_amount'],
+    't_description' => $ct['description'],
+    't_bundle_items' => $ct['bundle_items'],
+    't_access' => $ct['access'],
+    't_drawer_title' => $ct['drawer_title'],
 ];
 
 echo $OUTPUT->header();
