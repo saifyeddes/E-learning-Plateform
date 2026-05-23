@@ -134,14 +134,14 @@ $PAGE->set_secondary_navigation(false);
 local_elearning_system_apply_requested_language();
 
 $frontendstrings = local_elearning_system_get_flat_language_strings();
+$lang = local_elearning_system_get_active_language();
+$isrtl = ($lang === 'ar');
 
 $PAGE->set_title($frontendstrings['allcourses'] ?? 'All Courses');
 $PAGE->set_heading($frontendstrings['allcourses'] ?? 'All Courses');
 // local_elearning_system_force_auth_login_url('/local/elearning_system/index.php');
 
-function local_elearning_system_is_product_covered_by_purchase(int $userid, int $productid, moodle_database $DB): bool {
-    return local_elearning_system_is_product_covered_by_active_purchase($userid, $productid, $DB);
-}
+
 
 $isloggedin = isloggedin() && !isguestuser();
 $beneficiaryuserid = (int)$USER->id;
@@ -220,8 +220,15 @@ $hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $salepri
         'ispaid' => $type === 'paid',
         'isbundle' => $isbundle,
         'courseid' => !empty($r->courseid) ? (int)$r->courseid : 0,
-        'producturl' => (new moodle_url('/local/elearning_system/product.php', ['id' => (int)$r->id]))->out(false),
-        'addtocarturl' => (new moodle_url('/local/elearning_system/add_to_cart.php', ['id' => (int)$r->id]))->out(false),
+       'producturl' => (new moodle_url('/local/elearning_system/product.php', [
+    'id' => (int)$r->id,
+    'lang' => $lang,
+]))->out(false),
+
+'addtocarturl' => (new moodle_url('/local/elearning_system/add_to_cart.php', [
+    'id' => (int)$r->id,
+    'lang' => $lang,
+]))->out(false),
         'isincart' => array_key_exists((int)$r->id, $SESSION->local_elearning_system_cart),
         'ispurchased' => false,
     ];
@@ -271,6 +278,76 @@ $admindashboardurl = (new moodle_url('/local/elearning_system/admin/dashboard.ph
 ]))->out(false);
 
 echo $OUTPUT->render_from_template('local_elearning_system/home', [
+'home_login_now' => ($lang === 'ar') ? 'تسجيل الدخول' : (($lang === 'en') ? 'Login' : 'Se connecter'),
+
+'home_audience_student' => ($lang === 'ar') ? 'التلاميذ' : (($lang === 'en') ? 'Students' : 'Étudiants'),
+'home_audience_student_desc' => ($lang === 'ar')
+    ? 'ادخل إلى الدورات، تابع تعلمك وابدأ الدروس بطريقة سهلة ومنظمة.'
+    : (($lang === 'en')
+        ? 'Access your courses, follow your learning and start lessons easily.'
+        : 'Accédez à vos cours, suivez votre apprentissage et démarrez vos leçons facilement.'),
+
+'home_audience_parent' => ($lang === 'ar') ? 'الأولياء' : (($lang === 'en') ? 'Parents' : 'Parents'),
+'home_audience_parent_desc' => ($lang === 'ar')
+    ? 'تابع دورات طفلك، الطلبات، الفواتير وتقدمه من مساحة واحدة.'
+    : (($lang === 'en')
+        ? 'Track your child’s courses, orders, invoices and progress from one space.'
+        : 'Suivez les cours, commandes, factures et la progression de votre enfant depuis un seul espace.'),
+
+'home_feedback_title' => ($lang === 'ar') ? 'آراء المستخدمين' : (($lang === 'en') ? 'User feedback' : 'Avis des utilisateurs'),
+
+'home_feedback_1_name' => ($lang === 'ar') ? 'ولي تلميذ' : (($lang === 'en') ? 'Parent user' : 'Parent d’élève'),
+'home_feedback_1_text' => ($lang === 'ar')
+    ? 'منصة واضحة وسهلة الاستعمال، ساعدتني على متابعة تعلم ابني والوصول إلى الفواتير بسرعة.'
+    : (($lang === 'en')
+        ? 'A clear and easy-to-use platform that helps me follow my child’s learning and access invoices quickly.'
+        : 'Une plateforme claire et simple qui me permet de suivre l’apprentissage de mon enfant et d’accéder rapidement aux factures.'),
+
+'home_feedback_2_name' => ($lang === 'ar') ? 'تلميذ' : (($lang === 'en') ? 'Student' : 'Étudiant'),
+'home_feedback_2_text' => ($lang === 'ar')
+    ? 'الدروس منظمة، والواجهة سهلة، ويمكنني الوصول إلى الدورات بسرعة.'
+    : (($lang === 'en')
+        ? 'The courses are organized, the interface is easy, and I can access lessons quickly.'
+        : 'Les cours sont organisés, l’interface est simple et j’accède rapidement à mes leçons.'),
+
+'home_feedback_3_name' => ($lang === 'ar') ? 'مؤسسة تعليمية' : (($lang === 'en') ? 'Educational institution' : 'Établissement'),
+'home_feedback_3_text' => ($lang === 'ar')
+    ? 'حل عملي لتنظيم المحتوى الرقمي وتحسين تجربة التعلم عن بعد.'
+    : (($lang === 'en')
+        ? 'A practical solution to organize digital content and improve online learning.'
+        : 'Une solution pratique pour organiser les contenus numériques et améliorer l’apprentissage en ligne.'),
+  'isrtl' => $isrtl,
+
+'home_stats_title' => ($lang === 'ar') ? 'منصتنا في أرقام' : (($lang === 'en') ? 'Our platform in numbers' : 'Notre plateforme en chiffres'),
+'home_stats_subtitle' => ($lang === 'ar') ? 'مؤشرات بسيطة تعكس تطور المنصة وجودة التجربة التعليمية.' : (($lang === 'en') ? 'Simple indicators showing platform growth and learning quality.' : 'Quelques indicateurs qui reflètent l’évolution de la plateforme et la qualité de l’expérience.'),
+
+'home_stat_1_number' => '+4,500',
+'home_stat_1_label' => ($lang === 'ar') ? 'حصة مباشرة شهريًا' : (($lang === 'en') ? 'live sessions monthly' : 'sessions en direct par mois'),
+
+'home_stat_2_number' => '34',
+'home_stat_2_label' => ($lang === 'ar') ? 'مقرًا وجهة تعليمية' : (($lang === 'en') ? 'learning locations' : 'espaces et partenaires éducatifs'),
+
+'home_stat_3_number' => '+550k',
+'home_stat_3_label' => ($lang === 'ar') ? 'متعلم مسجل' : (($lang === 'en') ? 'registered learners' : 'apprenants inscrits'),
+
+'home_stat_4_number' => '+200k',
+'home_stat_4_label' => ($lang === 'ar') ? 'مورد تعليمي' : (($lang === 'en') ? 'learning resources' : 'ressources pédagogiques'),
+
+'home_audience_title' => ($lang === 'ar') ? 'لمن صُممت المنصة؟' : (($lang === 'en') ? 'Who is this platform for?' : 'À qui s’adresse la plateforme ?'),
+'home_audience_subtitle' => ($lang === 'ar') ? 'تجربة تعليمية مناسبة للتلاميذ، الأولياء والمؤسسات التعليمية.' : (($lang === 'en') ? 'A learning experience for students, parents and educational institutions.' : 'Une expérience adaptée aux élèves, aux parents et aux établissements.'),
+
+'home_audience_student' => ($lang === 'ar') ? 'التلاميذ' : (($lang === 'en') ? 'Students' : 'Élèves'),
+'home_audience_student_desc' => ($lang === 'ar') ? 'دروس واضحة ومنظمة تساعد على التعلم بطريقة سهلة.' : (($lang === 'en') ? 'Clear and structured courses for a smooth learning experience.' : 'Des cours clairs et structurés pour apprendre facilement.'),
+
+'home_audience_parent' => ($lang === 'ar') ? 'الأولياء' : (($lang === 'en') ? 'Parents' : 'Parents'),
+'home_audience_parent_desc' => ($lang === 'ar') ? 'متابعة الدورات والطلبات والفواتير الخاصة بالأبناء.' : (($lang === 'en') ? 'Track children’s courses, orders and invoices.' : 'Suivre les cours, commandes et factures des enfants.'),
+
+'home_audience_school' => ($lang === 'ar') ? 'المؤسسات التعليمية' : (($lang === 'en') ? 'Institutions' : 'Établissements'),
+'home_audience_school_desc' => ($lang === 'ar') ? 'تنظيم المحتوى وتحسين تجربة التعلم الرقمي.' : (($lang === 'en') ? 'Organize content and improve digital learning.' : 'Organiser les contenus et améliorer l’apprentissage numérique.'),
+
+'home_testimonial_title' => ($lang === 'ar') ? 'آراء المستخدمين' : (($lang === 'en') ? 'User feedback' : 'Avis des utilisateurs'),
+'home_testimonial_name' => ($lang === 'ar') ? 'ولي تلميذ' : (($lang === 'en') ? 'Parent user' : 'Parent d’élève'),
+'home_testimonial_text' => ($lang === 'ar') ? 'منصة سهلة وواضحة، تساعدني على متابعة تعلم ابني والوصول إلى الدورات والفواتير بسرعة.' : (($lang === 'en') ? 'A clear and easy-to-use platform that helps me follow my child’s learning and access courses and invoices quickly.' : 'Une plateforme claire et simple qui me permet de suivre l’apprentissage de mon enfant et d’accéder rapidement aux cours et factures.'),
     'home_allcourses' => $frontendstrings['allcourses'] ?? 'All Courses',
     'home_homeintro' => $frontendstrings['homeintro'] ?? '',
     'home_homeslide1kicker' => $frontendstrings['homeslide1kicker'] ?? '',
@@ -313,8 +390,8 @@ echo $OUTPUT->render_from_template('local_elearning_system/home', [
     'hasproducts' => !empty($products),
     'isloggedin' => $isloggedin,
     'cartcount' => local_elearning_system_cart_count($SESSION->local_elearning_system_cart),
-    'carturl' => (new moodle_url('/local/elearning_system/cart.php'))->out(false),
-    'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
+   'carturl' => (new moodle_url('/local/elearning_system/cart.php', ['lang' => $lang]))->out(false),
+'mycoursesurl' => (new moodle_url('/local/elearning_system/my_courses.php', ['lang' => $lang]))->out(false),
     'loginurl' => $authurl,
     'issiteadmin' => is_siteadmin(),
     'admindashboardurl' => $admindashboardurl,

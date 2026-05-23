@@ -1,19 +1,59 @@
-<div class="container mt-4">
+<div class="container mt-4 invoice-page {{#isrtl}}invoice-rtl{{/isrtl}}">
+
+    <style>
+    .invoice-rtl .offset-6 {
+    margin-left: 0;
+    margin-right: 50%;
+}
+
+@media (max-width: 768px) {
+    .invoice-rtl .offset-6 {
+        margin-right: 0;
+    }
+}
+        .invoice-rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .invoice-rtl .float-end {
+            float: left !important;
+        }
+
+        .invoice-rtl .fa-arrow-left {
+            transform: rotate(180deg);
+        }
+
+        .invoice-rtl .text-end {
+            text-align: left !important;
+        }
+
+        .invoice-rtl .offset-md-2 {
+            margin-left: 0;
+            margin-right: 16.666667%;
+        }
+
+        @media (max-width: 768px) {
+            .invoice-rtl .offset-md-2 {
+                margin-right: 0;
+            }
+        }
+    </style>
 
     <div class="row mb-4">
         <div class="col-12">
             <a href="{{backurl}}" class="btn btn-outline-secondary">
-                <i class="fa fa-arrow-left"></i> Retour
+                <i class="fa fa-arrow-left"></i> {{t_back}}
             </a>
             <a href="{{pdfurl}}" class="btn btn-success float-end">
-                <i class="fa fa-download"></i> Télécharger PDF
+                <i class="fa fa-download"></i> {{t_download_pdf}}
             </a>
         </div>
     </div>
 
     {{#isparentaccount}}
     <div class="alert alert-info">
-        Facture de votre enfant: <strong>{{targetfullname}}</strong>
+        {{t_child_invoice}} <strong>{{targetfullname}}</strong>
     </div>
     {{/isparentaccount}}
 
@@ -21,38 +61,34 @@
         <div class="col-md-8 offset-md-2">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
-                    
-                    <!-- Header -->
+
                     <div class="text-center mb-5">
-                        <h2 class="mb-1">FACTURE</h2>
-                        <p class="text-muted">Facture #{{id}}</p>
+                        <h2 class="mb-1">{{t_invoice}}</h2>
+                        <p class="text-muted">{{t_invoice_number}}{{id}}</p>
                     </div>
 
-                    <!-- Issue Date -->
                     <div class="row mb-4">
                         <div class="col-6">
-                            <p class="mb-1"><strong>Date d'émission:</strong></p>
+                            <p class="mb-1"><strong>{{t_issue_date}}:</strong></p>
                             <p>{{timecreated}}</p>
                         </div>
                     </div>
 
-                    <!-- Client Info -->
                     {{#user}}
                     <div class="border-top border-bottom py-3 mb-4">
-                        <p class="mb-1"><strong>Client:</strong></p>
+                        <p class="mb-1"><strong>{{t_client}}:</strong></p>
                         <p class="mb-0">{{user.fullname}}</p>
                         <p class="mb-0 text-muted">{{user.email}}</p>
                     </div>
                     {{/user}}
 
-                    <!-- Items Table -->
                     <div class="mb-4">
                         <table class="table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Produit / Service</th>
-                                    <th class="text-center" style="width:80px;">Quantité</th>
-                                    <th class="text-end" style="width:120px;">Montant</th>
+                                    <th>{{t_product_service}}</th>
+                                    <th class="text-center" style="width:80px;">{{t_quantity}}</th>
+                                    <th class="text-end" style="width:120px;">{{t_amount}}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -60,41 +96,39 @@
                                 <tr>
                                     <td>{{product.name}}</td>
                                     <td class="text-center">1</td>
-                                    <td class="text-end">${{product.amount}}</td>
+                                    <td class="text-end">{{product.amount}}</td>
                                 </tr>
                                 {{/product}}
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Totals -->
                     <div class="row mb-4">
                         <div class="col-6 offset-6">
                             <table class="table table-sm border-top">
                                 <tbody>
                                     <tr>
-                                        <th class="text-end" style="width:50%;">Sous-total:</th>
-                                        <td class="text-end">${{subtotal}}</td>
+                                        <th class="text-end" style="width:50%;">{{t_subtotal}}:</th>
+                                        <td class="text-end">{{subtotal}}</td>
                                     </tr>
                                     {{#hastvapercent}}
                                     <tr>
-                                        <th class="text-end">TVA ({{tvapercent}}%):</th>
-                                        <td class="text-end">${{taxamount}}</td>
+                                        <th class="text-end">{{t_vat}} ({{tvapercent}}%):</th>
+                                        <td class="text-end">{{taxamount}}</td>
                                     </tr>
                                     {{/hastvapercent}}
                                     <tr class="border-top">
-                                        <th class="text-end fs-5">Total:</th>
-                                        <td class="text-end fs-5 text-success"><strong>${{total}}</strong></td>
+                                        <th class="text-end fs-5">{{t_total}}:</th>
+                                        <td class="text-end fs-5 text-success"><strong>{{total}}</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Footer -->
                     <div class="text-center text-muted mt-5 pt-4 border-top">
-                        <p class="small mb-0">Merci pour votre achat!</p>
-                        <p class="small mb-0">Pour toute question, veuillez nous contacter.</p>
+                        <p class="small mb-0">{{t_thank_you}}</p>
+                        <p class="small mb-0">{{t_contact}}</p>
                     </div>
 
                 </div>

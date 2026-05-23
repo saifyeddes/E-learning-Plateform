@@ -1,97 +1,505 @@
 {{> local_elearning_system/client_styles }}
-<div class="es-client">
-<div class="container-fluid es-cart-page">
-    <div class="es-cart-hero mb-3">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h3 class="mb-1">{{t_yourcart}}</h3>
-                <p class="es-cart-subtitle mb-0">{{t_accessdurationmonths}}. {{t_autoupdate}}.</p>
-            </div>
-            <a href="{{storeurl}}" class="btn btn-outline-secondary btn-sm">{{t_continuebrowsing}}</a>
-        </div>
-    </div>
 
-    {{#hasproducts}}
-    <div class="row g-3 mb-3" id="esCartItems">
-        {{#products}}
-        <div class="col-12">
-            <article class="card es-cart-item" data-unitprice="{{unitpriceraw}}">
-                <div class="card-body">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-12 col-md-2">
-                            <a href="{{producturl}}" class="es-cart-thumb">
-                                {{#hasimage}}
-                                <img src="{{image}}" alt="{{name}}" class="img-fluid rounded">
-                                {{/hasimage}}
-                                {{^hasimage}}
-                                <div class="es-cart-thumb-placeholder"><i class="fa fa-image"></i></div>
-                                {{/hasimage}}
-                            </a>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <h5 class="mb-1"><a href="{{producturl}}">{{name}}</a></h5>
-                            <div class="text-muted small">{{t_unitprice}}: <span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span> / {{t_permonth}}</div>
-                        </div>
-                        <div class="col-12 col-md-3">
-                            <label class="form-label mb-1">{{t_accessdurationmonths}}</label>
-                            <form method="post" action="{{setdurationurl}}" class="m-0 es-cart-duration-form" novalidate>
-                                <div class="es-cart-stepper">
-                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="-1" aria-label="{{t_decrease}}">-</button>
-                                    <input
-                                        type="number"
-                                        name="durationmonths"
-                                        class="form-control es-cart-duration"
-                                        min="1"
-                                        max="24"
-                                        step="1"
-                                        value="{{durationmonths}}"
-                                        data-unitprice="{{unitpriceraw}}"
-                                        aria-label="{{t_accessdurationmonths}} - {{name}}"
-                                    >
-                                    <button type="button" class="btn btn-outline-secondary es-cart-step" data-step="1" aria-label="{{t_increase}}">+</button>
-                                </div>
-                            </form>
-                            <div class="small text-muted mt-1 es-cart-autosave">{{t_autoupdate}}</div>
-                        </div>
-                        <div class="col-6 col-md-2">
-                            <div class="small text-muted">{{t_total}}</div>
-                            <div class="fw-bold es-cart-line-price" data-linevalue="{{linepriceraw}}">{{lineprice}}</div>
-                        </div>
-                        <div class="col-6 col-md-2 col-lg-1 d-flex align-items-center justify-content-end">
-                            <a href="{{removeurl}}" class="btn btn-sm btn-outline-danger es-cart-remove-btn">{{t_remove}}</a>
-                        </div>
+<style>
+.es-cart-page-modern {
+    --es-primary: #0f6fc5;
+    --es-primary-dark: #084f92;
+    --es-success: #2e7d32;
+    --es-border: #d8e7f7;
+    --es-text: #1f2937;
+    --es-muted: #6b7280;
+
+    min-height: 100vh;
+    padding: 22px 32px 44px;
+    background:
+        radial-gradient(circle at top left, rgba(15,111,197,.12), transparent 28%),
+        linear-gradient(180deg, #f7fbff 0%, #ffffff 45%, #f8fbff 100%);
+}
+
+.es-cart-page-modern .container-fluid {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.es-cart-hero-modern {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--es-border);
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 24px;
+    background:
+        radial-gradient(circle at top right, rgba(15,111,197,.18), transparent 35%),
+        linear-gradient(135deg, #ffffff 0%, #eef7ff 100%);
+    box-shadow: 0 18px 45px rgba(15,111,197,.10);
+}
+
+.es-cart-hero-modern::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(15,111,197,.08);
+}
+
+.es-cart-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--es-border);
+    color: var(--es-primary);
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.es-cart-title {
+    margin: 0 0 8px;
+    font-size: 31px;
+    line-height: 1.15;
+    color: var(--es-text);
+    font-weight: 900;
+}
+
+.es-cart-subtitle-modern {
+    max-width: 720px;
+    margin: 0;
+    color: var(--es-muted);
+    font-size: 15px;
+}
+
+.es-cart-top-actions {
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 2;
+}
+
+.es-cart-action-btn {
+    border-radius: 999px;
+    padding: 9px 15px;
+    font-weight: 800;
+    font-size: 13px;
+    box-shadow: 0 7px 18px rgba(15,111,197,.08);
+}
+
+.es-cart-items-modern {
+    row-gap: 18px;
+}
+
+.es-cart-item-modern {
+    border: 1px solid #dceaf8;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(31,41,55,.08);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.es-cart-item-modern:hover {
+    transform: translateY(-4px);
+    border-color: #b7d9fa;
+    box-shadow: 0 22px 48px rgba(15,111,197,.15);
+}
+
+.es-cart-thumb-modern {
+    display: block;
+    height: 145px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #f3f7fb;
+    border: 1px solid #e5eef8;
+}
+
+.es-cart-thumb-modern img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.es-cart-thumb-placeholder-modern {
+    height: 145px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a9aae;
+    background: linear-gradient(135deg, #f5f8fc, #edf4fb);
+}
+
+.es-cart-product-title {
+    margin: 0 0 8px;
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.es-cart-product-title a {
+    color: #102033;
+    text-decoration: none;
+}
+
+.es-cart-product-title a:hover {
+    color: var(--es-primary);
+}
+
+.es-cart-unit {
+    color: var(--es-muted);
+    font-size: 13px;
+}
+
+.es-cart-duration-label {
+    color: #102033;
+    font-size: 13px;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.es-cart-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid #d8e7f7;
+    background: #f8fbff;
+    border-radius: 16px;
+}
+
+.es-cart-step {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px !important;
+    font-weight: 900;
+}
+
+.es-cart-duration {
+    width: 70px;
+    height: 38px;
+    border-radius: 12px !important;
+    text-align: center;
+    font-weight: 800;
+}
+
+.es-cart-autosave-modern {
+    color: var(--es-muted);
+    font-size: 12px;
+    margin-top: 7px;
+}
+
+.es-cart-line-total-label {
+    color: var(--es-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.es-cart-line-price {
+    color: var(--es-success);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.es-cart-remove-btn-modern {
+    border-radius: 14px;
+    padding: 9px 14px;
+    font-weight: 800;
+}
+
+.es-cart-summary-modern {
+    margin-top: 22px;
+    border: 1px solid #dceaf8;
+    border-radius: 24px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top right, rgba(46,125,50,.10), transparent 35%),
+        linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+    box-shadow: 0 18px 45px rgba(31,41,55,.08);
+}
+
+.es-cart-summary-body {
+    padding: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.es-cart-total-label {
+    color: var(--es-muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.es-cart-total-value {
+    display: block;
+    color: var(--es-success);
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.es-cart-summary-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.es-cart-clear-btn,
+.es-cart-pay-btn {
+    border-radius: 16px;
+    padding: 11px 20px;
+    font-weight: 900;
+}
+
+.es-cart-pay-btn {
+    background: linear-gradient(135deg, #0f6fc5, #0097b2);
+    border: none;
+    color: #ffffff !important;
+}
+
+.es-cart-empty-state {
+    border: 1px dashed #bdd6ef;
+    border-radius: 22px;
+    padding: 42px 24px;
+    text-align: center;
+    background: #fbfdff;
+    color: var(--es-muted);
+    box-shadow: 0 12px 28px rgba(31,41,55,.05);
+}
+
+.es-cart-empty-state i {
+    display: block;
+    color: #8ebce8;
+    margin-bottom: 14px;
+}
+
+/* RTL support */
+.es-cart-page-modern.es-rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.es-cart-page-modern.es-rtl .row {
+    direction: rtl;
+}
+
+.es-cart-page-modern.es-rtl .es-cart-top-actions {
+    justify-content: flex-start;
+}
+
+.es-cart-page-modern.es-rtl .es-cart-hero-modern::after {
+    right: auto;
+    left: -80px;
+}
+
+.es-cart-page-modern.es-rtl .text-end {
+    text-align: left !important;
+}
+
+/* Width fix */
+#page-local-elearning-system-cart #region-main,
+#page-local-elearning_system-cart #region-main,
+#page-local-elearning-system-cart .region-main,
+#page-local-elearning_system-cart .region-main {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+#page-local-elearning-system-cart .main-inner,
+#page-local-elearning_system-cart .main-inner,
+#page-local-elearning-system-cart [role="main"],
+#page-local-elearning_system-cart [role="main"] {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+@media (max-width: 768px) {
+    .es-cart-page-modern {
+        padding: 14px 12px 34px;
+    }
+
+    .es-cart-title {
+        font-size: 25px;
+    }
+
+    .es-cart-top-actions {
+        justify-content: flex-start;
+    }
+
+    .es-cart-thumb-modern,
+    .es-cart-thumb-placeholder-modern {
+        height: 180px;
+    }
+
+    .es-cart-summary-body {
+        align-items: stretch;
+    }
+
+    .es-cart-summary-actions,
+    .es-cart-clear-btn,
+    .es-cart-pay-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="es-client es-cart-page-modern {{#isrtl}}es-rtl{{/isrtl}}">
+    <div class="container-fluid">
+
+        <div class="es-cart-hero-modern">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-8">
+                    <div class="es-cart-kicker">
+                        <i class="fa fa-shopping-cart"></i>
+                        {{t_yourcart}}
+                    </div>
+                    <h2 class="es-cart-title">{{t_yourcart}}</h2>
+                    <p class="es-cart-subtitle-modern">
+                        {{t_accessdurationmonths}}. {{t_autoupdate}}.
+                    </p>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <div class="es-cart-top-actions">
+                        <a href="{{storeurl}}" class="btn btn-light es-cart-action-btn">
+                            <i class="fa fa-th-large"></i> {{t_continuebrowsing}}
+                        </a>
                     </div>
                 </div>
-            </article>
-        </div>
-        {{/products}}
-    </div>
-
-    <div class="card es-cart-summary-card">
-        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="es-cart-total-wrap">
-                <span class="text-muted d-block">{{t_grandtotal}}</span>
-                <strong class="es-cart-total-value" id="esCartTotal">{{total}}</strong>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="{{clearcarturl}}" class="btn btn-outline-danger">{{t_clearcart}}</a>
-                {{#isloggedin}}
-                <a href="{{checkouturl}}" class="btn btn-primary es-cart-cta">{{t_proceedtopayment}}</a>
-                {{/isloggedin}}
-                {{^isloggedin}}
-                <a href="{{authurl}}" class="btn btn-primary es-cart-cta">{{t_proceedtopayment}}</a>
-                {{/isloggedin}}
             </div>
         </div>
-    </div>
-    {{/hasproducts}}
 
-    {{^hasproducts}}
-    <div class="alert alert-info">
-        {{t_cartempty}}
+        {{#hasproducts}}
+        <div class="row es-cart-items-modern" id="esCartItems">
+            {{#products}}
+            <div class="col-12">
+                <article class="es-cart-item-modern" data-unitprice="{{unitpriceraw}}">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="row g-3 align-items-center">
+
+                            <div class="col-12 col-md-2">
+                                <a href="{{producturl}}" class="es-cart-thumb-modern">
+                                    {{#hasimage}}
+                                    <img src="{{image}}" alt="{{name}}">
+                                    {{/hasimage}}
+
+                                    {{^hasimage}}
+                                    <div class="es-cart-thumb-placeholder-modern">
+                                        <i class="fa fa-image fa-2x"></i>
+                                    </div>
+                                    {{/hasimage}}
+                                </a>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <h5 class="es-cart-product-title">
+                                    <a href="{{producturl}}">{{name}}</a>
+                                </h5>
+                                <div class="es-cart-unit">
+                                    {{t_unitprice}}:
+                                    <span class="es-cart-unit-price" data-unittext="{{unitpriceraw}}">{{price}}</span>
+                                    / {{t_permonth}}
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="es-cart-duration-label">{{t_accessdurationmonths}}</label>
+
+                                <form method="post" action="{{setdurationurl}}" class="m-0 es-cart-duration-form" novalidate>
+                                    <div class="es-cart-stepper">
+                                        <button type="button"
+                                                class="btn btn-outline-secondary es-cart-step"
+                                                data-step="-1"
+                                                aria-label="{{t_decrease}}">
+                                            -
+                                        </button>
+
+                                        <input
+                                            type="number"
+                                            name="durationmonths"
+                                            class="form-control es-cart-duration"
+                                            min="1"
+                                            max="24"
+                                            step="1"
+                                            value="{{durationmonths}}"
+                                            data-unitprice="{{unitpriceraw}}"
+                                            aria-label="{{t_accessdurationmonths}} - {{name}}"
+                                        >
+
+                                        <button type="button"
+                                                class="btn btn-outline-secondary es-cart-step"
+                                                data-step="1"
+                                                aria-label="{{t_increase}}">
+                                            +
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <div class="es-cart-autosave-modern">{{t_autoupdate}}</div>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <div class="es-cart-line-total-label">{{t_total}}</div>
+                                <div class="es-cart-line-price" data-linevalue="{{linepriceraw}}">
+                                    {{lineprice}}
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-md-1 d-flex align-items-center justify-content-end">
+                                <a href="{{removeurl}}" class="btn btn-outline-danger es-cart-remove-btn-modern">
+                                    <i class="fa fa-trash"></i>
+                                    {{t_remove}}
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </article>
+            </div>
+            {{/products}}
+        </div>
+
+        <div class="es-cart-summary-modern">
+            <div class="es-cart-summary-body">
+                <div>
+                    <span class="es-cart-total-label">{{t_grandtotal}}</span>
+                    <strong class="es-cart-total-value" id="esCartTotal">{{total}}</strong>
+                </div>
+
+                <div class="es-cart-summary-actions">
+                    <a href="{{clearcarturl}}" class="btn btn-outline-danger es-cart-clear-btn">
+                        <i class="fa fa-trash"></i> {{t_clearcart}}
+                    </a>
+
+                    {{#isloggedin}}
+                    <a href="{{checkouturl}}" class="btn es-cart-pay-btn">
+                        <i class="fa fa-credit-card"></i> {{t_proceedtopayment}}
+                    </a>
+                    {{/isloggedin}}
+
+                    {{^isloggedin}}
+                    <a href="{{authurl}}" class="btn es-cart-pay-btn">
+                        <i class="fa fa-credit-card"></i> {{t_proceedtopayment}}
+                    </a>
+                    {{/isloggedin}}
+                </div>
+            </div>
+        </div>
+        {{/hasproducts}}
+
+        {{^hasproducts}}
+        <div class="es-cart-empty-state">
+            <i class="fa fa-shopping-cart fa-3x"></i>
+            <h5>{{t_cartempty}}</h5>
+        </div>
+        {{/hasproducts}}
+
     </div>
-    {{/hasproducts}}
-</div>
 </div>
 
 <script>
@@ -99,11 +507,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const cartCurrencyCode = '{{currencycode}}';
 
-function formatCartMoney(amount) {
-    const value = parseFloat(amount || 0);
-    return cartCurrencyCode + ' ' + value.toFixed(2);
-}
-    const cartItems = Array.from(document.querySelectorAll('.es-cart-item'));
+    function formatCartMoney(amount) {
+        const value = parseFloat(amount || 0);
+        return cartCurrencyCode + ' ' + value.toFixed(2);
+    }
+
+    const cartItems = Array.from(document.querySelectorAll('.es-cart-item-modern'));
     const totalEl = document.getElementById('esCartTotal');
 
     if (!cartItems.length || !totalEl) {
@@ -129,28 +538,34 @@ function formatCartMoney(amount) {
 
     const recalcTotals = function() {
         let grand = 0;
+
         cartItems.forEach(function(item) {
             const input = item.querySelector('.es-cart-duration');
             const lineEl = item.querySelector('.es-cart-line-price');
             const unitTextEl = item.querySelector('.es-cart-unit-price');
+
             if (!input || !lineEl) {
                 return;
             }
 
             let unit = parseMoney(item.getAttribute('data-unitprice'));
+
             if (unit <= 0) {
                 unit = parseMoney(input.getAttribute('data-unitprice'));
             }
+
             if (unit <= 0 && unitTextEl) {
                 unit = parseMoney(unitTextEl.getAttribute('data-unittext') || unitTextEl.textContent);
             }
 
             const months = clampMonths(input.value);
             input.value = months;
+
             const line = unit * months;
-lineEl.setAttribute('data-linevalue', line.toFixed(2));
-lineEl.textContent = formatCartMoney(line);
-grand += line;
+            lineEl.setAttribute('data-linevalue', line.toFixed(2));
+            lineEl.textContent = formatCartMoney(line);
+
+            grand += line;
         });
 
         totalEl.textContent = formatCartMoney(grand);

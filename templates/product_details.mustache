@@ -1,115 +1,651 @@
 {{> local_elearning_system/client_styles }}
-<div class="es-client">
-<div class="container-fluid">
-    <div class="mb-3">
-        <a href="{{backurl}}" class="btn btn-link p-0">{{t_backtocatalogue}}</a>
-    </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-12 col-lg-4 mb-3 mb-lg-0 text-center">
-                    {{#hasimage}}
-                    <img src="{{image}}" alt="{{name}}" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
-                    {{/hasimage}}
-                    {{^hasimage}}
-                    <div class="text-muted"><i class="fa fa-image"></i> {{t_noimage}}</div>
-                    {{/hasimage}}
+<style>
+.es-product-page-modern {
+    --es-primary: #0f6fc5;
+    --es-primary-dark: #084f92;
+    --es-success: #2e7d32;
+    --es-border: #d8e7f7;
+    --es-text: #1f2937;
+    --es-muted: #6b7280;
+
+    min-height: 100vh;
+    padding: 22px 32px 44px;
+    background:
+        radial-gradient(circle at top left, rgba(15,111,197,.10), transparent 28%),
+        linear-gradient(180deg, #f7fbff 0%, #ffffff 45%, #f8fbff 100%);
+}
+
+.es-product-page-modern .container-fluid {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+/* Hero */
+.es-product-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--es-border);
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 24px;
+    background:
+        radial-gradient(circle at top right, rgba(15,111,197,.16), transparent 35%),
+        linear-gradient(135deg, #ffffff 0%, #eef7ff 100%);
+    box-shadow: 0 18px 45px rgba(15,111,197,.10);
+}
+
+.es-product-hero::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    bottom: -80px;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: rgba(15,111,197,.08);
+}
+
+.es-product-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--es-border);
+    color: var(--es-primary);
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.es-product-title {
+    margin: 0 0 8px;
+    font-size: 31px;
+    line-height: 1.15;
+    color: var(--es-text);
+    font-weight: 900;
+}
+
+.es-product-subtitle {
+    max-width: 720px;
+    margin: 0;
+    color: var(--es-muted);
+    font-size: 15px;
+}
+
+.es-product-top-actions {
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 2;
+}
+
+.es-product-action-btn {
+    border-radius: 999px;
+    padding: 9px 15px;
+    font-weight: 800;
+    font-size: 13px;
+    box-shadow: 0 7px 18px rgba(15,111,197,.08);
+}
+
+/* Main card */
+.es-product-card {
+    border: 1px solid #dceaf8;
+    border-radius: 26px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 18px 45px rgba(31,41,55,.08);
+}
+
+.es-product-card-body {
+    padding: 26px;
+}
+
+.es-product-image-box {
+    width: 100%;
+    min-height: 310px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #f3f7fb;
+    border: 1px solid #e5eef8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.es-product-image-box img {
+    width: 100%;
+    height: 100%;
+    max-height: 360px;
+    object-fit: cover;
+}
+
+.es-product-image-placeholder {
+    min-height: 310px;
+    color: #8a9aae;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.es-product-info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.es-product-name-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.es-product-name {
+    margin: 0;
+    color: #102033;
+    font-size: 30px;
+    line-height: 1.15;
+    font-weight: 900;
+}
+
+.es-product-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.es-product-type-badge.is-free {
+    background: #2e7d32;
+}
+
+.es-product-type-badge.is-paid {
+    background: #0f6fc5;
+}
+
+.es-product-price-box {
+    border: 1px solid #d8e7f7;
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: #f8fbff;
+    margin-bottom: 16px;
+}
+
+.es-product-price-label {
+    color: #102033;
+    font-size: 13px;
+    font-weight: 900;
+    margin-bottom: 6px;
+}
+
+.es-product-price-value {
+    color: var(--es-primary);
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.es-old-price {
+    color: #8a97a8;
+    text-decoration: line-through;
+    margin-inline-end: 8px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.es-sale-price {
+    color: var(--es-primary);
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.es-product-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.es-product-meta-item {
+    border: 1px solid #e4edf7;
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: #ffffff;
+}
+
+.es-product-meta-label {
+    color: var(--es-muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 3px;
+}
+
+.es-product-meta-value {
+    color: #102033;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+/* Bundle */
+.es-product-section {
+    margin-top: 18px;
+}
+
+.es-product-section-title {
+    margin: 0 0 12px;
+    color: #102033;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.es-bundle-list {
+    border: 1px solid #dceaf8;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.es-bundle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px 15px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.es-bundle-item:last-child {
+    border-bottom: 0;
+}
+
+.es-bundle-title {
+    color: #102033;
+    font-weight: 900;
+    font-size: 14px;
+}
+
+.es-bundle-course {
+    color: var(--es-muted);
+    font-size: 13px;
+}
+
+.es-bundle-course a {
+    color: var(--es-primary);
+    text-decoration: none;
+}
+
+.es-bundle-status {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.es-bundle-status.is-purchased {
+    background: #eaf7ec;
+    color: #2e7d32;
+}
+
+.es-bundle-status.is-not-purchased {
+    background: #eef2f6;
+    color: #667085;
+}
+
+/* Description */
+.es-product-description {
+    border-top: 1px solid #edf2f7;
+    padding-top: 18px;
+    margin-top: 18px;
+    color: #334155;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.es-product-description .text-muted {
+    color: var(--es-muted) !important;
+}
+
+/* Buttons */
+.es-product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.es-product-btn {
+    border-radius: 15px;
+    padding: 11px 18px;
+    font-weight: 900;
+    font-size: 14px;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.es-product-btn-primary {
+    background: linear-gradient(135deg, #0f6fc5, #0097b2);
+    border: none;
+    color: #ffffff !important;
+}
+
+.es-product-btn-primary:hover,
+.es-product-btn-primary:focus,
+.es-product-btn-primary:active {
+    background: linear-gradient(135deg, #084f92, #087e95);
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(15,111,197,.22);
+}
+
+.es-product-btn-outline {
+    background: #ffffff;
+    color: var(--es-primary) !important;
+    border: 1px solid #bfd9f3;
+}
+
+.es-product-btn-outline:hover {
+    background: #f2f7fd;
+    color: #084f92 !important;
+}
+
+.es-product-btn-success {
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    border: none;
+    color: #ffffff !important;
+}
+
+.es-product-btn-success:hover,
+.es-product-btn-success:focus {
+    color: #ffffff !important;
+}
+
+.es-product-btn-disabled {
+    background: #7fb07f;
+    color: #ffffff !important;
+    border: none;
+    cursor: not-allowed;
+}
+
+/* RTL */
+.es-product-page-modern.es-rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.es-product-page-modern.es-rtl .row {
+    direction: rtl;
+}
+
+.es-product-page-modern.es-rtl .es-product-top-actions {
+    justify-content: flex-start;
+}
+
+.es-product-page-modern.es-rtl .es-product-hero::after {
+    right: auto;
+    left: -80px;
+}
+
+.es-product-page-modern.es-rtl .es-bundle-item {
+    direction: rtl;
+}
+
+/* Width fix */
+#page-local-elearning-system-product #region-main,
+#page-local-elearning_system-product #region-main,
+#page-local-elearning-system-product .region-main,
+#page-local-elearning_system-product .region-main {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+#page-local-elearning-system-product .main-inner,
+#page-local-elearning_system-product .main-inner,
+#page-local-elearning-system-product [role="main"],
+#page-local-elearning_system-product [role="main"] {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+@media (max-width: 992px) {
+    .es-product-image-box,
+    .es-product-image-placeholder {
+        min-height: 240px;
+    }
+
+    .es-product-name {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 768px) {
+    .es-product-page-modern {
+        padding: 14px 12px 34px;
+    }
+
+    .es-product-hero {
+        padding: 20px;
+    }
+
+    .es-product-title {
+        font-size: 25px;
+    }
+
+    .es-product-card-body {
+        padding: 18px;
+    }
+
+    .es-product-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .es-product-actions,
+    .es-product-btn {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="es-client es-product-page-modern {{#isrtl}}es-rtl{{/isrtl}}">
+    <div class="container-fluid">
+
+        <div class="es-product-hero">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-8">
+                    <div class="es-product-kicker">
+                        <i class="fa fa-book-open"></i>
+                        {{t_backtocatalogue}}
+                    </div>
+                    <h2 class="es-product-title">{{name}}</h2>
+                    <p class="es-product-subtitle">
+                        {{#isbundle}}{{t_bundleproducts}}{{/isbundle}}
+                        {{^isbundle}}{{t_description}}{{/isbundle}}
+                    </p>
                 </div>
 
-                <div class="col-12 col-lg-8">
-                    <h2 class="mb-2">{{name}}</h2>
-
-                    <p class="mb-2">
-                        <span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">{{type}}</span>
-                    </p>
-
-                    <p class="mb-2">
-                        {{#isfree}}
-                        <strong>{{t_price}}:</strong> {{t_free}}
-                        {{/isfree}}
-                        {{#ispaid}}
-<strong>{{t_price}}:</strong>
-
-{{#hasdiscount}}
-<span class="es-old-price">{{originalprice}}</span>
-<span class="es-sale-price">{{saleprice}}</span>
-{{/hasdiscount}}
-
-{{^hasdiscount}}
-<span class="es-sale-price">{{displayprice}}</span>
-{{/hasdiscount}}
-
-{{/ispaid}}
-                    </p>
-
-                    <p class="mb-2"><strong>{{t_category}}:</strong> {{categoryname}}</p>
-                    <p class="mb-3"><strong>{{t_course}}:</strong> {{coursename}}</p>
-
-                    {{#isbundle}}
-                    <div class="mb-3">
-                        <h5 class="mb-2">{{t_bundleproducts}}</h5>
-                        {{#hasbundleitems}}
-                        <ul class="list-group">
-                            {{#bundleitems}}
-                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div>
-                                    <div><strong>{{name}}</strong></div>
-                                    <div class="small text-muted">
-                                        {{#hascourse}}<a href="{{courseurl}}">{{coursename}}</a>{{/hascourse}}
-                                        {{^hascourse}}{{coursename}}{{/hascourse}}
-                                    </div>
-                                </div>
-                                {{#ispurchased}}<span class="badge bg-success">{{t_purchased}}</span>{{/ispurchased}}
-                                {{^ispurchased}}<span class="badge bg-secondary">{{t_notpurchased}}</span>{{/ispurchased}}
-                            </li>
-                            {{/bundleitems}}
-                        </ul>
-                        {{/hasbundleitems}}
-                        {{^hasbundleitems}}
-                        <p class="text-muted mb-0">{{t_noproductsassignedtobundle}}</p>
-                        {{/hasbundleitems}}
-                    </div>
-                    {{/isbundle}}
-
-                    <div class="mb-4">
-                        <h5>{{t_description}}</h5>
-                        {{#hasdescription}}
-                        <div>{{{description}}}</div>
-                        {{/hasdescription}}
-                        {{^hasdescription}}
-                        <p class="text-muted mb-0">{{t_nodescriptionavailable}}</p>
-                        {{/hasdescription}}
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-2">
-                        {{#ispurchased}}
-                        <span class="btn btn-success disabled" aria-disabled="true">{{t_purchased}}</span>
-                        {{/ispurchased}}
-                        {{^ispurchased}}
-                            {{#isincart}}
-                            <a href="{{carturl}}" class="btn btn-outline-primary">{{t_incart}}</a>
-                            {{/isincart}}
-                            {{^isincart}}
-                            <a href="{{addtocarturl}}" class="btn btn-primary">{{t_addtocart}}</a>
-                            {{/isincart}}
-                        {{/ispurchased}}
-                        <a href="{{carturl}}" class="btn btn-outline-primary">{{t_viewcart}}</a>
-                        {{#canopencourse}}
-<a href="{{courseurl}}" class="btn btn-outline-secondary">{{t_opencourse}}</a>
-{{/canopencourse}}
-
-{{^canopencourse}}
-    {{#hascourse}}
-        {{^isloggedin}}
-        <a href="{{authurl}}" class="btn btn-success">{{t_buynow}}</a>
-        {{/isloggedin}}
-    {{/hascourse}}
-{{/canopencourse}}
+                <div class="col-12 col-lg-4">
+                    <div class="es-product-top-actions">
+                        <a href="{{backurl}}" class="btn btn-light es-product-action-btn">
+                            <i class="fa fa-arrow-left"></i> {{t_backtocatalogue}}
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="es-product-card">
+            <div class="es-product-card-body">
+                <div class="row g-4 align-items-start">
+
+                    <div class="col-12 col-lg-5">
+                        <div class="es-product-image-box">
+                            {{#hasimage}}
+                            <img src="{{image}}" alt="{{name}}">
+                            {{/hasimage}}
+
+                            {{^hasimage}}
+                            <div class="es-product-image-placeholder">
+                                <i class="fa fa-image fa-3x"></i>
+                                <span>{{t_noimage}}</span>
+                            </div>
+                            {{/hasimage}}
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-7">
+                        <div class="es-product-info">
+
+                            <div class="es-product-name-row">
+                                <h1 class="es-product-name">{{name}}</h1>
+
+                                <span class="es-product-type-badge {{#isfree}}is-free{{/isfree}}{{#ispaid}}is-paid{{/ispaid}}">
+                                    {{#isfree}}<i class="fa fa-check-circle"></i>{{/isfree}}
+                                    {{#ispaid}}<i class="fa fa-credit-card"></i>{{/ispaid}}
+                                    {{type}}
+                                </span>
+                            </div>
+
+                            <div class="es-product-price-box">
+                                <div class="es-product-price-label">{{t_price}}</div>
+
+                                {{#isfree}}
+                                <div class="es-product-price-value">{{t_free}}</div>
+                                {{/isfree}}
+
+                                {{#ispaid}}
+                                <div>
+                                    {{#hasdiscount}}
+                                    <span class="es-old-price">{{originalprice}}</span>
+                                    <span class="es-sale-price">{{saleprice}}</span>
+                                    {{/hasdiscount}}
+
+                                    {{^hasdiscount}}
+                                    <span class="es-sale-price">{{displayprice}}</span>
+                                    {{/hasdiscount}}
+                                </div>
+                                {{/ispaid}}
+                            </div>
+
+                            <div class="es-product-meta">
+                                <div class="es-product-meta-item">
+                                    <div class="es-product-meta-label">{{t_category}}</div>
+                                    <div class="es-product-meta-value">{{categoryname}}</div>
+                                </div>
+
+                                <div class="es-product-meta-item">
+                                    <div class="es-product-meta-label">{{t_course}}</div>
+                                    <div class="es-product-meta-value">{{coursename}}</div>
+                                </div>
+                            </div>
+
+                            {{#isbundle}}
+                            <div class="es-product-section">
+                                <h5 class="es-product-section-title">{{t_bundleproducts}}</h5>
+
+                                {{#hasbundleitems}}
+                                <div class="es-bundle-list">
+                                    {{#bundleitems}}
+                                    <div class="es-bundle-item">
+                                        <div>
+                                            <div class="es-bundle-title">{{name}}</div>
+                                            <div class="es-bundle-course">
+                                                {{#hascourse}}<a href="{{courseurl}}">{{coursename}}</a>{{/hascourse}}
+                                                {{^hascourse}}{{coursename}}{{/hascourse}}
+                                            </div>
+                                        </div>
+
+                                        {{#ispurchased}}
+                                        <span class="es-bundle-status is-purchased">{{t_purchased}}</span>
+                                        {{/ispurchased}}
+
+                                        {{^ispurchased}}
+                                        <span class="es-bundle-status is-not-purchased">{{t_notpurchased}}</span>
+                                        {{/ispurchased}}
+                                    </div>
+                                    {{/bundleitems}}
+                                </div>
+                                {{/hasbundleitems}}
+
+                                {{^hasbundleitems}}
+                                <p class="text-muted mb-0">{{t_noproductsassignedtobundle}}</p>
+                                {{/hasbundleitems}}
+                            </div>
+                            {{/isbundle}}
+
+                            <div class="es-product-description">
+                                <h5 class="es-product-section-title">{{t_description}}</h5>
+
+                                {{#hasdescription}}
+                                <div>{{{description}}}</div>
+                                {{/hasdescription}}
+
+                                {{^hasdescription}}
+                                <p class="text-muted mb-0">{{t_nodescriptionavailable}}</p>
+                                {{/hasdescription}}
+                            </div>
+
+                            <div class="es-product-actions">
+                                {{#ispurchased}}
+                                <span class="es-product-btn es-product-btn-disabled" aria-disabled="true">
+                                    <i class="fa fa-check-circle"></i> {{t_purchased}}
+                                </span>
+                                {{/ispurchased}}
+
+                                {{^ispurchased}}
+                                    {{#isincart}}
+                                    <a href="{{carturl}}" class="es-product-btn es-product-btn-outline">
+                                        <i class="fa fa-shopping-cart"></i> {{t_incart}}
+                                    </a>
+                                    {{/isincart}}
+
+                                    {{^isincart}}
+                                    <a href="{{addtocarturl}}" class="es-product-btn es-product-btn-primary">
+                                        <i class="fa fa-cart-plus"></i> {{t_addtocart}}
+                                    </a>
+                                    {{/isincart}}
+                                {{/ispurchased}}
+
+                                <a href="{{carturl}}" class="es-product-btn es-product-btn-outline">
+                                    <i class="fa fa-shopping-bag"></i> {{t_viewcart}}
+                                </a>
+
+                                {{#canopencourse}}
+                                <a href="{{courseurl}}" class="es-product-btn es-product-btn-success">
+                                    <i class="fa fa-play"></i> {{t_opencourse}}
+                                </a>
+                                {{/canopencourse}}
+
+                                {{^canopencourse}}
+                                    {{#hascourse}}
+                                        {{^isloggedin}}
+                                        <a href="{{authurl}}" class="es-product-btn es-product-btn-success">
+                                            <i class="fa fa-sign-in-alt"></i> {{t_buynow}}
+                                        </a>
+                                        {{/isloggedin}}
+                                    {{/hascourse}}
+                                {{/canopencourse}}
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
 </div>

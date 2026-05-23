@@ -51,6 +51,66 @@ $targetfullname = trim((string)($usercontext['targetfullname'] ?? ''));
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/elearning_system/invoice.php', ['id' => $orderid]);
+local_elearning_system_apply_requested_language();
+
+$lang = local_elearning_system_get_active_language();
+
+$invoicetexts = [
+    'fr' => [
+        'back' => 'Retour',
+        'download_pdf' => 'Télécharger PDF',
+        'child_invoice' => 'Facture de votre enfant :',
+        'invoice' => 'FACTURE',
+        'invoice_number' => 'Facture #',
+        'issue_date' => 'Date d’émission',
+        'client' => 'Client',
+        'product_service' => 'Produit / Service',
+        'quantity' => 'Quantité',
+        'amount' => 'Montant',
+        'subtotal' => 'Sous-total',
+        'vat' => 'TVA',
+        'total' => 'Total',
+        'thank_you' => 'Merci pour votre achat !',
+        'contact' => 'Pour toute question, veuillez nous contacter.',
+    ],
+    'en' => [
+        'back' => 'Back',
+        'download_pdf' => 'Download PDF',
+        'child_invoice' => 'Invoice for your child:',
+        'invoice' => 'INVOICE',
+        'invoice_number' => 'Invoice #',
+        'issue_date' => 'Issue date',
+        'client' => 'Client',
+        'product_service' => 'Product / Service',
+        'quantity' => 'Quantity',
+        'amount' => 'Amount',
+        'subtotal' => 'Subtotal',
+        'vat' => 'VAT',
+        'total' => 'Total',
+        'thank_you' => 'Thank you for your purchase!',
+        'contact' => 'For any question, please contact us.',
+    ],
+    'ar' => [
+        'back' => 'رجوع',
+        'download_pdf' => 'تحميل PDF',
+        'child_invoice' => 'فاتورة طفلك:',
+        'invoice' => 'فاتورة',
+        'invoice_number' => 'فاتورة رقم #',
+        'issue_date' => 'تاريخ الإصدار',
+        'client' => 'العميل',
+        'product_service' => 'المنتج / الخدمة',
+        'quantity' => 'الكمية',
+        'amount' => 'المبلغ',
+        'subtotal' => 'المجموع الفرعي',
+        'vat' => 'ضريبة القيمة المضافة',
+        'total' => 'الإجمالي',
+        'thank_you' => 'شكرًا لشرائكم!',
+        'contact' => 'لأي سؤال، يرجى التواصل معنا.',
+    ],
+];
+
+$it = $invoicetexts[$lang] ?? $invoicetexts['fr'];
+$isrtl = ($lang === 'ar');
 
 // Fetch order with full details
 $orderdata = null;
@@ -113,77 +173,96 @@ $total = $subtotal + $tax;
 // If PDF requested, generate PDF
 if ($pdfgenerate == 1) {
     require_once($CFG->libdir . '/pdflib.php');
-    
+
     $pdf = new pdf();
-    $pdf->SetFont('helvetica', '', 10);
+    $pdf->SetCreator('Moodle');
+    $pdf->SetAuthor(format_string(get_site()->fullname));
+    $pdf->SetTitle($it['invoice_number'] . $orderid);
     $pdf->AddPage('P', 'A4');
-    
-    // Header
-    $pdf->SetFont('helvetica', 'B', 16);
-    $pdf->Cell(0, 10, get_site()->fullname, 0, 1, 'C');
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(0, 5, 'FACTURE', 0, 1, 'C');
-    $pdf->Ln(5);
-    
-    // Invoice info
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->Cell(0, 5, 'Facture #' . $orderid, 0, 1);
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(0, 5, 'Date: ' . userdate($orderdata->timecreated, get_string('strftimedaydatetime', 'core_langconfig')), 0, 1);
-    $pdf->Ln(3);
-    
-    // Client info
+
+    // Important pour l’arabe.
+    $pdf->SetFont('freeserif', '', 10);
+
+    $dir = $isrtl ? 'rtl' : 'ltr';
+    $align = $isrtl ? 'right' : 'left';
+
+    $productname = $product ? format_string($product->name ?? '', true, ['context' => $context]) : '';
+    if (!empty($product->courseid) && !empty($orderdata->coursename)) {
+        $productname .= ' - ' . format_string($orderdata->coursename, true, ['context' => $context]);
+    }
+
+    $html = '
+    <div dir="' . $dir . '" style="text-align:' . $align . '; font-family: freeserif;">
+        <h1 style="text-align:center;">' . s(format_string(get_site()->fullname)) . '</h1>
+        <h2 style="text-align:center;">' . s($it['invoice']) . '</h2>
+
+        <p><strong>' . s($it['invoice_number']) . '</strong>' . s($orderid) . '</p>
+        <p><strong>' . s($it['issue_date']) . ':</strong> ' . s(userdate((int)$orderdata->timecreated, '%d/%m/%Y %H:%M')) . '</p>
+
+        <br>';
+
     if ($user) {
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 5, 'Client:', 0, 1);
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(0, 5, fullname($user), 0, 1);
-        $pdf->Cell(0, 5, $user->email, 0, 1);
-        $pdf->Ln(5);
+        $html .= '
+        <div style="border-top:1px solid #ddd; border-bottom:1px solid #ddd; padding:10px 0;">
+            <p><strong>' . s($it['client']) . ':</strong></p>
+            <p>' . s(fullname($user)) . '<br>' . s($user->email) . '</p>
+        </div>
+        <br>';
     }
-    
-    // Products table
-    $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->SetFillColor(200, 220, 255);
-    $pdf->Cell(80, 6, 'Product / Service', 0, 0, 'L', true);
-    $pdf->Cell(35, 6, 'Qty', 0, 0, 'C', true);
-    $pdf->Cell(40, 6, 'Amount', 0, 1, 'R', true);
-    
-    $pdf->SetFont('helvetica', '', 10);
-    
-    if ($product) {
-        $productname = format_string($product->name ?? 'Product', true, ['context' => $context]);
-        if (!empty($product->courseid) && !empty($orderdata->coursename)) {
-            $productname .= ' - ' . format_string($orderdata->coursename, true, ['context' => $context]);
-        }
-        
-        $pdf->MultiCell(80, 6, $productname, 0, 'L');
-        $pdf->SetXY(80, $pdf->GetY() - 6);
-        $pdf->Cell(35, 6, '1', 0, 0, 'C');
-        $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
-    } else {
-        $pdf->Cell(80, 6, 'Product', 0, 0, 'L');
-        $pdf->Cell(35, 6, '1', 0, 0, 'C');
-        $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
+
+    $html .= '
+        <table border="1" cellpadding="7" cellspacing="0" width="100%">
+            <thead>
+                <tr style="background-color:#eaf3ff;">
+                    <th width="55%"><strong>' . s($it['product_service']) . '</strong></th>
+                    <th width="15%" style="text-align:center;"><strong>' . s($it['quantity']) . '</strong></th>
+                    <th width="30%" style="text-align:right;"><strong>' . s($it['amount']) . '</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>' . s($productname) . '</td>
+                    <td style="text-align:center;">1</td>
+                    <td style="text-align:right;">' . s(local_elearning_system_format_price((float)$orderdata->amount)) . '</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br><br>
+
+        <table cellpadding="5" cellspacing="0" width="45%" align="' . ($isrtl ? 'left' : 'right') . '">
+            <tr>
+                <td><strong>' . s($it['subtotal']) . ':</strong></td>
+                <td style="text-align:right;">' . s(local_elearning_system_format_price((float)$subtotal)) . '</td>
+            </tr>';
+
+    if (!empty($tvapercent)) {
+        $html .= '
+            <tr>
+                <td><strong>' . s($it['vat']) . ' (' . s((string)$tvapercent) . '%):</strong></td>
+                <td style="text-align:right;">' . s(local_elearning_system_format_price((float)$tax)) . '</td>
+            </tr>';
     }
-    
-    $pdf->Ln(3);
-    
-    // Totals
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell(115, 6, 'Subtotal:', 0, 0, 'R');
-    $pdf->Cell(40, 6, local_elearning_system_format_price($subtotal), 0, 1, 'R');
-    
-    if ($tvapercent > 0) {
-        $pdf->Cell(115, 6, 'TVA (' . number_format($tvapercent, 1) . '%):', 0, 0, 'R');
-        $pdf->Cell(40, 6, local_elearning_system_format_price($tax), 0, 1, 'R');
-    }
-    
-    $pdf->SetFont('helvetica', 'B', 11);
-    $pdf->Cell(115, 6, 'TOTAL:', 0, 0, 'R');
-    $pdf->Cell(40, 6, local_elearning_system_format_price($total), 0, 1, 'R');
-    
-    $pdf->Output('facture_' . $orderid . '.pdf', 'D');
+
+    $html .= '
+            <tr>
+                <td><strong>' . s($it['total']) . ':</strong></td>
+                <td style="text-align:right;"><strong>' . s(local_elearning_system_format_price((float)$total)) . '</strong></td>
+            </tr>
+        </table>
+
+        <br><br><br><br>
+
+        <div style="text-align:center; color:#666; border-top:1px solid #ddd; padding-top:12px;">
+            <p>' . s($it['thank_you']) . '</p>
+            <p>' . s($it['contact']) . '</p>
+        </div>
+    </div>';
+
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    $filename = 'invoice-' . $orderid . '.pdf';
+    $pdf->Output($filename, 'D');
     exit;
 }
 
@@ -194,21 +273,50 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Facture #' . $orderid);
 $PAGE->set_heading('Facture');
 
+$pdfurl = (new moodle_url('/local/elearning_system/invoice.php', [
+    'id' => $orderid,
+    'pdf' => 1,
+    'lang' => $lang,
+]))->out(false);
+
+$backurl = (new moodle_url('/local/elearning_system/commandes.php', [
+    'lang' => $lang,
+]))->out(false);
+
 $invoicehtml = [
+    'isrtl' => $isrtl,
+
+    't_back' => $it['back'],
+    't_download_pdf' => $it['download_pdf'],
+    't_child_invoice' => $it['child_invoice'],
+    't_invoice' => $it['invoice'],
+    't_invoice_number' => $it['invoice_number'],
+    't_issue_date' => $it['issue_date'],
+    't_client' => $it['client'],
+    't_product_service' => $it['product_service'],
+    't_quantity' => $it['quantity'],
+    't_amount' => $it['amount'],
+    't_subtotal' => $it['subtotal'],
+    't_vat' => $it['vat'],
+    't_total' => $it['total'],
+    't_thank_you' => $it['thank_you'],
+    't_contact' => $it['contact'],
+
     'id' => (int)$orderid,
     'timecreated' => userdate((int)$orderdata->timecreated),
     'tvapercent' => number_format($tvapercent, 1),
-    'subtotal' => local_elearning_system_format_price($subtotal),
-'taxamount' => local_elearning_system_format_price($tax),
-'total' => local_elearning_system_format_price($total),
+
+    'subtotal' => local_elearning_system_format_price((float)$subtotal),
+    'taxamount' => local_elearning_system_format_price((float)$tax),
+    'total' => local_elearning_system_format_price((float)$total),
 
     'hastvapercent' => ($tvapercent > 0),
     'isparentaccount' => $isparentaccount,
     'targetfullname' => $targetfullname,
-    'backurl' => (new moodle_url('/local/elearning_system/my_courses.php'))->out(false),
-    'pdfurl' => (new moodle_url('/local/elearning_system/invoice.php', ['id' => $orderid, 'pdf' => 1]))->out(false),
-];
 
+    'pdfurl' => $pdfurl,
+    'backurl' => $backurl,
+];
 if ($user) {
     $invoicehtml['user'] = [
         'fullname' => fullname($user),

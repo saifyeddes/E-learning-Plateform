@@ -185,39 +185,95 @@ function local_elearning_system_my_courses_get_all_products(): array {
     return $products;
 }
 
+function local_elearning_system_my_courses_order_is_active(stdClass $order): bool {
+    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
+
+    $expiresat = !empty($order->expiresat)
+        ? (int)$order->expiresat
+        : strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+
+    return $expiresat === false || $expiresat <= 0 || $expiresat > time();
+}
+
 function local_elearning_system_my_courses_product_has_active_purchase(int $userid, int $productid): bool {
+    if ($userid <= 0 || $productid <= 0) {
+        return false;
+    }
+
     $db = local_elearning_system_my_courses_plugin_db();
 
     $stmt = $db->prepare("
-        SELECT id, timecreated, durationmonths, expiresat
-          FROM el_orders
-         WHERE userid = ? AND productid = ?
-      ORDER BY id DESC
-         LIMIT 1
+        SELECT o.id, o.productid, o.timecreated, o.durationmonths, o.expiresat,
+               p.isbundle, p.bundleitems
+          FROM el_orders o
+     LEFT JOIN el_products p ON p.id = o.productid
+         WHERE o.userid = ?
+      ORDER BY o.id DESC
     ");
 
     if (!$stmt) {
         throw new moodle_exception('Plugin DB prepare error: ' . $db->error);
     }
 
-    $stmt->bind_param('ii', $userid, $productid);
+    $stmt->bind_param('i', $userid);
     $stmt->execute();
 
     $result = $stmt->get_result();
-    $order = $result ? $result->fetch_object() : null;
+
+    $activeorders = [];
+    while ($row = $result->fetch_object()) {
+        if (local_elearning_system_my_courses_order_is_active($row)) {
+            $activeorders[] = $row;
+        }
+    }
 
     $stmt->close();
 
-    if (!$order) {
+    foreach ($activeorders as $order) {
+        if ((int)$order->productid === $productid) {
+            return true;
+        }
+    }
+
+    foreach ($activeorders as $order) {
+        if (empty($order->isbundle) || empty($order->bundleitems)) {
+            continue;
+        }
+
+        $bundleitemids = array_values(array_unique(array_filter(array_map(
+            'intval',
+            explode(',', (string)$order->bundleitems)
+        ))));
+
+        if (in_array($productid, $bundleitemids, true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function local_elearning_system_my_courses_bundle_all_items_purchased(int $userid, stdClass $bundle): bool {
+    if ($userid <= 0 || empty($bundle->isbundle) || empty($bundle->bundleitems)) {
         return false;
     }
 
-    $durationmonths = max(1, (int)($order->durationmonths ?? 1));
-    $expiresat = !empty($order->expiresat)
-        ? (int)$order->expiresat
-        : strtotime('+' . $durationmonths . ' months', (int)$order->timecreated);
+    $bundleitemids = array_values(array_unique(array_filter(array_map(
+        'intval',
+        explode(',', (string)$bundle->bundleitems)
+    ))));
 
-    return $expiresat === false || $expiresat <= 0 || $expiresat > time();
+    if (empty($bundleitemids)) {
+        return false;
+    }
+
+    foreach ($bundleitemids as $itemid) {
+        if (!local_elearning_system_my_courses_product_has_active_purchase($userid, (int)$itemid)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 $usercontext = local_elearning_system_get_effective_user_context((int)$USER->id, $DB);
@@ -441,7 +497,14 @@ $hasdiscount = $originalprice > 0 && $saleprice > 0 && $originalprice > $salepri
 
         $eligibleproductscount++;
 
-        if (local_elearning_system_my_courses_product_has_active_purchase($targetuserid, $productid)) {
+        $isproductpurchased = local_elearning_system_my_courses_product_has_active_purchase($targetuserid, $productid);
+
+$isbundlecompleted = false;
+if (!empty($product->isbundle)) {
+    $isbundlecompleted = local_elearning_system_my_courses_bundle_all_items_purchased($targetuserid, $product);
+}
+
+if ($isproductpurchased || $isbundlecompleted) {
     continue;
 }
 

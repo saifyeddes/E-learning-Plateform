@@ -1,278 +1,1726 @@
 {{> local_elearning_system/client_styles }}
-<div class="es-client">
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="es-home-hero d-flex justify-content-between align-items-start flex-wrap gap-3">
-                <div>
-                    <h3 class="mb-1">{{home_allcourses}}</h3>
-                    <p class="text-muted mb-0">{{home_homeintro}}</p>
+<style>
+.es-home-page {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 22px 16px 0;
+}
+
+.es-home-page .container-fluid {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+/* General */
+.es-home-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(15, 35, 55, .055);
+}
+
+.es-home-title {
+    color: #102033;
+    font-weight: 850;
+    font-size: 28px;
+    margin: 0 0 8px;
+}
+
+.es-home-text {
+    color: #657386;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Header */
+.es-home-hero {
+    padding: 22px 24px;
+    margin-bottom: 22px;
+}
+
+.es-home-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #0f6fc5;
+    font-weight: 800;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.es-home-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.es-home-action-btn,
+.es-home-slide-actions .btn,
+.es-store-cta {
+    border-radius: 12px;
+    font-weight: 750;
+}
+
+.es-cart-icon-modern {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #0f6fc5;
+    color: #fff !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+}
+
+.es-cart-count-modern {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #2e7d32;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Carousel */
+.es-home-carousel {
+    overflow: hidden;
+    margin-bottom: 26px;
+}
+
+.es-home-carousel-inner {
+    min-height: 310px;
+    position: relative;
+}
+
+.es-home-slide {
+    display: none;
+    grid-template-columns: 1.05fr .95fr;
+    min-height: 310px;
+}
+
+.es-home-slide.is-active {
+    display: grid;
+}
+
+.es-home-slide-content {
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.es-home-slide-kicker {
+    color: #0f6fc5;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.es-home-slide-content h2 {
+    color: #102033;
+    font-size: 29px;
+    line-height: 1.2;
+    font-weight: 850;
+    margin-bottom: 12px;
+}
+
+.es-home-slide-content p {
+    color: #657386;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.es-home-slide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.es-home-slide-art {
+    background: #eef3f8;
+    overflow: hidden;
+}
+
+.es-home-slide-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.es-home-carousel-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    border-top: 1px solid #e3eaf2;
+    background: #fff;
+}
+
+.es-home-carousel-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #d4e0ec;
+    background: #fff;
+    color: #0f6fc5;
+}
+
+.es-home-carousel-dots {
+    display: flex;
+    gap: 7px;
+}
+
+.es-home-dot {
+    width: 9px;
+    height: 9px;
+    border: 0;
+    border-radius: 999px;
+    background: #c5d5e5;
+}
+
+.es-home-dot.is-active {
+    width: 24px;
+    background: #0f6fc5;
+}
+
+/* Extra sections */
+.es-home-section {
+    margin: 36px 0;
+}
+
+.es-home-section-head {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.es-home-section-head h3 {
+    color: #102033;
+    font-size: 26px;
+    font-weight: 850;
+    margin-bottom: 8px;
+}
+
+.es-home-section-head p {
+    max-width: 720px;
+    margin: 0 auto;
+    color: #657386;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.es-home-stats {
+    padding: 24px 18px;
+}
+
+.es-home-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.es-home-stat {
+    text-align: center;
+    padding: 12px 16px;
+    border-inline-end: 1px solid #edf1f5;
+}
+
+.es-home-stat:last-child {
+    border-inline-end: 0;
+}
+
+.es-home-stat-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 12px;
+    border-radius: 14px;
+    background: #f4f8fc;
+    color: #0f6fc5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.es-home-stat-number {
+    color: #173b63;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.es-home-stat-label {
+    color: #4b6b8b;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Audience cards */
+.es-home-audience-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.es-home-audience-card {
+    position: relative;
+    min-height: 245px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #102033;
+    box-shadow: 0 8px 22px rgba(15, 35, 55, .08);
+}
+
+.es-home-audience-card img {
+    width: 100%;
+    height: 100%;
+    min-height: 245px;
+    object-fit: cover;
+    opacity: .82;
+    transition: transform .25s ease;
+}
+
+.es-home-audience-card:hover img {
+    transform: scale(1.04);
+}
+
+.es-home-audience-overlay {
+    position: absolute;
+    inset: 0;
+    padding: 20px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(180deg, rgba(16,32,51,.08), rgba(16,32,51,.76));
+}
+
+.es-home-audience-tag {
+    position: absolute;
+    top: 14px;
+    inset-inline-end: 14px;
+    background: rgba(255,255,255,.93);
+    color: #0f6fc5;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.es-home-audience-overlay h4 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.es-home-audience-overlay p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+/* Testimonial simple */
+.es-home-testimonial {
+    padding: 34px 24px;
+    text-align: center;
+}
+
+.es-home-testimonial h3 {
+    color: #102033;
+    font-size: 26px;
+    font-weight: 850;
+    margin-bottom: 12px;
+}
+
+.es-home-testimonial-name {
+    color: #173b63;
+    font-weight: 850;
+    margin-bottom: 6px;
+}
+
+.es-home-testimonial-stars {
+    color: #f6b800;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.es-home-testimonial-text {
+    max-width: 760px;
+    margin: 0 auto;
+    color: #657386;
+    font-size: 15px;
+    line-height: 1.75;
+}
+
+/* Filters */
+.es-home-filters-modern {
+    border: 1px solid #e3eaf2;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(15, 35, 55, .04);
+    margin-bottom: 24px;
+}
+
+.es-home-filters-modern label {
+    color: #102033;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.es-home-filters-modern .form-control,
+.es-home-filters-modern .custom-select {
+    border-radius: 12px;
+    border: 1px solid #d4e0ec;
+    height: 42px;
+}
+
+.es-home-filters-modern .btn {
+    border-radius: 12px;
+    height: 42px;
+    font-weight: 750;
+}
+
+/* Section titles */
+.es-home-section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 28px 0 16px;
+}
+
+.es-home-section-title {
+    color: #102033;
+    font-size: 24px;
+    font-weight: 850;
+    margin: 0 0 6px;
+}
+
+.es-home-section-desc {
+    color: #657386;
+    font-size: 14px;
+    margin: 0;
+}
+
+.es-home-section-badge {
+    border: 1px solid #d4e0ec;
+    border-radius: 999px;
+    padding: 7px 12px;
+    color: #0f6fc5;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+/* Product cards */
+.es-store-card {
+    height: 100%;
+    border: 1px solid #e3eaf2;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 35, 55, .055);
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.es-store-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(15, 35, 55, .09);
+}
+
+.es-store-image-modern,
+.es-store-image-placeholder-modern {
+    height: 190px;
+    overflow: hidden;
+    background: #f2f5f8;
+}
+
+.es-store-image-modern img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.es-store-image-placeholder-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7c8ea3;
+    text-decoration: none !important;
+}
+
+.es-store-badges {
+    position: absolute;
+    top: 12px;
+    inset-inline-start: 12px;
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.es-store-badge {
+    background: rgba(255,255,255,.92);
+    color: #0f6fc5;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.es-store-body-modern {
+    padding: 16px 18px;
+}
+
+.es-store-title-modern {
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: 850;
+}
+
+.es-store-title-modern a {
+    color: #102033;
+    text-decoration: none;
+}
+
+.es-store-title-modern a:hover {
+    color: #0f6fc5;
+}
+
+.es-store-price-modern {
+    color: #102033;
+    font-size: 14px;
+    border-top: 1px solid #edf1f5;
+    padding-top: 12px;
+}
+
+.es-old-price {
+    color: #8a97a8;
+    text-decoration: line-through;
+    margin-inline: 6px;
+}
+
+.es-sale-price {
+    color: #0f6fc5;
+    font-weight: 850;
+    font-size: 17px;
+}
+
+.es-store-footer-modern {
+    padding: 0 18px 18px;
+}
+
+.es-store-cta-modern {
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 750;
+}
+
+.es-store-cta-primary {
+    background: #0f6fc5;
+    border: none;
+    color: #fff !important;
+}
+
+.es-home-empty {
+    border: 1px dashed #bdd2e6;
+    border-radius: 18px;
+    background: #fff;
+    color: #657386;
+    text-align: center;
+    padding: 30px 18px;
+}
+
+/* Footer */
+.es-home-footer {
+    margin-top: 42px;
+    background: #fff;
+    border-top: 1px solid #e3eaf2;
+}
+
+.es-home-footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 18px;
+}
+
+.es-home-footer-brand {
+    color: #102033;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.es-home-footer-text {
+    max-width: 580px;
+    color: #657386;
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 6px 0 0;
+}
+
+.es-home-footer-links {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.es-home-footer-links a {
+    color: #0f6fc5;
+    font-size: 13px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.es-home-footer-bottom {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 12px 18px 20px;
+    color: #8a97a8;
+    font-size: 12px;
+    border-top: 1px solid #edf1f5;
+}
+
+/* RTL */
+.es-home-page.es-rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.es-home-page.es-rtl .row {
+    direction: rtl;
+}
+
+.es-home-page.es-rtl .es-home-actions,
+.es-home-page.es-rtl .es-home-footer-links {
+    justify-content: flex-start;
+}
+
+.es-home-page.es-rtl .es-home-section-head,
+.es-home-page.es-rtl .es-home-testimonial {
+    direction: rtl;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .es-home-slide,
+    .es-home-slide.is-active {
+        display: block;
+    }
+
+    .es-home-slide-art {
+        height: 220px;
+    }
+
+    .es-home-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .es-home-stat:nth-child(2) {
+        border-inline-end: 0;
+    }
+
+    .es-home-stat:nth-child(1),
+    .es-home-stat:nth-child(2) {
+        border-bottom: 1px solid #edf1f5;
+    }
+
+    .es-home-audience-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .es-home-page {
+        padding: 14px 10px 0;
+    }
+
+    .es-home-hero,
+    .es-home-slide-content {
+        padding: 22px;
+    }
+
+    .es-home-title,
+    .es-home-slide-content h2 {
+        font-size: 24px;
+    }
+
+    .es-home-actions {
+        justify-content: flex-start;
+    }
+
+    .es-home-section-header {
+        display: block;
+    }
+
+    .es-home-section-badge {
+        display: inline-flex;
+        margin-top: 10px;
+    }
+
+    .es-store-image-modern,
+    .es-store-image-placeholder-modern {
+        height: 170px;
+    }
+
+    .es-home-footer-links {
+        justify-content: flex-start;
+        margin-top: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .es-home-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .es-home-stat {
+        border-inline-end: 0;
+        border-bottom: 1px solid #edf1f5;
+    }
+
+    .es-home-stat:last-child {
+        border-bottom: 0;
+    }
+}
+/* ==================================================
+   FINAL HOME REFINEMENT - SIMPLE / FLUID / CLEAN
+   ================================================== */
+
+.es-home-page {
+    background: #f9fbfd !important;
+}
+
+.es-home-card {
+    box-shadow: 0 10px 28px rgba(15, 35, 55, .045) !important;
+}
+
+.es-home-section {
+    margin: 42px 0;
+}
+
+/* Audience : only student + parent */
+.es-home-audience-grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.es-home-audience-card {
+    min-height: 310px;
+    border-radius: 20px;
+}
+
+.es-home-audience-card img {
+    min-height: 310px;
+}
+
+.es-home-audience-overlay {
+    background: linear-gradient(180deg, rgba(16,32,51,.04), rgba(16,32,51,.78));
+}
+
+.es-audience-login-btn {
+    width: fit-content;
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0f6fc5 !important;
+    font-size: 13px;
+    font-weight: 850;
+    text-decoration: none !important;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.es-audience-login-btn:hover {
+    background: #f1f7fd;
+    transform: translateY(-2px);
+}
+
+/* All courses section */
+.es-home-section-header {
+    margin-top: 38px;
+    padding: 0 2px;
+}
+
+#homeCourseList,
+#homeBundleList + .row {
+    row-gap: 20px;
+}
+
+.es-store-card {
+    border-radius: 20px !important;
+    border: 1px solid #dce6f0 !important;
+    box-shadow: 0 10px 26px rgba(15, 35, 55, .055) !important;
+}
+
+.es-store-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(15, 35, 55, .095) !important;
+}
+
+.es-store-image-modern,
+.es-store-image-placeholder-modern {
+    height: 205px !important;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.es-store-body-modern {
+    padding: 18px 18px 14px !important;
+}
+
+.es-store-title-modern {
+    font-size: 19px !important;
+    line-height: 1.25;
+    min-height: 48px;
+}
+
+.es-store-price-modern {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 38px;
+}
+
+.es-sale-price {
+    color: #0f6fc5 !important;
+    font-weight: 900 !important;
+}
+
+/* Add to cart hover fix */
+.es-store-cta-primary,
+.es-store-cta-primary:visited {
+    background: #0f6fc5 !important;
+    border: 1px solid #0f6fc5 !important;
+    color: #ffffff !important;
+}
+
+.es-store-cta-primary:hover,
+.es-store-cta-primary:focus,
+.es-store-cta-primary:active {
+    background: #084f92 !important;
+    border-color: #084f92 !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(15, 111, 197, .22);
+}
+
+.es-store-cta-primary i,
+.es-store-cta-primary:hover i {
+    color: #ffffff !important;
+}
+
+.es-store-cta-modern.btn-outline-primary:hover {
+    color: #ffffff !important;
+}
+
+/* Feedback carousel */
+.es-home-feedback {
+    padding: 34px 24px;
+    overflow: hidden;
+}
+
+.es-feedback-carousel {
+    position: relative;
+    min-height: 150px;
+}
+
+.es-feedback-slide {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+    animation: esFadeIn .35s ease;
+}
+
+.es-feedback-slide.is-active {
+    display: block;
+}
+
+.es-feedback-stars {
+    color: #f6b800;
+    font-size: 19px;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.es-feedback-slide p {
+    color: #5f6f82;
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 12px;
+}
+
+.es-feedback-slide strong {
+    color: #173b63;
+    font-weight: 900;
+}
+
+.es-feedback-dots {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 14px;
+}
+
+.es-feedback-dot {
+    width: 9px;
+    height: 9px;
+    border: 0;
+    border-radius: 999px;
+    background: #c5d5e5;
+}
+
+.es-feedback-dot.is-active {
+    width: 24px;
+    background: #0f6fc5;
+}
+
+@keyframes esFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Elegant footer */
+.es-home-footer {
+    margin-top: 52px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e1e8f0 !important;
+}
+
+.es-home-footer-inner {
+    padding: 30px 18px !important;
+}
+
+.es-home-footer-brand {
+    font-size: 22px !important;
+    letter-spacing: -.2px;
+}
+
+.es-home-footer-links {
+    gap: 10px !important;
+}
+
+.es-home-footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border: 1px solid #e1e8f0;
+    border-radius: 999px;
+    background: #ffffff;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.es-home-footer-links a:hover {
+    background: #f4f8fc;
+    transform: translateY(-2px);
+}
+
+.es-home-footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* RTL */
+.es-home-page.es-rtl .es-feedback-slide {
+    direction: rtl;
+}
+
+.es-home-page.es-rtl .es-audience-login-btn i {
+    transform: scaleX(-1);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .es-home-audience-grid-two {
+        grid-template-columns: 1fr !important;
+        max-width: 560px;
+    }
+}
+
+@media (max-width: 768px) {
+    .es-store-title-modern {
+        min-height: auto;
+    }
+
+    .es-home-footer-bottom {
+        display: block;
+    }
+}
+/* ===============================
+   CLEAN HOME IMPROVEMENTS
+   =============================== */
+
+.es-home-page {
+    background: #f9fafb;
+}
+
+.es-home-section {
+    margin: 38px 0;
+}
+
+.es-home-section-head {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.es-home-section-head h3 {
+    font-size: 26px;
+    font-weight: 850;
+    color: #102033;
+    margin-bottom: 8px;
+}
+
+.es-home-section-head p {
+    max-width: 680px;
+    margin: 0 auto;
+    color: #667085;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Audience: only 2 cards */
+.es-home-audience-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.es-home-audience-card {
+    min-height: 280px;
+    border-radius: 20px;
+}
+
+.es-home-audience-card img {
+    min-height: 280px;
+    opacity: .72;
+}
+
+.es-home-audience-overlay {
+    background: linear-gradient(180deg, rgba(16,32,51,.06), rgba(16,32,51,.82));
+}
+
+.es-audience-login-btn {
+    width: fit-content;
+    margin-top: 14px;
+    border-radius: 999px;
+    padding: 9px 15px;
+    background: #ffffff;
+    color: #0f6fc5 !important;
+    font-weight: 800;
+    font-size: 13px;
+    text-decoration: none !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+.es-audience-login-btn:hover {
+    background: #f2f7fd;
+    color: #084f92 !important;
+}
+
+/* Add to cart hover fix */
+.es-store-cta-primary,
+.es-store-cta-primary:visited {
+    background: #0f6fc5 !important;
+    border: 1px solid #0f6fc5 !important;
+    color: #ffffff !important;
+}
+
+.es-store-cta-primary:hover,
+.es-store-cta-primary:focus,
+.es-store-cta-primary:active {
+    background: #084f92 !important;
+    border-color: #084f92 !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(15,111,197,.22);
+}
+
+.es-store-cta-primary i {
+    color: #ffffff !important;
+}
+
+/* Improve All Courses cards */
+#homeCourseList,
+#homeBundleList + .row {
+    row-gap: 20px;
+}
+
+.es-store-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 20px;
+    border: 1px solid #dbe6f1;
+    box-shadow: 0 10px 26px rgba(15, 35, 55, .06);
+}
+
+.es-store-image-modern,
+.es-store-image-placeholder-modern {
+    height: 205px;
+}
+
+.es-store-body-modern {
+    flex: 1;
+    padding: 18px 18px 14px;
+}
+
+.es-store-title-modern {
+    font-size: 19px;
+    line-height: 1.35;
+    margin-bottom: 12px;
+}
+
+.es-store-price-modern {
+    margin-top: 10px;
+    padding-top: 12px;
+}
+
+.es-store-footer-modern {
+    padding: 0 18px 18px;
+}
+
+.es-store-cta-modern {
+    min-height: 44px;
+}
+
+/* Feedback carousel */
+.es-home-feedback {
+    padding: 34px 24px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.es-feedback-carousel {
+    position: relative;
+    min-height: 140px;
+}
+
+.es-feedback-slide {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    animation: esFeedbackFade .35s ease;
+}
+
+.es-feedback-slide.is-active {
+    display: block;
+}
+
+.es-feedback-stars {
+    color: #f6b800;
+    font-size: 19px;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+}
+
+.es-feedback-slide p {
+    color: #657386;
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 12px;
+}
+
+.es-feedback-slide strong {
+    color: #173b63;
+    font-weight: 850;
+}
+
+.es-feedback-dots {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.es-feedback-dot {
+    width: 9px;
+    height: 9px;
+    border: 0;
+    border-radius: 999px;
+    background: #c5d5e5;
+}
+
+.es-feedback-dot.is-active {
+    width: 24px;
+    background: #0f6fc5;
+}
+
+@keyframes esFeedbackFade {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Elegant footer */
+.es-home-footer {
+    margin-top: 50px;
+    background: #ffffff;
+    border-top: 1px solid #e3eaf2;
+}
+
+.es-home-footer-inner {
+    padding: 30px 18px;
+}
+
+.es-home-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 21px;
+    font-weight: 900;
+    color: #102033;
+}
+
+.es-home-footer-brand::before {
+    content: "";
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0f6fc5, #48a7dc);
+    display: inline-block;
+}
+
+.es-home-footer-text {
+    margin-top: 10px;
+    color: #667085;
+}
+
+.es-home-footer-links {
+    gap: 10px;
+}
+
+.es-home-footer-links a {
+    padding: 8px 12px;
+    border: 1px solid #dbe6f1;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0f6fc5;
+    transition: background .18s ease, color .18s ease;
+}
+
+.es-home-footer-links a:hover {
+    background: #f2f7fd;
+    color: #084f92;
+}
+
+.es-home-footer-bottom {
+    color: #8a97a8;
+}
+
+/* RTL corrections */
+.es-home-page.es-rtl .es-audience-login-btn {
+    direction: rtl;
+}
+
+.es-home-page.es-rtl .es-feedback-slide {
+    direction: rtl;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .es-home-audience-two {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+
+    .es-home-audience-card,
+    .es-home-audience-card img {
+        min-height: 245px;
+    }
+
+    .es-home-footer-links {
+        justify-content: flex-start;
+    }
+}
+</style>
+<div class="es-client es-home-page {{#isrtl}}es-rtl{{/isrtl}}">
+    <div class="container-fluid">
+
+        <div class="es-home-hero es-home-card">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-8">
+                    <div class="es-home-kicker">
+                        <i class="fa fa-graduation-cap"></i>
+                        {{home_sitepresentation}}
+                    </div>
+
+                    <h2 class="es-home-title">{{home_allcourses}}</h2>
+                    <p class="es-home-subtitle">{{home_homeintro}}</p>
                 </div>
-                <div class="es-top-actions">
-    {{#issiteadmin}}
-    <a href="{{admindashboardurl}}" class="btn btn-primary btn-sm">
-        <i class="fa fa-tachometer-alt mr-1"></i>
-        {{home_admindashboard}}
-    </a>
-    {{/issiteadmin}}
 
-    <a href="{{carturl}}" class="es-cart-icon-btn" title="{{home_cart}}" aria-label="{{home_cart}}">
-        <i class="fa fa-shopping-cart"></i>
-        <span class="es-cart-count">{{cartcount}}</span>
-    </a>
+                <div class="col-12 col-lg-4">
+                    <div class="es-home-actions">
+                        {{#issiteadmin}}
+                        <a href="{{admindashboardurl}}" class="btn btn-primary es-home-action-btn">
+                            <i class="fa fa-tachometer-alt"></i>
+                            {{home_admindashboard}}
+                        </a>
+                        {{/issiteadmin}}
 
-    {{#isloggedin}}
-    <a href="{{mycoursesurl}}" class="btn btn-light btn-sm">
-        {{home_mycourses}}
-    </a>
-    {{/isloggedin}}
-</div>
-            </div>
-        </div>
-    </div>
+                        <a href="{{carturl}}" class="es-cart-icon-modern" title="{{home_cart}}" aria-label="{{home_cart}}">
+                            <i class="fa fa-shopping-cart"></i>
+                            <span class="es-cart-count-modern">{{cartcount}}</span>
+                        </a>
 
-    <section class="es-home-carousel card mb-3" aria-label="{{home_sitepresentation}}">
-        <div class="es-home-carousel-inner" id="esHomeCarousel">
-            <article class="es-home-slide is-active">
-                <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">{{home_homeslide1kicker}}</span>
-                    <h2>{{home_homeslide1title}}</h2>
-                    <p>{{home_homeslide1desc}}</p>
-                    <div class="es-home-slide-actions">
-                        <a href="#homeCourseList" class="btn btn-primary">{{home_browsecourses}}</a>
                         {{#isloggedin}}
-                        <a href="{{mycoursesurl}}" class="btn btn-outline-secondary">{{home_mycourses}}</a>
+                        <a href="{{mycoursesurl}}" class="btn btn-light es-home-action-btn">
+                            <i class="fa fa-play-circle"></i>
+                            {{home_mycourses}}
+                        </a>
                         {{/isloggedin}}
-                        {{^isloggedin}}
-                        <a href="{{loginurl}}" class="btn btn-outline-secondary">{{home_signin}}</a>
-                        {{/isloggedin}}
                     </div>
-                </div>
-                <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="{{home_slide1alt}}" loading="eager">
-                </div>
-            </article>
-
-            <article class="es-home-slide">
-                <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">{{home_homeslide2kicker}}</span>
-                    <h2>{{home_homeslide2title}}</h2>
-                    <p>{{home_homeslide2desc}}</p>
-                    <div class="es-home-slide-actions">
-                        <a href="#homeBundleList" class="btn btn-primary">{{home_viewbundles}}</a>
-                        <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_opencart}}</a>
-                    </div>
-                </div>
-                <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80" alt="{{home_slide2alt}}" loading="lazy">
-                </div>
-            </article>
-
-            <article class="es-home-slide">
-                <div class="es-home-slide-content">
-                    <span class="es-home-slide-kicker">{{home_homeslide3kicker}}</span>
-                    <h2>{{home_homeslide3title}}</h2>
-                    <p>{{home_homeslide3desc}}</p>
-                    <div class="es-home-slide-actions">
-                        <a href="#homeFilters" class="btn btn-primary">{{home_findacourse}}</a>
-                        <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_checkout}}</a>
-                    </div>
-                </div>
-                <div class="es-home-slide-art" aria-hidden="true">
-                    <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="{{home_slide3alt}}" loading="lazy">
-                </div>
-            </article>
-        </div>
-
-        <div class="es-home-carousel-nav" aria-label="{{home_carouselnavigation}}">
-            <button type="button" class="es-home-carousel-btn" id="esHomePrev" aria-label="{{home_previousslide}}">
-                <i class="fa fa-chevron-left"></i>
-            </button>
-            <div class="es-home-carousel-dots" id="esHomeDots"></div>
-            <button type="button" class="es-home-carousel-btn" id="esHomeNext" aria-label="{{home_nextslide}}">
-                <i class="fa fa-chevron-right"></i>
-            </button>
-        </div>
-    </section>
-
-    {{#hasproducts}}
-    <div class="card mb-3 es-home-filters">
-        <div class="card-body">
-            <div class="row g-2 align-items-end" id="homeFilters">
-                <div class="col-12 col-md-6">
-                    <label for="homeSearch" class="form-label mb-1">{{home_search}}</label>
-                    <input type="text" id="homeSearch" class="form-control" placeholder="{{home_searchbycoursename}}">
-                </div>
-                <div class="col-12 col-md-4">
-                    <label for="homeTypeFilter" class="form-label mb-1">{{home_type}}</label>
-                    <select id="homeTypeFilter" class="custom-select form-control">
-                        <option value="all">{{home_alltypes}}</option>
-                        <option value="free">{{home_free}}</option>
-                        <option value="paid">{{home_paid}}</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-2">
-                    <button type="button" id="homeResetFilter" class="btn btn-secondary w-100">{{home_reset}}</button>
                 </div>
             </div>
+        </div>
+
+        <section class="es-home-carousel es-home-card" aria-label="{{home_sitepresentation}}">
+            <div class="es-home-carousel-inner" id="esHomeCarousel">
+                <article class="es-home-slide is-active">
+                    <div class="es-home-slide-content">
+                        <span class="es-home-slide-kicker">{{home_homeslide1kicker}}</span>
+                        <h2>{{home_homeslide1title}}</h2>
+                        <p>{{home_homeslide1desc}}</p>
+                        <div class="es-home-slide-actions">
+                            <a href="#homeCourseList" class="btn btn-primary">{{home_browsecourses}}</a>
+                            {{#isloggedin}}
+                            <a href="{{mycoursesurl}}" class="btn btn-outline-secondary">{{home_mycourses}}</a>
+                            {{/isloggedin}}
+                            {{^isloggedin}}
+                            <a href="{{loginurl}}" class="btn btn-outline-secondary">{{home_signin}}</a>
+                            {{/isloggedin}}
+                        </div>
+                    </div>
+                    <div class="es-home-slide-art" aria-hidden="true">
+                        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=80" alt="{{home_slide1alt}}" loading="eager">
+                    </div>
+                </article>
+
+                <article class="es-home-slide">
+                    <div class="es-home-slide-content">
+                        <span class="es-home-slide-kicker">{{home_homeslide2kicker}}</span>
+                        <h2>{{home_homeslide2title}}</h2>
+                        <p>{{home_homeslide2desc}}</p>
+                        <div class="es-home-slide-actions">
+                            <a href="#homeBundleList" class="btn btn-primary">{{home_viewbundles}}</a>
+                            <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_opencart}}</a>
+                        </div>
+                    </div>
+                    <div class="es-home-slide-art" aria-hidden="true">
+                        <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80" alt="{{home_slide2alt}}" loading="lazy">
+                    </div>
+                </article>
+
+                <article class="es-home-slide">
+                    <div class="es-home-slide-content">
+                        <span class="es-home-slide-kicker">{{home_homeslide3kicker}}</span>
+                        <h2>{{home_homeslide3title}}</h2>
+                        <p>{{home_homeslide3desc}}</p>
+                        <div class="es-home-slide-actions">
+                            <a href="#homeFilters" class="btn btn-primary">{{home_findacourse}}</a>
+                            <a href="{{carturl}}" class="btn btn-outline-secondary">{{home_checkout}}</a>
+                        </div>
+                    </div>
+                    <div class="es-home-slide-art" aria-hidden="true">
+                        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="{{home_slide3alt}}" loading="lazy">
+                    </div>
+                </article>
+            </div>
+
+            <div class="es-home-carousel-nav" aria-label="{{home_carouselnavigation}}">
+                <button type="button" class="es-home-carousel-btn" id="esHomePrev" aria-label="{{home_previousslide}}">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <div class="es-home-carousel-dots" id="esHomeDots"></div>
+                <button type="button" class="es-home-carousel-btn" id="esHomeNext" aria-label="{{home_nextslide}}">
+                    <i class="fa fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+<section class="es-home-section es-home-stats es-home-card">
+    <div class="es-home-section-head">
+        <h3>{{home_stats_title}}</h3>
+        <p>{{home_stats_subtitle}}</p>
+    </div>
+
+    <div class="es-home-stats-grid">
+        <div class="es-home-stat">
+            <div class="es-home-stat-icon"><i class="fa fa-video"></i></div>
+            <div class="es-home-stat-number">{{home_stat_1_number}}</div>
+            <div class="es-home-stat-label">{{home_stat_1_label}}</div>
+        </div>
+
+        <div class="es-home-stat">
+            <div class="es-home-stat-icon"><i class="fa fa-map-marker-alt"></i></div>
+            <div class="es-home-stat-number">{{home_stat_2_number}}</div>
+            <div class="es-home-stat-label">{{home_stat_2_label}}</div>
+        </div>
+
+        <div class="es-home-stat">
+            <div class="es-home-stat-icon"><i class="fa fa-user-graduate"></i></div>
+            <div class="es-home-stat-number">{{home_stat_3_number}}</div>
+            <div class="es-home-stat-label">{{home_stat_3_label}}</div>
+        </div>
+
+        <div class="es-home-stat">
+            <div class="es-home-stat-icon"><i class="fa fa-book"></i></div>
+            <div class="es-home-stat-number">{{home_stat_4_number}}</div>
+            <div class="es-home-stat-label">{{home_stat_4_label}}</div>
         </div>
     </div>
-    {{/hasproducts}}
+</section>
 
-    <div class="row g-3" id="homeCourseList">
-        {{#products}}
-        <div class="col-12 col-sm-6 col-lg-4 mb-3 home-course-item" data-type="{{#isfree}}free{{/isfree}}{{#ispaid}}paid{{/ispaid}}" data-name="{{name}}">
-            <div class="card h-100 es-store-card">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-3 text-center es-store-image-wrap">
-                        {{#hasimage}}
-                        <a href="{{producturl}}">
-                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded es-store-image">
-                        </a>
-                        {{/hasimage}}
-                        {{^hasimage}}
-                        <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
-                            <div class="text-muted"><i class="fa fa-image"></i> {{home_noimage}}</div>
-                        </a>
-                        {{/hasimage}}
+<section class="es-home-section">
+    <div class="es-home-section-head">
+        <h3>{{home_audience_title}}</h3>
+        <p>{{home_audience_subtitle}}</p>
+    </div>
+
+    <div class="es-home-audience-grid es-home-audience-grid-two">
+        <article class="es-home-audience-card">
+            <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80" alt="{{home_audience_student}}">
+            <div class="es-home-audience-overlay">
+                <span class="es-home-audience-tag">{{home_audience_student}}</span>
+                <h4>{{home_audience_student}}</h4>
+                <p>{{home_audience_student_desc}}</p>
+                <a href="{{loginurl}}" class="es-audience-login-btn">
+                    <i class="fa fa-sign-in-alt"></i> {{home_login_now}}
+                </a>
+            </div>
+        </article>
+
+        <article class="es-home-audience-card">
+            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80" alt="{{home_audience_parent}}">
+            <div class="es-home-audience-overlay">
+                <span class="es-home-audience-tag">{{home_audience_parent}}</span>
+                <h4>{{home_audience_parent}}</h4>
+                <p>{{home_audience_parent_desc}}</p>
+                <a href="{{loginurl}}" class="es-audience-login-btn">
+                    <i class="fa fa-sign-in-alt"></i> {{home_login_now}}
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+<section class="es-home-section es-home-feedback es-home-card">
+    <div class="es-home-section-head mb-3">
+        <h3>{{home_feedback_title}}</h3>
+    </div>
+
+    <div class="es-feedback-carousel" id="esFeedbackCarousel">
+        <article class="es-feedback-slide is-active">
+            <div class="es-feedback-stars">★★★★★</div>
+            <p>{{home_feedback_1_text}}</p>
+            <strong>{{home_feedback_1_name}}</strong>
+        </article>
+
+        <article class="es-feedback-slide">
+            <div class="es-feedback-stars">★★★★★</div>
+            <p>{{home_feedback_2_text}}</p>
+            <strong>{{home_feedback_2_name}}</strong>
+        </article>
+
+        <article class="es-feedback-slide">
+            <div class="es-feedback-stars">★★★★★</div>
+            <p>{{home_feedback_3_text}}</p>
+            <strong>{{home_feedback_3_name}}</strong>
+        </article>
+    </div>
+
+    <div class="es-feedback-dots" id="esFeedbackDots"></div>
+</section>
+        {{#hasproducts}}
+        <div class="card es-home-filters-modern" id="homeFilters">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-6">
+                        <label for="homeSearch" class="form-label mb-1">{{home_search}}</label>
+                        <input type="text" id="homeSearch" class="form-control" placeholder="{{home_searchbycoursename}}">
                     </div>
 
-                    <h5 class="card-title mb-1"><a href="{{producturl}}">{{name}}</a></h5>
-
-                    <div class="mb-2">
-                        <span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">
-                            {{#isfree}}{{home_free}}{{/isfree}}
-                            {{#ispaid}}{{home_paid}}{{/ispaid}}
-                        </span>
+                    <div class="col-12 col-md-4">
+                        <label for="homeTypeFilter" class="form-label mb-1">{{home_type}}</label>
+                        <select id="homeTypeFilter" class="custom-select form-control">
+                            <option value="all">{{home_alltypes}}</option>
+                            <option value="free">{{home_free}}</option>
+                            <option value="paid">{{home_paid}}</option>
+                        </select>
                     </div>
 
-                    <div class="mb-3 es-store-price">
-                        {{#isfree}}
-                        <strong>{{home_pricelabel}}:</strong> {{home_free}}
-                        {{/isfree}}
-                        {{#ispaid}}
-<strong>{{home_pricelabel}}:</strong>
-
-{{#hasdiscount}}
-<span class="es-old-price">{{originalprice}}</span>
-<span class="es-sale-price">{{saleprice}}</span>
-{{/hasdiscount}}
-
-{{^hasdiscount}}
-<span class="es-sale-price">{{displayprice}}</span>
-{{/hasdiscount}}
-
-{{/ispaid}}
+                    <div class="col-12 col-md-2">
+                        <button type="button" id="homeResetFilter" class="btn btn-secondary w-100">{{home_reset}}</button>
                     </div>
-
-                    {{#ispurchased}}
-<span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">{{purchaselabel}}</span>
-{{/ispurchased}}
-
-{{^ispurchased}}
-    {{#isincart}}
-    <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">{{home_incart}}</a>
-    {{/isincart}}
-    {{^isincart}}
-    <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">{{home_addtocart}}</a>
-    {{/isincart}}
-{{/ispurchased}}
                 </div>
             </div>
+        </div>
+        {{/hasproducts}}
+
+        <div class="es-home-section-header">
+            <div>
+                <h3 class="es-home-section-title">{{home_allcourses}}</h3>
+                <p class="es-home-section-desc">{{home_homeintro}}</p>
+            </div>
+            <span class="es-home-section-badge">
+                <i class="fa fa-book-open"></i>
+                {{home_allcourses}}
+            </span>
+        </div>
+
+        <div class="row g-3" id="homeCourseList">
+            {{#products}}
+            <div class="col-12 col-md-6 col-xl-4 mb-3 home-course-item"
+                 data-type="{{#isfree}}free{{/isfree}}{{#ispaid}}paid{{/ispaid}}"
+                 data-name="{{name}}">
+                <div class="es-store-card">
+
+                    {{#hasimage}}
+                    <div class="es-store-image-modern">
+                        <a href="{{producturl}}">
+                            <img src="{{image}}" alt="{{name}}">
+                        </a>
+                        <div class="es-store-badges">
+                            <span class="es-store-badge {{#isfree}}es-store-badge-free{{/isfree}}{{#ispaid}}es-store-badge-paid{{/ispaid}}">
+                                {{#isfree}}{{home_free}}{{/isfree}}
+                                {{#ispaid}}{{home_paid}}{{/ispaid}}
+                            </span>
+                        </div>
+                    </div>
+                    {{/hasimage}}
+
+                    {{^hasimage}}
+                    <a href="{{producturl}}" class="es-store-image-placeholder-modern">
+                        <div class="text-center">
+                            <i class="fa fa-image fa-2x"></i>
+                            <div class="mt-2">{{home_noimage}}</div>
+                        </div>
+                    </a>
+                    {{/hasimage}}
+
+                    <div class="es-store-body-modern">
+                        <h5 class="es-store-title-modern">
+                            <a href="{{producturl}}">{{name}}</a>
+                        </h5>
+
+                        <div class="es-store-price-modern">
+                            {{#isfree}}
+                            <strong>{{home_pricelabel}}:</strong> {{home_free}}
+                            {{/isfree}}
+
+                            {{#ispaid}}
+                            <strong>{{home_pricelabel}}:</strong>
+
+                            {{#hasdiscount}}
+                            <span class="es-old-price">{{originalprice}}</span>
+                            <span class="es-sale-price">{{saleprice}}</span>
+                            {{/hasdiscount}}
+
+                            {{^hasdiscount}}
+                            <span class="es-sale-price">{{displayprice}}</span>
+                            {{/hasdiscount}}
+                            {{/ispaid}}
+                        </div>
+                    </div>
+
+                    <div class="es-store-footer-modern">
+                        {{#ispurchased}}
+                        <span class="btn btn-success disabled es-store-cta-modern" aria-disabled="true">
+                            <i class="fa fa-check-circle"></i> {{purchaselabel}}
+                        </span>
+                        {{/ispurchased}}
+
+                        {{^ispurchased}}
+                        {{#isincart}}
+                        <a href="{{carturl}}" class="btn btn-outline-primary es-store-cta-modern">
+                            <i class="fa fa-shopping-cart"></i> {{home_incart}}
+                        </a>
+                        {{/isincart}}
+
+                        {{^isincart}}
+                        <a href="{{addtocarturl}}" class="btn es-store-cta-modern es-store-cta-primary">
+                            <i class="fa fa-cart-plus"></i> {{home_addtocart}}
+                        </a>
+                        {{/isincart}}
+                        {{/ispurchased}}
+                    </div>
+                </div>
+            </div>
+            {{/products}}
+        </div>
+
+        {{^products}}
+        <div class="es-home-empty">
+            <i class="fa fa-folder-open fa-3x"></i>
+            <h5>{{home_nocoursesavailable}}</h5>
         </div>
         {{/products}}
-    </div>
 
-    {{^products}}
-    <div class="alert alert-info">
-        {{home_nocoursesavailable}}
-    </div>
-    {{/products}}
-
-    <hr class="my-4">
-    <div class="row mb-3">
-        <div class="col-12">
-            <h3 class="mb-1">{{home_availablebundles}}</h3>
-            <p class="text-muted mb-0">{{home_bundlesdesc}}</p>
+        <div class="es-home-section-header" id="homeBundleList">
+            <div>
+                <h3 class="es-home-section-title">{{home_availablebundles}}</h3>
+                <p class="es-home-section-desc">{{home_bundlesdesc}}</p>
+            </div>
+            <span class="es-home-section-badge">
+                <i class="fa fa-layer-group"></i>
+                {{home_bundle}}
+            </span>
         </div>
+
+        {{#hasbundles}}
+        <div class="row g-3">
+            {{#bundles}}
+            <div class="col-12 col-md-6 col-xl-4 mb-3">
+                <div class="es-store-card">
+
+                    {{#hasimage}}
+                    <div class="es-store-image-modern">
+                        <a href="{{producturl}}">
+                            <img src="{{image}}" alt="{{name}}">
+                        </a>
+                        <div class="es-store-badges">
+                            <span class="es-store-badge es-store-badge-bundle">{{home_bundle}}</span>
+                            <span class="es-store-badge {{#isfree}}es-store-badge-free{{/isfree}}{{#ispaid}}es-store-badge-paid{{/ispaid}}">
+                                {{#isfree}}{{home_free}}{{/isfree}}
+                                {{#ispaid}}{{home_paid}}{{/ispaid}}
+                            </span>
+                        </div>
+                    </div>
+                    {{/hasimage}}
+
+                    {{^hasimage}}
+                    <a href="{{producturl}}" class="es-store-image-placeholder-modern">
+                        <div class="text-center">
+                            <i class="fa fa-image fa-2x"></i>
+                            <div class="mt-2">{{home_noimage}}</div>
+                        </div>
+                    </a>
+                    {{/hasimage}}
+
+                    <div class="es-store-body-modern">
+                        <h5 class="es-store-title-modern">
+                            <a href="{{producturl}}">{{name}}</a>
+                        </h5>
+
+                        <div class="es-store-price-modern">
+                            {{#isfree}}
+                            <strong>{{home_pricelabel}}:</strong> {{home_free}}
+                            {{/isfree}}
+
+                            {{#ispaid}}
+                            <strong>{{home_pricelabel}}:</strong>
+
+                            {{#hasdiscount}}
+                            <span class="es-old-price">{{originalprice}}</span>
+                            <span class="es-sale-price">{{saleprice}}</span>
+                            {{/hasdiscount}}
+
+                            {{^hasdiscount}}
+                            <span class="es-sale-price">{{displayprice}}</span>
+                            {{/hasdiscount}}
+                            {{/ispaid}}
+                        </div>
+                    </div>
+
+                    <div class="es-store-footer-modern">
+                        {{#ispurchased}}
+                        <span class="btn btn-success disabled es-store-cta-modern" aria-disabled="true">
+                            <i class="fa fa-check-circle"></i> {{purchaselabel}}
+                        </span>
+                        {{/ispurchased}}
+
+                        {{^ispurchased}}
+                        {{#isincart}}
+                        <a href="{{carturl}}" class="btn btn-outline-primary es-store-cta-modern">
+                            <i class="fa fa-shopping-cart"></i> {{home_incart}}
+                        </a>
+                        {{/isincart}}
+
+                        {{^isincart}}
+                        <a href="{{addtocarturl}}" class="btn es-store-cta-modern es-store-cta-primary">
+                            <i class="fa fa-cart-plus"></i> {{home_addtocart}}
+                        </a>
+                        {{/isincart}}
+                        {{/ispurchased}}
+                    </div>
+                </div>
+            </div>
+            {{/bundles}}
+        </div>
+        {{/hasbundles}}
+
+        {{^hasbundles}}
+        <div class="es-home-empty">
+            <i class="fa fa-layer-group fa-3x"></i>
+            <h5>{{home_nobundlesavailable}}</h5>
+        </div>
+        {{/hasbundles}}
+
+        <div id="homeNoResults" class="alert alert-warning d-none mt-3">
+            {{home_nocoursesmatch}}
+        </div>
+
     </div>
 
-    {{#hasbundles}}
-    <div class="row g-3" id="homeBundleList">
-        {{#bundles}}
-        <div class="col-12 col-sm-6 col-lg-4 mb-3">
-            <div class="card h-100 es-store-card">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-3 text-center es-store-image-wrap">
-                        {{#hasimage}}
-                        <a href="{{producturl}}">
-                            <img src="{{image}}" alt="{{name}}" class="img-fluid rounded es-store-image">
+    <footer class="es-home-footer">
+        <div class="es-home-footer-inner">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-7">
+                    <div class="es-home-footer-brand">SIT E-Learning</div>
+                    <p class="es-home-footer-text">
+                        {{home_homeintro}}
+                    </p>
+                </div>
+
+                <div class="col-12 col-lg-5">
+                    <div class="es-home-footer-links">
+                        <a href="{{mycoursesurl}}">
+                            <i class="fa fa-play-circle"></i> {{home_mycourses}}
                         </a>
-                        {{/hasimage}}
-                        {{^hasimage}}
-                        <a href="{{producturl}}" class="text-decoration-none es-store-image-placeholder">
-                            <div class="text-muted"><i class="fa fa-image"></i> {{home_noimage}}</div>
+                        <a href="{{carturl}}">
+                            <i class="fa fa-shopping-cart"></i> {{home_cart}}
                         </a>
-                        {{/hasimage}}
+                        <a href="#homeCourseList">
+                            <i class="fa fa-book-open"></i> {{home_allcourses}}
+                        </a>
+                        <a href="#homeBundleList">
+                            <i class="fa fa-layer-group"></i> {{home_availablebundles}}
+                        </a>
                     </div>
-
-                    <h5 class="card-title mb-1"><a href="{{producturl}}">{{name}}</a></h5>
-
-                    <div class="mb-2 d-flex align-items-center gap-2">
-                        <span class="badge bg-info text-dark">{{home_bundle}}</span>
-                        <span class="badge {{#isfree}}bg-success{{/isfree}}{{#ispaid}}bg-primary{{/ispaid}}">
-                            {{#isfree}}{{home_free}}{{/isfree}}
-                            {{#ispaid}}{{home_paid}}{{/ispaid}}
-                        </span>
-                    </div>
-
-                    <div class="mb-3 es-store-price">
-                        {{#isfree}}
-                        <strong>{{home_pricelabel}}:</strong> {{home_free}}
-                        {{/isfree}}
-                       {{#ispaid}}
-<strong>{{home_pricelabel}}:</strong>
-
-{{#hasdiscount}}
-<span class="es-old-price">{{originalprice}}</span>
-<span class="es-sale-price">{{saleprice}}</span>
-{{/hasdiscount}}
-
-{{^hasdiscount}}
-<span class="es-sale-price">{{displayprice}}</span>
-{{/hasdiscount}}
-
-{{/ispaid}}
-                    </div>
-
-                    {{#ispurchased}}
-<span class="btn btn-success mt-auto disabled es-store-cta" aria-disabled="true">{{purchaselabel}}</span>
-{{/ispurchased}}
-
-{{^ispurchased}}
-    {{#isincart}}
-    <a href="{{carturl}}" class="btn btn-outline-primary mt-auto es-store-cta">{{home_incart}}</a>
-    {{/isincart}}
-    {{^isincart}}
-    <a href="{{addtocarturl}}" class="btn btn-primary mt-auto es-store-cta">{{home_addtocart}}</a>
-    {{/isincart}}
-{{/ispurchased}}
                 </div>
             </div>
         </div>
-        {{/bundles}}
-    </div>
-    {{/hasbundles}}
 
-    {{^hasbundles}}
-    <div class="alert alert-info">
-        {{home_nobundlesavailable}}
-    </div>
-    {{/hasbundles}}
-
-    <div id="homeNoResults" class="alert alert-warning d-none mt-2">
-        {{home_nocoursesmatch}}
-    </div>
+        <div class="es-home-footer-bottom">
+            © SIT E-Learning — {{home_sitepresentation}}
+        </div>
+    </footer>
 </div>
 
 <script>
@@ -327,7 +1775,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (timer) {
                 clearInterval(timer);
             }
-            timer = setInterval(nextSlide, 2000);
+            timer = setInterval(nextSlide, 3000);
         };
 
         carouselNext.addEventListener('click', function() {
@@ -379,6 +1827,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const isVisible = matchName && matchType;
             item.classList.toggle('d-none', !isVisible);
+
             if (isVisible) {
                 visibleCount++;
             }
@@ -394,8 +1843,42 @@ document.addEventListener('DOMContentLoaded', function() {
         typeFilter.value = 'all';
         applyFilters();
     });
-});
+    
+const feedbackCarousel = document.getElementById('esFeedbackCarousel');
+const feedbackDots = document.getElementById('esFeedbackDots');
+
+if (feedbackCarousel && feedbackDots) {
+    const feedbackSlides = Array.from(feedbackCarousel.querySelectorAll('.es-feedback-slide'));
+    let feedbackIndex = 0;
+
+    feedbackDots.innerHTML = '';
+
+    feedbackSlides.forEach(function(_, idx) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'es-feedback-dot';
+        dot.classList.toggle('is-active', idx === 0);
+        dot.addEventListener('click', function() {
+            setFeedback(idx);
+        });
+        feedbackDots.appendChild(dot);
+    });
+
+    function setFeedback(index) {
+        feedbackIndex = (index + feedbackSlides.length) % feedbackSlides.length;
+
+        feedbackSlides.forEach(function(slide, idx) {
+            slide.classList.toggle('is-active', idx === feedbackIndex);
+        });
+
+        Array.from(feedbackDots.querySelectorAll('.es-feedback-dot')).forEach(function(dot, idx) {
+            dot.classList.toggle('is-active', idx === feedbackIndex);
+        });
+    }
+
+    setInterval(function() {
+        setFeedback(feedbackIndex + 1);
+    }, 3500);
+}
+}); 
 </script>
-
-</div>
-
