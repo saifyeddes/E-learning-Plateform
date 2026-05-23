@@ -318,7 +318,6 @@ if (!empty($templatedata['courseurl'])) {
     }
 }
 if (!empty($productrecord->isbundle) && !empty($bundleitemids)) {
-    $bundleitemids = array_values(array_unique(array_filter(array_map('intval', explode(',', (string)$productrecord->bundleitems)))));
     if (!empty($bundleitemids)) {
         $bundleproducts = local_elearning_system_plugin_get_products_by_ids_client($bundleitemids);
         foreach ($bundleitemids as $bundleitemid) {

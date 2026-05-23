@@ -936,6 +936,10 @@ max-height: calc(100vh - var(--admin-top-offset)) !important;
                     <span class="elearn-nav__icon"><i class="fa fa-envelope"></i></span>
                     <span class="elearn-nav__label">Email Templates</span>
                 </a>
+                <a href="/local/elearning_system/admin/settings.php" class="elearn-nav__item {{#issettings}}is-active{{/issettings}}">
+    <span class="elearn-nav__icon"><i class="fa fa-cog"></i></span>
+    <span class="elearn-nav__label">Settings</span>
+</a>
             </nav>
         </div>
     </aside>
@@ -1083,6 +1087,10 @@ max-height: calc(100vh - var(--admin-top-offset)) !important;
             {{#isemailtemplates}}
                 {{> local_elearning_system/emailtemplates_content }}
             {{/isemailtemplates}}
+
+            {{#issettings}}
+    {{> local_elearning_system/settings_content }}
+{{/issettings}}
 
             {{#isparents}}
                 {{> local_elearning_system/parents_content }}
