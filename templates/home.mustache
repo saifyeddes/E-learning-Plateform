@@ -442,6 +442,7 @@
 
 .es-store-image-modern,
 .es-store-image-placeholder-modern {
+    position: relative;
     height: 190px;
     overflow: hidden;
     background: #f2f5f8;
@@ -671,9 +672,11 @@
     }
 
     .es-store-image-modern,
-    .es-store-image-placeholder-modern {
-        height: 170px;
-    }
+.es-store-image-placeholder-modern {
+    position: relative;
+    height: 205px !important;
+    border-bottom: 1px solid #eef2f7;
+}
 
     .es-home-footer-links {
         justify-content: flex-start;
@@ -1260,6 +1263,16 @@
     .es-home-footer-links {
         justify-content: flex-start;
     }
+}
+.es-store-image-modern {
+    position: relative !important;
+}
+
+.es-store-badges {
+    position: absolute !important;
+    top: 12px !important;
+    inset-inline-start: 12px !important;
+    z-index: 3 !important;
 }
 </style>
 <div class="es-client es-home-page {{#isrtl}}es-rtl{{/isrtl}}">
